@@ -48,7 +48,7 @@ cp .env.example .env
 |---|---|---|
 | `VERIFY_TOKEN` | ✅ | Token aleatorio que usarás al configurar el webhook en Meta |
 | `WHATSAPP_TOKEN` | ✅ | Token de acceso de la Graph API para enviar mensajes |
-| `PHONE_NUMBER_ID` | ✅ | ID del número de teléfono en Meta Developers |
+| `WHATSAPP_PHONE_NUMBER_ID` | ✅ | ID del número de teléfono en Meta Developers |
 | `ANTHROPIC_API_KEY` | ✅ | API Key de Anthropic para consultar a Claude |
 | `APP_SECRET` | ⬜ | App Secret para validar firmas de payload |
 | `LOG_LEVEL` | ⬜ | Nivel de logging (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |

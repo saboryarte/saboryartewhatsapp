@@ -61,13 +61,13 @@ class WhatsAppPayload(BaseModel):
 # ── Sending ───────────────────────────────────────────────────────────────────
 
 async def send_text(to: str, text: str) -> None:
-    if not settings.whatsapp_token or not settings.phone_number_id:
-        logger.warning("send_text: WHATSAPP_TOKEN o PHONE_NUMBER_ID no configurados")
+    if not settings.whatsapp_token or not settings.whatsapp_phone_number_id:
+        logger.warning("send_text: WHATSAPP_TOKEN o WHATSAPP_PHONE_NUMBER_ID no configurados")
         return
 
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            f"{_GRAPH_API_URL}/{settings.phone_number_id}/messages",
+            f"{_GRAPH_API_URL}/{settings.whatsapp_phone_number_id}/messages",
             headers={
                 "Authorization": f"Bearer {settings.whatsapp_token}",
                 "Content-Type": "application/json",

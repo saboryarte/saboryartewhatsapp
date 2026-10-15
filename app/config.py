@@ -6,7 +6,7 @@ class Settings(BaseSettings):
 
     verify_token: str
     whatsapp_token: str = ""
-    phone_number_id: str = ""
+    whatsapp_phone_number_id: str = ""
     app_secret: str = ""
     anthropic_api_key: str = ""
 
