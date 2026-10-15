@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import AsyncMock
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -11,6 +12,13 @@ CHALLENGE = "abc123"
 def set_env(monkeypatch):
     monkeypatch.setenv("VERIFY_TOKEN", VALID_TOKEN)
     monkeypatch.setenv("WHATSAPP_TOKEN", "dummy")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "dummy")
+
+
+@pytest.fixture(autouse=True)
+def mock_externos(monkeypatch):
+    monkeypatch.setattr("app.main.ask_claude", AsyncMock(return_value="respuesta de Claude"))
+    monkeypatch.setattr("app.main.send_text", AsyncMock(return_value=None))
 
 
 @pytest.fixture

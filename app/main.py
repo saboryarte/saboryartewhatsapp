@@ -3,13 +3,14 @@ import logging
 from fastapi import FastAPI, HTTPException, Query, Request, status
 from fastapi.responses import PlainTextResponse
 
+from .claude import ask_claude
 from .config import settings
-from .models import WhatsAppPayload
+from .whatsapp import WhatsAppPayload, send_text
 
 logging.basicConfig(level=settings.log_level)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="WhatsApp Cloud API Webhook", version="1.0.0")
+app = FastAPI(title="WhatsApp Claude Agent", version="1.0.0")
 
 
 @app.get("/webhook", response_class=PlainTextResponse)
@@ -32,7 +33,7 @@ async def verify_webhook(
 
 @app.post("/webhook", status_code=status.HTTP_200_OK)
 async def receive_webhook(request: Request, payload: WhatsAppPayload) -> dict:
-    """Recibe notificaciones de eventos de WhatsApp Cloud API."""
+    """Recibe mensajes de WhatsApp, consulta a Claude y responde al remitente."""
     if payload.object != "whatsapp_business_account":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Objeto no reconocido")
 
@@ -45,13 +46,14 @@ async def receive_webhook(request: Request, payload: WhatsAppPayload) -> dict:
 
             for message in value.messages or []:
                 sender = message.from_
-                msg_type = message.type
 
-                if msg_type == "text" and message.text:
+                if message.type == "text" and message.text:
                     body = message.text.get("body", "")
-                    logger.info("Mensaje de texto de %s: %s", sender, body)
+                    logger.info("Mensaje de %s: %s", sender, body)
+                    reply = await ask_claude(body)
+                    await send_text(sender, reply)
                 else:
-                    logger.info("Mensaje tipo '%s' de %s", msg_type, sender)
+                    logger.info("Mensaje tipo '%s' de %s (ignorado)", message.type, sender)
 
             for status_update in value.statuses or []:
                 logger.info(

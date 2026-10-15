@@ -1,13 +1,14 @@
-# WhatsApp Cloud API — Webhook con FastAPI
+# WhatsApp Claude Agent
 
-Servidor webhook para [WhatsApp Cloud API](https://developers.facebook.com/docs/whatsapp/cloud-api) construido con **Python + FastAPI**.
+Agente de WhatsApp construido con **Python + FastAPI** que recibe mensajes via [WhatsApp Cloud API](https://developers.facebook.com/docs/whatsapp/cloud-api), consulta a **Claude** (Anthropic) y responde automáticamente al remitente.
 
 ## Características
 
 - `GET /webhook` — verificación del webhook por parte de Meta
-- `POST /webhook` — recepción de mensajes, estados y eventos
+- `POST /webhook` — recibe mensajes de WhatsApp, consulta a Claude y envía la respuesta
+- Integración con **Claude Opus** via Anthropic SDK (pensamiento adaptativo)
 - Variables de entorno con validación via **pydantic-settings**
-- Pruebas con **pytest** y **httpx**
+- Pruebas con **pytest**
 
 ---
 
@@ -15,6 +16,7 @@ Servidor webhook para [WhatsApp Cloud API](https://developers.facebook.com/docs/
 
 - Python 3.11+
 - Una app en [Meta for Developers](https://developers.facebook.com/) con WhatsApp Business configurado
+- Una API Key de [Anthropic](https://console.anthropic.com/) para acceder a Claude
 - Un túnel público para desarrollo local (por ejemplo, [ngrok](https://ngrok.com/))
 
 ---
@@ -45,8 +47,9 @@ cp .env.example .env
 | Variable | Requerida | Descripción |
 |---|---|---|
 | `VERIFY_TOKEN` | ✅ | Token aleatorio que usarás al configurar el webhook en Meta |
-| `WHATSAPP_TOKEN` | ⬜ | Token de acceso de la Graph API para enviar mensajes |
-| `PHONE_NUMBER_ID` | ⬜ | ID del número de teléfono en Meta Developers |
+| `WHATSAPP_TOKEN` | ✅ | Token de acceso de la Graph API para enviar mensajes |
+| `PHONE_NUMBER_ID` | ✅ | ID del número de teléfono en Meta Developers |
+| `ANTHROPIC_API_KEY` | ✅ | API Key de Anthropic para consultar a Claude |
 | `APP_SECRET` | ⬜ | App Secret para validar firmas de payload |
 | `LOG_LEVEL` | ⬜ | Nivel de logging (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 
@@ -100,12 +103,13 @@ pytest --cov=app --cov-report=term-missing
 ## Estructura del proyecto
 
 ```
-whatsapp-webhook/
+whatsapp-claude-agent/
 ├── app/
 │   ├── __init__.py
-│   ├── config.py      # Configuración via variables de entorno
-│   ├── main.py        # Rutas FastAPI
-│   └── models.py      # Modelos Pydantic del payload de WhatsApp
+│   ├── main.py        # Rutas FastAPI (GET y POST /webhook)
+│   ├── whatsapp.py    # Modelos Pydantic + envío de mensajes via Meta Graph API
+│   ├── claude.py      # Consulta a Claude via Anthropic SDK
+│   └── config.py      # Configuración via variables de entorno
 ├── tests/
 │   ├── __init__.py
 │   └── test_webhook.py

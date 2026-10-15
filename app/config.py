@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     whatsapp_token: str = ""
     phone_number_id: str = ""
     app_secret: str = ""
+    anthropic_api_key: str = ""
 
     log_level: str = "INFO"
 
