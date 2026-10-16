@@ -2,6 +2,7 @@ import logging
 from typing import Any
 
 import httpx
+from httpx import HTTPStatusError
 from pydantic import BaseModel, ConfigDict, Field
 
 from .config import settings
@@ -16,7 +17,8 @@ _GRAPH_API_URL = "https://graph.facebook.com/v19.0"
 class WhatsAppMessage(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    from_: str = Field(alias="from")
+    from_: str | None = Field(default=None, alias="from")
+    from_user_id: str | None = None
     id: str
     timestamp: str
     type: str
@@ -29,14 +31,19 @@ class WhatsAppMessage(BaseModel):
     interactive: dict[str, Any] | None = None
 
 
+class WhatsAppProfile(BaseModel):
+    name: str | None = None
+
+
 class WhatsAppContact(BaseModel):
-    profile: dict[str, Any]
-    wa_id: str
+    profile: WhatsAppProfile | None = None
+    wa_id: str | None = None
+    user_id: str | None = None
 
 
 class WhatsAppValue(BaseModel):
-    messaging_product: str
-    metadata: dict[str, Any]
+    messaging_product: str = ""
+    metadata: dict[str, Any] = {}
     contacts: list[WhatsAppContact] | None = None
     messages: list[WhatsAppMessage] | None = None
     statuses: list[dict[str, Any]] | None = None
@@ -79,5 +86,8 @@ async def send_text(to: str, text: str) -> None:
                 "text": {"body": text},
             },
         )
-        response.raise_for_status()
-        logger.info("Mensaje enviado a %s", to)
+        try:
+            response.raise_for_status()
+            logger.info("Mensaje enviado")
+        except HTTPStatusError as e:
+            logger.error("Error enviando mensaje: HTTP %s", e.response.status_code)

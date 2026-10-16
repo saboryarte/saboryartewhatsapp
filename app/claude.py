@@ -1,6 +1,8 @@
 from anthropic import AsyncAnthropic
 
-_client = AsyncAnthropic()
+from .config import settings
+
+_client = AsyncAnthropic(api_key=settings.anthropic_api_key)
 
 
 async def ask_claude(prompt: str) -> str:
