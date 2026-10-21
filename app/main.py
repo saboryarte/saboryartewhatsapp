@@ -6,7 +6,8 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 
 from .claude import ask_claude
 from .config import settings
-from .whatsapp import WhatsAppPayload, send_text
+from .greetings import is_greeting, pick_welcome
+from .whatsapp import WhatsAppContact, WhatsAppPayload, send_text
 
 logging.basicConfig(level=settings.log_level)
 logger = logging.getLogger(__name__)
@@ -45,6 +46,16 @@ async def verify_webhook(
     return hub_challenge
 
 
+def _profile_name(contacts: list[WhatsAppContact] | None, sender: str) -> str | None:
+    """Nombre de perfil del remitente; si hay un único contacto se asume que es él."""
+    if not contacts:
+        return None
+    contact = next((c for c in contacts if sender in (c.wa_id, c.user_id)), None)
+    if contact is None and len(contacts) == 1:
+        contact = contacts[0]
+    return contact.profile.name if contact and contact.profile else None
+
+
 async def _process_payload(payload: WhatsAppPayload) -> None:
     for entry in payload.entry:
         for change in entry.changes:
@@ -67,6 +78,10 @@ async def _process_payload(payload: WhatsAppPayload) -> None:
                         logger.debug("Evento de texto sin cuerpo ignorado (id: %s, keys: %s)", message.id, list(message.text.keys()))
                         continue
                     logger.info("Mensaje de texto recibido (id: %s)", message.id)
+                    if is_greeting(body):
+                        logger.info("Saludo detectado, se envía bienvenida aleatoria (id: %s)", message.id)
+                        await send_text(sender, pick_welcome(_profile_name(value.contacts, sender)))
+                        continue
                     reply = await ask_claude(body)
                     if reply:
                         await send_text(sender, reply)

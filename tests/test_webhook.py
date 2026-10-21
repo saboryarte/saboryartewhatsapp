@@ -266,12 +266,12 @@ class TestReceiveWebhook:
                 "messaging_product": "whatsapp",
                 "metadata": {"display_phone_number": "1234", "phone_number_id": "p1"},
                 "contacts": [{"profile": {"name": "Test"}, "wa_id": "521234"}],
-                "messages": [{"from": "521234", "id": "wamid.5", "timestamp": "1700000000", "type": "text", "text": {"body": "Hola"}}],
+                "messages": [{"from": "521234", "id": "wamid.5", "timestamp": "1700000000", "type": "text", "text": {"body": "¿Cuál es el horario?"}}],
             }}]}],
         }
         resp = client.post("/webhook", json=payload)
         assert resp.status_code == 200
-        ask_mock.assert_called_once_with("Hola")
+        ask_mock.assert_called_once_with("¿Cuál es el horario?")
 
     def test_campo_distinto_de_messages_ignorado(self, client, monkeypatch):
         """Cambios con field != 'messages' deben ignorarse y devolver 200."""
@@ -328,7 +328,7 @@ class TestReceiveWebhook:
                 "messaging_product": "whatsapp",
                 "metadata": {"phone_number_id": "p1"},
                 "contacts": [{"profile": {"name": "U"}, "user_id": "contact_bsuid_999"}],
-                "messages": [{"from_user_id": "msg_bsuid_111", "id": "wamid.x", "timestamp": "1", "type": "text", "text": {"body": "hola"}}],
+                "messages": [{"from_user_id": "msg_bsuid_111", "id": "wamid.x", "timestamp": "1", "type": "text", "text": {"body": "necesito ayuda"}}],
             }}]}],
         }
         resp = client.post("/webhook", json=payload)
@@ -371,7 +371,7 @@ class TestReceiveWebhook:
                 "messaging_product": "whatsapp",
                 "metadata": {"phone_number_id": "p1"},
                 "contacts": [{"profile": {"name": "U"}, "user_id": "contact_bsuid_555"}],
-                "messages": [{"id": "wamid.fb", "timestamp": "1", "type": "text", "text": {"body": "hola"}}],
+                "messages": [{"id": "wamid.fb", "timestamp": "1", "type": "text", "text": {"body": "necesito ayuda"}}],
             }}]}],
         }
         resp = client.post("/webhook", json=payload)
@@ -418,12 +418,12 @@ class TestReceiveWebhook:
                 "messaging_product": "whatsapp",
                 "metadata": {"phone_number_id": "p1"},
                 "contacts": [{"wa_id": "521234567890"}],
-                "messages": [{"from": "521234567890", "id": "wamid.r1", "timestamp": "1", "type": "text", "text": {"body": "hola"}}],
+                "messages": [{"from": "521234567890", "id": "wamid.r1", "timestamp": "1", "type": "text", "text": {"body": "necesito ayuda"}}],
             }}]}],
         }
         resp = client.post("/webhook", json=payload)
         assert resp.status_code == 200
-        ask_mock.assert_called_once_with("hola")
+        ask_mock.assert_called_once_with("necesito ayuda")
         send_mock.assert_called_once_with("521234567890", "ok")
 
     def test_regresion_status_read_devuelve_200(self, client, monkeypatch):
@@ -472,3 +472,85 @@ class TestReceiveWebhook:
         assert resp.status_code == 200
         ask_mock.assert_called_once_with("Hola mundo")
         send_mock.assert_not_called()
+
+
+# ── Saludos iniciales aleatorios ──────────────────────────────────────────────
+
+from app.greetings import WELCOME_MESSAGES, is_greeting, pick_welcome
+
+
+def _payload_texto(body: str, nombre: str | None = "Ana María") -> dict:
+    contact = {"wa_id": "521234567890"}
+    if nombre is not None:
+        contact["profile"] = {"name": nombre}
+    return {
+        "object": "whatsapp_business_account",
+        "entry": [{"id": "e1", "changes": [{"field": "messages", "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {"phone_number_id": "p1"},
+            "contacts": [contact],
+            "messages": [{"from": "521234567890", "id": "wamid.g1", "timestamp": "1", "type": "text", "text": {"body": body}}],
+        }}]}],
+    }
+
+
+class TestSaludos:
+    @pytest.mark.parametrize("texto", [
+        "Hola", "hola!", "Holaaa 👋", "ola", "Buenas", "Buenos días", "buenas tardes!!",
+        "Hola, buenas noches", "hola que tal", "Hola, ¿cómo estás?", "Hey", "qué más", "Saludos",
+    ])
+    def test_detecta_saludos(self, texto):
+        assert is_greeting(texto)
+
+    @pytest.mark.parametrize("texto", [
+        "Hola, quiero hacer un pedido", "precio", "info", "bueno", "¿Cuál es el horario?",
+        "Hola mundo", "", "👋", "hola " * 20,
+    ])
+    def test_no_detecta_mensajes_con_intencion(self, texto):
+        assert not is_greeting(texto)
+
+    def test_bienvenida_es_variada_y_no_repite_consecutivo(self):
+        mensajes = [pick_welcome() for _ in range(50)]
+        assert len(set(mensajes)) > 1
+        assert all(a != b for a, b in zip(mensajes, mensajes[1:]))
+
+    def test_bienvenida_personaliza_con_primer_nombre(self):
+        for _ in range(30):
+            assert ", Ana!" in pick_welcome("ANA maría")
+
+    def test_bienvenida_sin_nombre_no_deja_placeholder(self):
+        for _ in range(30):
+            mensaje = pick_welcome(None)
+            assert "{nombre}" not in mensaje and ", !" not in mensaje
+
+    def test_nombre_invalido_se_omite(self):
+        sin_nombre = {m.format(nombre="") for m in WELCOME_MESSAGES}
+        assert pick_welcome("🌸✨") in sin_nombre
+
+    def test_saludo_envia_bienvenida_sin_invocar_claude(self, client, monkeypatch):
+        ask_mock = AsyncMock(return_value="x")
+        send_mock = AsyncMock(return_value=None)
+        monkeypatch.setattr("app.main.ask_claude", ask_mock)
+        monkeypatch.setattr("app.main.send_text", send_mock)
+        resp = client.post("/webhook", json=_payload_texto("¡Hola! 😊"))
+        assert resp.status_code == 200
+        ask_mock.assert_not_called()
+        send_mock.assert_called_once()
+        destinatario, texto = send_mock.call_args.args
+        assert destinatario == "521234567890"
+        assert "Ana" in texto
+
+    def test_saludo_sin_profile_envia_bienvenida(self, client, monkeypatch):
+        send_mock = AsyncMock(return_value=None)
+        monkeypatch.setattr("app.main.send_text", send_mock)
+        resp = client.post("/webhook", json=_payload_texto("buenas", nombre=None))
+        assert resp.status_code == 200
+        _, texto = send_mock.call_args.args
+        assert texto in {m.format(nombre="") for m in WELCOME_MESSAGES}
+
+    def test_saludo_con_intencion_va_a_claude(self, client, monkeypatch):
+        ask_mock = AsyncMock(return_value="respuesta")
+        monkeypatch.setattr("app.main.ask_claude", ask_mock)
+        resp = client.post("/webhook", json=_payload_texto("Hola, ¿tienen envíos a Bogotá?"))
+        assert resp.status_code == 200
+        ask_mock.assert_called_once_with("Hola, ¿tienen envíos a Bogotá?")

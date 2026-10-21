@@ -9,6 +9,7 @@ Agente de WhatsApp construido con **Python + FastAPI** que recibe mensajes via [
 - Integración con **Claude Opus** via Anthropic SDK (pensamiento adaptativo)
 - Variables de entorno con validación via **pydantic-settings**
 - Pruebas con **pytest**
+- Bienvenida aleatoria: los saludos puros ("hola", "buenas tardes", "hola, ¿qué tal?") se responden con uno de varios mensajes amigables, personalizado con el nombre del perfil, sin consultar a Claude. Los mensajes se editan en `app/greetings.py`
 
 ---
 
@@ -109,7 +110,10 @@ whatsapp-claude-agent/
 │   ├── main.py        # Rutas FastAPI (GET y POST /webhook)
 │   ├── whatsapp.py    # Modelos Pydantic + envío de mensajes via Meta Graph API
 │   ├── claude.py      # Consulta a Claude via Anthropic SDK
+│   ├── greetings.py   # Detección de saludos y mensajes de bienvenida aleatorios
 │   └── config.py      # Configuración via variables de entorno
+├── docs/
+│   └── guia-construccion-flujos.md  # Cómo diseñar los flujos de ventas, consultas, pedidos y atención
 ├── tests/
 │   ├── __init__.py
 │   └── test_webhook.py
