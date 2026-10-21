@@ -111,9 +111,13 @@ whatsapp-claude-agent/
 │   ├── whatsapp.py    # Modelos Pydantic + envío de mensajes via Meta Graph API
 │   ├── claude.py      # Consulta a Claude via Anthropic SDK
 │   ├── greetings.py   # Detección de saludos y mensajes de bienvenida aleatorios
+│   ├── flows/
+│   │   └── mensajes.json  # Texto, botones y listas de cada paso de los flujos de Saboryarte
 │   └── config.py      # Configuración via variables de entorno
 ├── docs/
-│   └── guia-construccion-flujos.md  # Cómo diseñar los flujos de ventas, consultas, pedidos y atención
+│   ├── guia-construccion-flujos.md  # Cómo diseñar los flujos de ventas, consultas, pedidos y atención
+│   ├── flujos/saboryarte.md         # Diseño de los flujos de Saboryarte (rutas, traspaso, voz de marca)
+│   └── knowledge-base/              # Contenido que puede usar el bot (interno/ nunca va al prompt)
 ├── tests/
 │   ├── __init__.py
 │   └── test_webhook.py

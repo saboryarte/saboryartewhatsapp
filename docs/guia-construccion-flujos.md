@@ -191,6 +191,8 @@ flowchart TD
 
 Ordenado por prioridad. Lo de **A** a **D** desbloquea los dos primeros flujos.
 
+> **Actualización (21 oct 2026):** el diseño de Saboryarte ya cubre buena parte de A, B, C, E y F. Está en `docs/flujos/saboryarte.md`, con su base de conocimiento en `docs/knowledge-base/`. Lo que sigue abierto quedó en la sección «Pendientes por confirmar» de ese documento.
+
 **A. Marca y alcance**
 - [ ] Nombre de la marca y una línea sobre qué vende.
 - [ ] País, ciudades de operación y moneda.

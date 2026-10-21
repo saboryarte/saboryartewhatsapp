@@ -2,29 +2,26 @@ import random
 import re
 import unicodedata
 
-# Mensajes de bienvenida para pruebas. Se elige uno al azar en cada saludo.
+# Mensajes de bienvenida con la voz de Saboryarte (docs/flujos/saboryarte.md, §5). Se elige uno al azar
+# en cada saludo; hacen de G1 mientras el bot no envíe el menú como lista de WhatsApp.
 # "{nombre}" se reemplaza por ", <Nombre>" si conocemos el nombre del perfil, o por "" si no.
 WELCOME_MESSAGES: tuple[str, ...] = (
-    "¡Hola{nombre}! 👋 Qué alegría tenerte por aquí. Soy el asistente virtual y estoy listo para ayudarte. "
-    "¿Buscas información de productos, quieres hacer un pedido o tienes alguna consulta?",
-    "¡Hola{nombre}! 😊 Gracias por escribirnos. Cuéntame, ¿en qué te puedo ayudar hoy? "
-    "Puedo orientarte con productos, pedidos o cualquier duda que tengas.",
-    "¡Qué gusto saludarte{nombre}! ✨ Estoy aquí para ayudarte con lo que necesites: conocer nuestros productos, "
-    "hacer un pedido o resolver una duda. ¿Por dónde empezamos?",
-    "¡Hola{nombre}! Te damos la bienvenida 🙌 ¿Qué te gustaría hacer hoy? "
-    "Puedo contarte sobre nuestros productos, ayudarte con un pedido o responder tus preguntas.",
-    "¡Buenas{nombre}! 👋 Me encanta que nos escribas. Dime qué tienes en mente y con gusto te ayudo: "
-    "productos, pedidos o consultas, ¡lo que necesites!",
-    "¡Hola{nombre}! 🌟 Aquí tu asistente virtual, con toda la energía para ayudarte. "
-    "¿Quieres conocer nuestros productos, hacer un pedido o revisar algo puntual?",
-    "¡Hola, hola{nombre}! 😄 Qué bueno que llegaste. ¿En qué te ayudo hoy? "
-    "Puedo darte información de productos, apoyarte con tu pedido o resolver cualquier pregunta.",
-    "¡Hola{nombre}! Gracias por contactarnos 💬 Con gusto te acompaño en lo que necesites. "
-    "¿Te interesa algún producto, quieres pedir algo o necesitas resolver una duda?",
-    "¡Hola{nombre}! Es un placer atenderte 😊 Cuéntame qué necesitas y lo resolvemos juntos. "
-    "¿Productos, pedidos o una consulta?",
-    "¡Hola{nombre}! ☀️ Espero que estés muy bien. Estoy aquí para ayudarte con productos, pedidos "
-    "o lo que necesites. ¿Qué te gustaría hacer?",
+    "¡Hola{nombre}! 🌿 Qué alegría tenerte por acá. Soy el asistente virtual de Saboryarte.\n\n"
+    "Cuéntame, ¿en qué te puedo ayudar hoy?",
+    "¡Hola{nombre}! 🧂 Qué gusto que nos escribas. Soy el asistente virtual de Saboryarte y te ayudo "
+    "con nuestras mezclas, tus pedidos o lo que necesites.\n\n¿Qué te trae por acá?",
+    "¡Qué más{nombre}! 🌿 Por acá el asistente virtual de Saboryarte, listo para ayudarte a encontrar tu sabor.\n\n"
+    "¿En qué te ayudo hoy?",
+    "¡Hola{nombre}! ✨ Qué rico tenerte por acá. Te puedo mostrar nuestras mezclas y kits, ayudarte "
+    "con un pedido o con un regalo.\n\n¿Por dónde empezamos?",
+    "¡Hola{nombre}! 🌿 Gracias por escribirle a Saboryarte. Soy el asistente virtual y con mucho gusto te acompaño.\n\n"
+    "Cuéntame, ¿qué estás buscando hoy?",
+    "¡Holaaa{nombre}! 🧂 Qué bueno verte por acá. Soy el asistente virtual de Saboryarte: te ayudo con "
+    "nuestras mezclas, pedidos, regalos y más.\n\n¿Qué se te antoja hoy?",
+    "¡Hola{nombre}! 🌿 Qué alegría saludarte. Aquí el asistente virtual de Saboryarte, con toda la energía "
+    "para darle más sabor a tu cocina.\n\n¿En qué te ayudo?",
+    "¡Hola{nombre}! ✨ Bienvenida la buena sazón a esta conversación. Soy el asistente virtual de Saboryarte.\n\n"
+    "¿Quieres conocer nuestras mezclas, hacer un pedido o resolver una duda?",
 )
 
 # Palabras/frases que, solas o combinadas, cuentan como saludo puro ("hola", "buenas tardes", "hola que tal").

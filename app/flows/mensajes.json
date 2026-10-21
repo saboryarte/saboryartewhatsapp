@@ -1,0 +1,439 @@
+{
+  "version": "2026-10-21",
+  "fuente": "Artefacto «Chatbot WhatsApp Saboryarte — Flujos del chatbot», adaptado a este proyecto. Ver docs/flujos/saboryarte.md.",
+  "convenciones": {
+    "tipo": "texto | botones (máx. 3) | lista (máx. 10 filas) | libre (espera texto del cliente) | traspaso (pasa a una persona) | plantilla (requiere aprobación de Meta)",
+    "corchetes": "El texto entre [corchetes] es un dato que se completa en tiempo de ejecución o que está pendiente de confirmar.",
+    "va_a": "Id del paso al que lleva la opción. Las opciones sin va_a se resuelven con la lógica del flujo (ver notas).",
+    "notas": "Instrucciones internas. Nunca se envían al cliente."
+  },
+  "flujos": {
+    "entrada": {
+      "flujo_proyecto": "Entrada",
+      "pasos": [
+        {
+          "id": "G0", "tipo": "texto",
+          "texto": "Al escribirnos aceptas el tratamiento de tus datos según nuestra política: [enlace a la política].",
+          "notas": "Solo en el primer mensaje de cada cliente nuevo; se puede unir a G1. Pendiente: crear y publicar la política de tratamiento de datos (Ley 1581 de 2012)."
+        },
+        {
+          "id": "G1", "tipo": "lista",
+          "texto": "¡Hola! 🌿 Qué alegría tenerte por acá. Soy el asistente virtual de Saboryarte.\n\nCuéntame, ¿en qué te puedo ayudar hoy?",
+          "boton_lista": "Ver opciones",
+          "opciones": [
+            {"id": "menu_comprar", "titulo": "🧂 Comprar mezclas", "descripcion": "Catálogo, kits y pedidos", "va_a": "P1"},
+            {"id": "menu_mezcla", "titulo": "🎨 Mezcla personalizada", "descripcion": "Crea tu propia mezcla (mínimo 1 kilo)", "va_a": "M1"},
+            {"id": "menu_regalo", "titulo": "🎁 Regalos corporativos", "descripcion": "Detalles para tu equipo o tus clientes", "va_a": "R1"},
+            {"id": "menu_distribuir", "titulo": "🏪 Quiero distribuir", "descripcion": "Lleva Saboryarte a tu negocio", "va_a": "D1"},
+            {"id": "menu_seguimiento", "titulo": "📦 Seguir mi pedido", "descripcion": "Consulta cómo va tu pedido", "va_a": "S1"},
+            {"id": "menu_persona", "titulo": "💬 Hablar con alguien", "descripcion": "Te atiende una persona del equipo", "va_a": "T1"}
+          ],
+          "notas": "Dentro de horario. La bienvenida aleatoria de app/greetings.py cumple este papel mientras no se envíen listas."
+        },
+        {
+          "id": "G2", "tipo": "lista",
+          "texto": "¡Hola! 🌿 Ahorita estamos fuera de horario (atendemos lunes a sábado de 8:00 a. m. a 6:00 p. m.), pero yo sí puedo ayudarte con casi todo.\n\nSi necesitas a alguien del equipo, te escribimos apenas abramos. ¿Qué te trae por acá?",
+          "boton_lista": "Ver opciones",
+          "opciones_de": "G1",
+          "notas": "Fuera de horario (zona horaria America/Bogota)."
+        },
+        {
+          "id": "G3", "tipo": "lista",
+          "texto": "Uy, creo que no te entendí bien 🙈 ¿Me ayudas escogiendo una de estas opciones?",
+          "boton_lista": "Ver opciones",
+          "opciones_de": "G1",
+          "notas": "Primer fallo de comprensión. En el segundo fallo seguido se envía G4 y se activa el traspaso."
+        },
+        {
+          "id": "G4", "tipo": "traspaso",
+          "texto": "Mejor te paso con alguien del equipo para que te atienda con calma. ¿Me cuentas en una frase qué necesitas?",
+          "notas": "Segundo fallo de comprensión seguido. La frase del cliente va a la ficha de traspaso. Prioridad normal."
+        }
+      ]
+    },
+    "compra": {
+      "flujo_proyecto": "Ventas + Pedidos",
+      "pasos": [
+        {
+          "id": "P1", "tipo": "lista",
+          "texto": "¡Qué rico! Vamos a encontrar tus mezclas 🧂\n¿Qué quieres hacer?",
+          "boton_lista": "Ver opciones",
+          "opciones": [
+            {"id": "p1_catalogo", "titulo": "Ver las 6 mezclas", "va_a": "P2"},
+            {"id": "p1_queridas", "titulo": "Las más queridas", "va_a": "P3"},
+            {"id": "p1_kits", "titulo": "Kit mini y kits", "va_a": "P4"},
+            {"id": "p1_no_se", "titulo": "No sé cuál elegir", "va_a": "P5"},
+            {"id": "p1_pedido", "titulo": "Hacer mi pedido", "va_a": "P6"},
+            {"id": "p1_duda", "titulo": "Tengo una duda", "va_a": "P9"}
+          ]
+        },
+        {
+          "id": "P2", "tipo": "lista",
+          "texto": "Estas son nuestras 6 mezclas ✨ Toca la que quieras conocer y te cuento de qué está hecha.",
+          "boton_lista": "Ver mezclas",
+          "opciones": [
+            {"id": "prod_sal_de_oro", "titulo": "Sal de oro", "va_a": "P2F"},
+            {"id": "prod_sal_de_sol", "titulo": "Sal de sol", "va_a": "P2F"},
+            {"id": "prod_sal_de_luna_rosa", "titulo": "Sal de luna rosa", "va_a": "P2F"},
+            {"id": "prod_sal_de_la_vid", "titulo": "Sal de la vid", "va_a": "P2F"},
+            {"id": "prod_sal_chilemon", "titulo": "Sal chilemon", "va_a": "P2F"},
+            {"id": "prod_tierra_de_fuego", "titulo": "Mezcla tierra de fuego", "va_a": "P2F"}
+          ]
+        },
+        {
+          "id": "P2F", "tipo": "botones",
+          "texto": "[ficha del producto: descripción, presentación y precio al público según docs/knowledge-base/saboryarte.md]",
+          "opciones": [
+            {"id": "p2f_agregar", "titulo": "Agregar al pedido", "va_a": "P6"},
+            {"id": "p2f_otra", "titulo": "Ver otra mezcla", "va_a": "P2"},
+            {"id": "p2f_menu", "titulo": "Volver al menú", "va_a": "G1"}
+          ],
+          "notas": "Paso agregado en la adaptación: en el artefacto la ficha estaba descrita en la nota de P2. Se envía con foto del producto."
+        },
+        {
+          "id": "P3", "tipo": "botones",
+          "texto": "Las que más se llevan nuestros clientes:\n\n• Sal de oro: con ajo negro, tomillo, pimienta y cúrcuma. Va con cualquier tipo de cocción.\n• Sal de sol: con jengibre, romero, orégano y albahaca. Especial para pollo y pescado.\n• Chilemon: con limón deshidratado y chiles. Perfecta para frutas y para michelar. ¡Con mango es una delicia! 🥭\n\nCada una viene de 100 g, con una cuchara tallada artesanalmente, por $26.000. ¿Cuál quieres probar?",
+          "opciones": [
+            {"id": "p3_oro", "titulo": "Sal de oro", "va_a": "P6"},
+            {"id": "p3_sol", "titulo": "Sal de sol", "va_a": "P6"},
+            {"id": "p3_chilemon", "titulo": "Chilemon", "va_a": "P6"}
+          ],
+          "notas": "Cada botón lleva a P6 con esa mezcla ya elegida. Enviar con foto de producto."
+        },
+        {
+          "id": "P4", "tipo": "botones",
+          "texto": "El kit mini es perfecto para probar o para regalar 🎁\nTrae nuestras 6 mezclas en versión miniatura, una cuchara artesanal y un mini manual de uso, por $60.000.\n\n¿Qué prefieres?",
+          "opciones": [
+            {"id": "p4_kit_mini", "titulo": "Kit mini", "va_a": "P6"},
+            {"id": "p4_armar", "titulo": "Armar mi kit", "va_a": "P4B"},
+            {"id": "p4_regalo", "titulo": "Regalo empresarial", "va_a": "R1"}
+          ],
+          "notas": "El kit mini trae unos 40 g de cada sal y unos 25 g de la mezcla tierra de fuego."
+        },
+        {
+          "id": "P4B", "tipo": "lista",
+          "texto": "¡Arma tu kit a tu gusto! 🎁 Cada kit trae mezclas de 100 g y una cuchara artesanal.\n¿Cuántas mezclas quieres?",
+          "boton_lista": "Ver kits",
+          "opciones": [
+            {"id": "kit_2", "titulo": "2 mezclas · $48.000", "va_a": "P6"},
+            {"id": "kit_3", "titulo": "3 mezclas · $70.000", "va_a": "P6"},
+            {"id": "kit_4", "titulo": "4 mezclas · $88.000", "va_a": "P6"},
+            {"id": "kit_5", "titulo": "5 mezclas · $110.000", "va_a": "P6"},
+            {"id": "kit_6", "titulo": "6 mezclas · $133.000", "va_a": "P6"}
+          ],
+          "notas": "Después pregunta cuáles mezclas quiere (texto libre) y sigue al pedido. La mezcla tierra de fuego viene en 60 g."
+        },
+        {
+          "id": "P5", "tipo": "lista",
+          "texto": "Te ayudo a escoger 🌿 ¿En qué comidas la usarías más?",
+          "boton_lista": "Ver opciones",
+          "opciones": [
+            {"id": "uso_carnes", "titulo": "Carnes y parrilla", "descripcion": "Carnes, parrilla y costillas", "recomienda": ["Sal de la vid", "Mezcla tierra de fuego"]},
+            {"id": "uso_pollo", "titulo": "Pollo y pescado", "recomienda": ["Sal de sol"]},
+            {"id": "uso_verduras", "titulo": "Verduras y arroces", "descripcion": "Verduras, arroces y ensaladas", "recomienda": ["Sal de sol", "Sal de la vid"]},
+            {"id": "uso_frutas", "titulo": "Frutas y para michelar", "recomienda": ["Sal chilemon"]},
+            {"id": "uso_todo", "titulo": "Para todo un poco", "recomienda": ["Sal de oro", "Sal de luna rosa"]}
+          ],
+          "notas": "Se responde con la ficha (P2F) de la mezcla recomendada. Recomendaciones sugeridas: ajustar con el equipo."
+        },
+        {
+          "id": "P6", "tipo": "libre",
+          "texto": "¡Listo! Armemos tu pedido 🙌\n¿Qué mezclas quieres y cuántas unidades de cada una?",
+          "notas": "Si el cliente menciona que quiere distribuir o revender, responder «¡Qué bueno! Para eso tenemos una ruta especial. ¿Te cuento cómo distribuir Saboryarte?» y pasar a D1. El granel es solo para distribuidores: a un consumidor final se le ofrecen las presentaciones de 100 g o los kits. La mezcla tierra de fuego no se vende a granel."
+        },
+        {
+          "id": "P7", "tipo": "libre",
+          "texto": "Perfecto. ¿A qué ciudad te lo enviamos? Enviamos a todo Colombia 🇨🇴\n\nPara el envío necesito tu nombre completo, dirección y un teléfono de contacto.",
+          "notas": "Solo envío, no hay recogida en persona. La tarifa sale de docs/knowledge-base/saboryarte.md según la ciudad; una persona confirma el valor final."
+        },
+        {
+          "id": "P8", "tipo": "botones",
+          "texto": "Este es tu pedido:\n[resumen de productos y cantidades]\nSubtotal: [valor]\nEnvío: [según tu ciudad]\nTotal: [valor]\n\n¿Todo bien?",
+          "opciones": [
+            {"id": "p8_confirmar", "titulo": "Confirmar pedido", "va_a": "P11"},
+            {"id": "p8_cambiar", "titulo": "Cambiar algo", "va_a": "P6"},
+            {"id": "p8_persona", "titulo": "Hablar con alguien", "va_a": "T1"}
+          ],
+          "notas": "El subtotal y el total los calcula el código con el catálogo y la tarifa de envío, no Claude."
+        },
+        {
+          "id": "P9", "tipo": "lista",
+          "texto": "Claro, dime cuál duda tienes:",
+          "boton_lista": "Ver temas",
+          "opciones": [
+            {"id": "faq_envios", "titulo": "Envíos y tiempos", "tema_kb": "envios", "va_a": "P9S"},
+            {"id": "faq_pagos", "titulo": "Formas de pago", "tema_kb": "pagos", "va_a": "P9S"},
+            {"id": "faq_ingredientes", "titulo": "Ingredientes", "descripcion": "Ingredientes y presentaciones", "tema_kb": "catalogo", "va_a": "P9S"},
+            {"id": "faq_uso", "titulo": "Cómo usar mis mezclas", "va_a": "P9C"},
+            {"id": "faq_donde", "titulo": "Dónde las encuentro", "va_a": "O1"},
+            {"id": "faq_quienes", "titulo": "Quiénes somos", "va_a": "P9B"},
+            {"id": "faq_otra", "titulo": "Otra duda", "notas": "Texto libre; responde Claude con la base de conocimiento o traspasa si no hay dato."}
+          ],
+          "notas": "Respuestas cortas. Si menciona alergias o salud: «Para eso prefiero que te ayude una persona del equipo y revise los ingredientes contigo» y traspaso con prioridad alta. Cambios o daños: una persona revisa cada caso."
+        },
+        {
+          "id": "P9B", "tipo": "texto",
+          "texto": "Somos Luz María y Juanita José, mamá e hija, creadoras de Saboryarte 🌿\nHacemos mezclas de sales y especias con ingredientes 100% naturales, en nuestra propia planta de producción.\n\nNuestro lema: el arte de crear, el arte de cocinar.",
+          "notas": "También sirve en las rutas de distribuidor y regalo corporativo."
+        },
+        {
+          "id": "P9C", "tipo": "texto",
+          "texto": "¡Así puedes sacarles el mejor sabor! 🧂\n\n• Sal de oro: va con cualquier tipo de cocción.\n• Sal de sol: para pollo y pescado, y para saltear vegetales y arroces.\n• Sal de luna rosa: suave y balanceada, para cualquier tipo de cocción.\n• Sal de la vid: para la parrilla, las ensaladas y las pastas.\n• Chilemon: para frutas, ensaladas y pescados, y para michelar.\n• Tierra de fuego: le da un toque ahumado a las papas y las costillas.\n\nUsa las mezclas como usarías tu sal de siempre y ajusta la cantidad a tu gusto.",
+          "notas": "Revisar la última frase con el equipo. El mismo contenido sirve para el mini manual del kit."
+        },
+        {
+          "id": "P9S", "tipo": "botones",
+          "texto": "¿Te sirvió?",
+          "opciones": [
+            {"id": "p9s_si", "titulo": "Sí", "va_a": "P1"},
+            {"id": "p9s_no", "titulo": "No", "va_a": "T1"}
+          ],
+          "notas": "Paso agregado en la adaptación: en el artefacto estaba descrito en la nota de P9."
+        },
+        {
+          "id": "P10", "tipo": "texto",
+          "texto": "Aquí quedo por si te animas 🌿 Cuando quieras, escríbeme «menú» y retomamos."
+        },
+        {
+          "id": "P11", "tipo": "traspaso",
+          "texto": "¡Pedido recibido! 🙌 Una persona del equipo te escribe en menos de 1 hora con los datos de pago (transferencia o link de pago) y te confirma el despacho.",
+          "notas": "Etiquetas: Producto, Pendiente de pago. El bot no confirma pago ni despacho."
+        }
+      ]
+    },
+    "mezcla": {
+      "flujo_proyecto": "Ventas (consultiva) → traspaso",
+      "pasos": [
+        {
+          "id": "M1", "tipo": "texto",
+          "texto": "¡Esta es de mis favoritas! 🎨 Crear una mezcla propia es combinar sabores hasta que quede justo como la imaginas.\n\nTe hago unas preguntas cortas y le paso tu idea a nuestra especialista.\n\nDato importante: el pedido mínimo de mezcla personalizada es de 1 kilo, y el valor depende de la receta, así que la cotización te la da una persona del equipo 😊",
+          "notas": "El bot nunca da un precio en esta ruta."
+        },
+        {
+          "id": "M2", "tipo": "botones",
+          "texto": "¿Para quién es la mezcla?",
+          "opciones": [
+            {"id": "m2_casa", "titulo": "Para mi casa", "va_a": "M3"},
+            {"id": "m2_negocio", "titulo": "Mi negocio o marca", "va_a": "D1"},
+            {"id": "m2_regalo", "titulo": "Regalo o evento", "va_a": "M3"}
+          ],
+          "notas": "«Mi negocio o marca» entra a la ruta de distribuidor con interés «Mezcla personalizada»."
+        },
+        {
+          "id": "M3", "tipo": "libre",
+          "texto": "Cuéntame cómo imaginas el sabor. ¿Algo cítrico, picante, ahumado, de hierbas…? Escríbelo como te nazca, o mándame un audio 🎙️",
+          "notas": "Único paso que acepta audio y foto de referencia."
+        },
+        {"id": "M4", "tipo": "libre", "texto": "¿En qué comidas la usarías?"},
+        {
+          "id": "M5", "tipo": "botones",
+          "texto": "¿Cuántos kilos necesitas? Recuerda que el mínimo es 1 kilo.",
+          "opciones": [
+            {"id": "m5_1kg", "titulo": "1 kilo", "va_a": "M6"},
+            {"id": "m5_mas", "titulo": "Más de 1 kilo", "va_a": "M6"},
+            {"id": "m5_no_se", "titulo": "Aún no sé", "va_a": "M6"}
+          ],
+          "notas": "«Más de 1 kilo»: pedir la cantidad aproximada. Si pide menos de 1 kilo, explicar el mínimo y ofrecer el catálogo o el kit mini."
+        },
+        {
+          "id": "M6", "tipo": "botones",
+          "texto": "¿Hay algo que debamos evitar? (alergias, sin picante, otros)",
+          "opciones": [
+            {"id": "m6_nada", "titulo": "Nada", "va_a": "M7"},
+            {"id": "m6_si", "titulo": "Sí, te cuento", "notas": "Capturar el texto libre y seguir a M7."}
+          ]
+        },
+        {"id": "M7", "tipo": "libre", "texto": "¿Para cuándo la quieres y a qué ciudad iría?"},
+        {
+          "id": "M8", "tipo": "traspaso",
+          "texto": "¡Listo, ya tengo todo! 🌿 Le paso tu idea a Juanita, nuestra especialista en mezclas. Te escribe en menos de 1 hora para afinar los sabores contigo y darte la cotización.",
+          "notas": "Etiqueta: Mezcla. El bot no promete precios ni tiempos de desarrollo."
+        }
+      ]
+    },
+    "regalo": {
+      "flujo_proyecto": "Ventas (corporativo) → traspaso",
+      "pasos": [
+        {"id": "R1", "tipo": "texto", "texto": "¡Regalar sabor es regalar un momento! 🎁 Cuéntame un poco y te armamos una propuesta."},
+        {
+          "id": "R2", "tipo": "lista",
+          "texto": "¿Qué tienes en mente?",
+          "boton_lista": "Ver opciones",
+          "opciones": [
+            {"id": "r2_kit_mini", "titulo": "Kit mini", "va_a": "R3"},
+            {"id": "r2_kit", "titulo": "Armar un kit o ancheta", "va_a": "R3"},
+            {"id": "r2_mezcla", "titulo": "Mezcla personalizada", "va_a": "R3", "notas": "Avisar que el mínimo es 1 kilo y que la cotiza una persona."},
+            {"id": "r2_asesoria", "titulo": "Aún no sé, asesórenme", "va_a": "R3"}
+          ],
+          "notas": "No hay personalización de empaque con el sello de la empresa. Si la piden, traspaso."
+        },
+        {
+          "id": "R3", "tipo": "botones",
+          "texto": "¿Cuántos regalos necesitas?",
+          "opciones": [
+            {"id": "r3_menos_10", "titulo": "Menos de 10", "va_a": "P1"},
+            {"id": "r3_10_100", "titulo": "10 a 100", "va_a": "R4"},
+            {"id": "r3_mas_100", "titulo": "Más de 100", "va_a": "R4"}
+          ],
+          "notas": "Menos de 10 regalos se atiende como compra normal."
+        },
+        {"id": "R4", "tipo": "libre", "texto": "¿Para qué fecha los necesitas? Ojo: en Navidad y fin de año se llena rápido 🎄"},
+        {
+          "id": "R5", "tipo": "botones",
+          "texto": "¿Cómo sería la entrega?",
+          "opciones": [
+            {"id": "r5_una", "titulo": "Una sola dirección", "va_a": "R6"},
+            {"id": "r5_varias", "titulo": "Varias ciudades", "va_a": "R6"},
+            {"id": "r5_cada_persona", "titulo": "A cada persona", "va_a": "R6"}
+          ]
+        },
+        {"id": "R6", "tipo": "libre", "texto": "¿Me regalas tu nombre, el de tu empresa y un correo para enviarte la propuesta?"},
+        {
+          "id": "R7", "tipo": "traspaso",
+          "texto": "¡Gracias, [nombre]! Ya tengo lo necesario. Juanita, de nuestro equipo, te escribe en menos de 1 hora con una propuesta.\n\nMientras tanto te dejo nuestra presentación de regalos 📎 [archivo]",
+          "notas": "Etiqueta: Corporativo. Prioridad alta entre noviembre y diciembre."
+        }
+      ]
+    },
+    "distribuidor": {
+      "flujo_proyecto": "Ventas (B2B) → traspaso calificado",
+      "pasos": [
+        {"id": "D1", "tipo": "texto", "texto": "¡Qué bueno que quieras llevar Saboryarte a tu gente! 🌿 Fabricamos en planta propia. Te hago unas preguntas rápidas para que la persona indicada te contacte con información a tu medida."},
+        {
+          "id": "D2", "tipo": "lista",
+          "texto": "¿Qué tipo de negocio tienes?",
+          "boton_lista": "Ver opciones",
+          "opciones": [
+            {"id": "neg_natural", "titulo": "Tienda natural", "descripcion": "Tienda o mercado natural o ecológico", "canal_objetivo": false, "va_a": "D3"},
+            {"id": "neg_gourmet", "titulo": "Súper o delicatessen", "descripcion": "Supermercado o delicatessen gourmet", "canal_objetivo": true, "va_a": "D3"},
+            {"id": "neg_regalos", "titulo": "Regalos o anchetas", "descripcion": "Tienda de regalos o anchetas", "canal_objetivo": true, "va_a": "D3"},
+            {"id": "neg_comida", "titulo": "Restaurante o comida", "descripcion": "Restaurante o negocio de comida", "canal_objetivo": false, "va_a": "D3"},
+            {"id": "neg_revender", "titulo": "Empezar a revender", "descripcion": "Quiero empezar a revender", "canal_objetivo": false, "va_a": "D3"},
+            {"id": "neg_otro", "titulo": "Otro", "canal_objetivo": false, "va_a": "D3"}
+          ],
+          "notas": "canal_objetivo alimenta la calificación (ver docs/knowledge-base/interno/distribuidores.md)."
+        },
+        {
+          "id": "D3", "tipo": "botones",
+          "texto": "¿Qué te interesa?",
+          "opciones": [
+            {"id": "d3_productos", "titulo": "Productos actuales", "va_a": "D4"},
+            {"id": "d3_mezcla", "titulo": "Mezcla personalizada", "va_a": "D4"},
+            {"id": "d3_ambas", "titulo": "Las dos cosas", "va_a": "D4"}
+          ]
+        },
+        {"id": "D4", "tipo": "libre", "texto": "¿En qué ciudad queda tu negocio?"},
+        {
+          "id": "D5", "tipo": "botones",
+          "texto": "¿Cuánto pensarías pedir?",
+          "opciones": [
+            {"id": "vol_prueba", "titulo": "Una prueba pequeña", "va_a": "D6"},
+            {"id": "vol_recurrente", "titulo": "Pedido recurrente", "va_a": "D6"},
+            {"id": "vol_grande", "titulo": "Volumen grande", "va_a": "D6"}
+          ]
+        },
+        {
+          "id": "D6", "tipo": "botones",
+          "texto": "¿Ya vendes productos gourmet o naturales?",
+          "opciones": [
+            {"id": "d6_si", "titulo": "Sí", "va_a": "D7"},
+            {"id": "d6_no", "titulo": "No", "va_a": "D7"},
+            {"id": "d6_empiezo", "titulo": "Apenas empiezo", "va_a": "D7"}
+          ]
+        },
+        {"id": "D7", "tipo": "libre", "texto": "¿Me compartes el nombre de tu negocio, el tuyo y tu Instagram o página web? Así vemos cómo nos veríamos juntos 😊"},
+        {
+          "id": "D8", "tipo": "traspaso",
+          "texto": "¡Gracias! Ya le paso tu información a Juanita, de nuestro equipo comercial. Te escribe en menos de 1 hora.\n\nMientras tanto te dejo nuestra propuesta comercial 📎",
+          "notas": "Etiqueta: Distribuidor + Caliente, Tibio o Frío. El PDF de la propuesta trae precios de distribuidor: se envía solo al terminar la calificación. Las condiciones comerciales las explica la asesora (ver docs/knowledge-base/interno/distribuidores.md)."
+        }
+      ]
+    },
+    "seguimiento": {
+      "flujo_proyecto": "Pedidos (estado)",
+      "pasos": [
+        {"id": "S1", "tipo": "libre", "texto": "Claro 📦 ¿Me das el nombre con el que hiciste el pedido o el número del pedido?"},
+        {
+          "id": "S3", "tipo": "texto",
+          "texto": "Encontré tu pedido, [nombre]. Va así: [estado]. [Fecha estimada de entrega o guía de seguimiento].",
+          "notas": "Solo si el sistema devolvió el estado. Nunca se inventa."
+        },
+        {
+          "id": "S5", "tipo": "botones",
+          "texto": "¿Te puedo ayudar con algo más?",
+          "opciones": [
+            {"id": "s5_menu", "titulo": "Volver al menú", "va_a": "G1"},
+            {"id": "s5_persona", "titulo": "Hablar con alguien", "va_a": "T1"},
+            {"id": "s5_no", "titulo": "No, gracias"}
+          ]
+        },
+        {
+          "id": "S6", "tipo": "traspaso",
+          "texto": "Mil disculpas por la demora 🙏 Ya le pasé tu caso a una persona del equipo con prioridad. Te escribe en menos de 1 hora.",
+          "notas": "Si el pedido está retrasado, el cliente dice que no llegó o no hay integración para consultar el estado. Prioridad alta."
+        }
+      ]
+    },
+    "queja": {
+      "flujo_proyecto": "Atención al cliente",
+      "pasos": [
+        {"id": "Q1", "tipo": "libre", "texto": "Lamento mucho lo que pasó, gracias por avisarnos 💛\nCuéntame qué ocurrió y tu nombre o número de pedido (si algo llegó dañado, mándame una foto), y una persona lo revisa contigo cuanto antes."},
+        {
+          "id": "Q2", "tipo": "traspaso",
+          "texto": "Lamentamos sinceramente lo ocurrido. Hemos dado prioridad a su caso y una persona de nuestro equipo se comunicará con usted lo antes posible.",
+          "notas": "Reclamo grave (producto en mal estado, salud, cobro errado). Único momento en que el bot usa «usted» y tono formal, sin emojis. Etiqueta: Urgente."
+        }
+      ]
+    },
+    "otras": {
+      "flujo_proyecto": "Consultas / Atención",
+      "pasos": [
+        {
+          "id": "O1", "tipo": "texto",
+          "texto": "¿Dónde las encuentras cerca de ti? Estos son los lugares donde nos consigues:\n\nMedellín:\n• Curua (La Candelaria)\n• Rikatas (La Candelaria)\n• Vida Simple (Laureles)\n• Saludpan (Laureles)\n• Arepa Paisa (Placita de Flórez)\n\nEnvigado:\n• Vida Simple (Distrito Avignon)\n\nOriente antioqueño:\n• Ecosanos Rionegro: sede principal (sector La Galería) y sede Gualanday\n• Ecosanos El Retiro\n• Lácteos Buenavista (La Unión)\n\nLas fechas de nuestras ferias las avisamos en Instagram @saboryarte.cocina.\n\nY si estás en otra ciudad, te las enviamos a todo Colombia 🚚",
+          "notas": "En el artefacto estaba marcado como lista sin opciones; se envía como texto. Pendiente: el punto 11 de la lista llegó vacío."
+        },
+        {
+          "id": "O2", "tipo": "texto",
+          "texto": "Recibí tu audio 🎙️ Todavía no los puedo escuchar, pero te ayudo si me escribes o eliges una opción del menú.",
+          "notas": "Para fotos y stickers se cambia «audio» por «imagen». No aplica en M3, donde sí se aceptan."
+        },
+        {
+          "id": "O3", "tipo": "libre",
+          "texto": "¡Qué gusto! Cuéntame de qué se trata la alianza, la colaboración o el evento, y se lo paso a la persona que lleva esos temas.",
+          "notas": "Va a traspaso con etiqueta Alianzas (prensa, creadores de contenido, ferias)."
+        },
+        {
+          "id": "O4", "tipo": "plantilla",
+          "texto": "¡Hola, [nombre]! 🌿 ¿Ya estrenaste tus mezclas? Nos encantaría saber cómo te fue. Si preparas algo rico, etiquétanos en Instagram @saboryarte.cocina y lo compartimos.",
+          "opciones": [
+            {"id": "o4_encanto", "titulo": "Me encantaron", "notas": "Pedir permiso para compartir su comentario como testimonio."},
+            {"id": "o4_problema", "titulo": "Tuve un problema", "va_a": "Q1"},
+            {"id": "o4_repetir", "titulo": "Pedir de nuevo", "va_a": "P6"}
+          ],
+          "notas": "Plantilla que debe aprobar Meta. Se envía 3 días después de la entrega, fuera de la ventana de 24 h."
+        }
+      ]
+    },
+    "traspaso": {
+      "flujo_proyecto": "Atención al cliente (traspaso)",
+      "pasos": [
+        {
+          "id": "T1", "tipo": "traspaso",
+          "texto": "Te paso con Juanita, de nuestro equipo 💛 Ya le conté lo que me dijiste para que no tengas que repetirlo. Te escribe en menos de 1 hora.",
+          "notas": "Dentro de horario."
+        },
+        {
+          "id": "T2", "tipo": "traspaso",
+          "texto": "Te paso con una persona del equipo 💛 Ya le dejé tu información. Como ahorita estamos fuera de horario (atendemos lunes a sábado de 8:00 a. m. a 6:00 p. m.), te escribe apenas abramos.",
+          "notas": "Fuera de horario. El cliente queda en cola para el siguiente turno."
+        },
+        {
+          "id": "T3", "tipo": "texto",
+          "texto": "¡Aquí sigo! Si necesitas algo más, escríbeme «menú» 🌿",
+          "notas": "Se envía cuando la persona cierra la conversación y el bot se reactiva."
+        }
+      ]
+    }
+  }
+}
