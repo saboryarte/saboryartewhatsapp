@@ -90,4 +90,15 @@ async def send_text(to: str, text: str) -> None:
             response.raise_for_status()
             logger.info("Mensaje enviado")
         except HTTPStatusError as e:
-            logger.error("Error enviando mensaje: HTTP %s", e.response.status_code)
+            # Meta explica el motivo en error.message (p. ej. token vencido: code 190, subcode 463)
+            try:
+                error = e.response.json().get("error", {})
+            except ValueError:
+                error = {}
+            logger.error(
+                "Error enviando mensaje: HTTP %s — %s (code %s, subcode %s)",
+                e.response.status_code,
+                error.get("message", "sin detalle"),
+                error.get("code"),
+                error.get("error_subcode"),
+            )
