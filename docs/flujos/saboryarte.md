@@ -399,10 +399,10 @@ Ordenado según las fases de la guía.
 | 1 | **Estado de conversación** por remitente (§3) | Todas | ✅ Fase 1: SQLite (`app/state.py`), caduca a las 24 h; Claude recibe los últimos 20 mensajes. |
 | 2 | **Deduplicación** por `message.id` | Todas (evita pedidos duplicados) | ✅ Fase 1. |
 | 3 | **Enviar listas y botones** (`interactive`) a partir de `mensajes.json` | Todas | ✅ Listas y botones (`app/router.py`). |
-| 4 | **Recibir respuestas** `interactive` (`button_reply`, `list_reply`) y enrutar por `id` de opción | Todas | 🟡 Navegables: G1, P1–P5, P2F, P9 con sus respuestas (P9B, P9C, P9O, P9S, O1). El resto responde «en construcción», incluidos P6–P8 (pedido). |
+| 4 | **Recibir respuestas** `interactive` (`button_reply`, `list_reply`) y enrutar por `id` de opción | Todas | 🟡 Ruta de compra completa hasta P8: G1, P1–P8, P2F, P9 con sus respuestas (P9B, P9C, P9O, P9S, O1). P11, el traspaso y las demás rutas responden «en construcción». |
 | 5 | **Router** con las reglas transversales y el horario | Todas | 🟡 Saludo → menú, «menú» reinicia, un saludo a mitad de flujo no reinicia. Faltan el horario, «asesor», salud y los dos fallos seguidos. |
 | 6 | ***System prompt*** con voz de marca + `knowledge-base/saboryarte.md` | Consultas, Ventas | ✅ `app/prompt.py`. Avisa a Claude que aún no toma pedidos ni traspasa. |
-| 7 | **Cálculo de totales** (catálogo + tarifa por ciudad) para P8 | Compra | No existe. |
+| 7 | **Cálculo de totales** (catálogo + tarifa por ciudad) para P8 | Compra | ✅ `app/orders.py`. Claude solo extrae productos y datos de envío del texto (salidas estructuradas); el código valida contra el catálogo y hace las cuentas. |
 | 8 | **Traspaso real:** dónde llega la ficha, cómo responde el equipo y cómo se reactiva el bot | Todas | No existe. Decisión pendiente (ver abajo). |
 | 9 | **Mensajes no textuales:** O2, y en M3 aceptar audio y foto | Mezcla | Se ignoran sin responder. |
 | 10 | **Plantillas aprobadas por Meta:** postventa (O4) y seguimientos a distribuidores | Postventa, Distribuidor | No existen. |

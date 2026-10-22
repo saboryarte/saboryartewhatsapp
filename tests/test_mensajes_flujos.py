@@ -87,7 +87,7 @@ def test_mensajes_y_base_publica_sin_datos_de_distribuidor():
 
 def test_productos_referenciados_existen_en_catalogo():
     catalogo = json.loads((ROOT / "app/flows/catalogo.json").read_text(encoding="utf-8"))
-    ids_catalogo = {p["id"] for p in catalogo["productos"]}
+    ids_catalogo = {p["id"] for p in catalogo["productos"]} | {catalogo["kit_mini"]["id"]}
     for paso in PASOS:
         for op in paso.get("opciones", []):
             referenciados = [op["producto"]] if "producto" in op else op.get("recomienda", [])

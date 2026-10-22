@@ -88,11 +88,10 @@ class TestNavegacionCatalogo:
         elegir(client, "prod_tierra_de_fuego")
         assert "60 g" in mocks["buttons"].call_args.args[1]
 
-    def test_agregar_al_pedido_aun_en_construccion(self, client, mocks):
+    def test_agregar_al_pedido_inicia_el_pedido(self, client, mocks):
         elegir(client, "prod_sal_de_oro")
         elegir(client, "p2f_agregar", "button_reply")
-        texto = mocks["text"].call_args.args[1]
-        assert "pedidos" in texto and "construcción" in texto
+        assert "*Sal de oro*" in mocks["text"].call_args.args[1]
         conv = load_conversation(REMITENTE)
         assert conv.paso == "P6" and conv.datos["producto"] == "sal_de_oro"
 

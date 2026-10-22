@@ -1,7 +1,14 @@
+import logging
+
+import anthropic
 from anthropic import AsyncAnthropic
+from pydantic import BaseModel
 
 from .config import settings
+from .flows import orderable_products
 from .prompt import system_prompt
+
+logger = logging.getLogger(__name__)
 
 _client = AsyncAnthropic(api_key=settings.anthropic_api_key)
 
@@ -21,3 +28,93 @@ async def ask_claude(prompt: str, history: list[dict] | None = None) -> str:
         if block.type == "text":
             return block.text
     return ""
+
+
+# ── Extracción estructurada (pedido y datos de envío) ─────────────────────────
+# Claude solo interpreta el texto del cliente; el código valida contra el catálogo y hace las cuentas.
+
+_EXTRACTION_MODEL = "claude-opus-5-5"
+
+
+class LineaPedido(BaseModel):
+    producto: str
+    cantidad: int
+
+
+class PedidoExtraido(BaseModel):
+    lineas: list[LineaPedido]
+    no_reconocidos: list[str]
+    quiere_distribuir: bool
+    pregunta_o_comentario: bool
+
+
+class EnvioExtraido(BaseModel):
+    nombre: str | None
+    direccion: str | None
+    ciudad: str | None
+    telefono: str | None
+    pregunta_o_comentario: bool
+
+
+def _order_instructions() -> str:
+    catalogo = "\n".join(f"- {p['id']}: {p['nombre']} ({p['presentacion']})" for p in orderable_products())
+    return f"""Extraes los productos y cantidades de un mensaje de WhatsApp de un cliente de Saboryarte.
+
+Catálogo (id: nombre):
+{catalogo}
+
+Reglas:
+- En «lineas» usa solo ids del catálogo. Nombres cortos o informales cuentan: «oro» = sal_de_oro, «chilemon» o «la de limón» = sal_chilemon, «la ahumada» = tierra_de_fuego.
+- Convierte cantidades escritas en palabras a números. Si no dice cantidad, usa 1.
+- Si el cliente ya había elegido un producto y solo responde con una cantidad, aplícala a ese producto.
+- «no_reconocidos»: productos que menciona y no están en el catálogo (por ejemplo, «sal negra» o «granel»).
+- «quiere_distribuir»: true si habla de revender, distribuir, comprar a granel o para su negocio.
+- «pregunta_o_comentario»: true si el mensaje no trae productos para el pedido (una pregunta u otro tema)."""
+
+
+_SHIPPING_INSTRUCTIONS = """Extraes los datos de envío de un mensaje de WhatsApp de un cliente en Colombia.
+
+Reglas:
+- «nombre»: nombre completo de quien recibe. «direccion»: dirección con barrio o referencias si las da. «ciudad»: ciudad o municipio. «telefono»: número de contacto, solo dígitos y «+».
+- Usa null para los datos que el mensaje no trae. No inventes ni completes datos.
+- «pregunta_o_comentario»: true si el mensaje no trae datos de envío (una pregunta u otro tema)."""
+
+
+async def _extract(instructions: str, content: str, output_format: type[BaseModel]) -> BaseModel | None:
+    """Devuelve la extracción validada, o None si la API falla o el modelo declina."""
+    try:
+        response = await _client.beta.messages.parse(
+            model=_EXTRACTION_MODEL,
+            max_tokens=16000,
+            output_config={"effort": "low"},
+            # Si el modelo declina por política, la API reintenta en otro modelo dentro de la misma llamada.
+            betas=["server-side-fallback-2026-07-01"],
+            fallbacks="default",
+            system=instructions,
+            messages=[{"role": "user", "content": content}],
+            output_format=output_format,
+        )
+    except anthropic.APIConnectionError:
+        logger.error("Extracción: no se pudo conectar con la API de Anthropic")
+        return None
+    except anthropic.APIStatusError as e:
+        logger.error("Extracción: error de la API de Anthropic (HTTP %s)", e.status_code)
+        return None
+    if response.stop_reason == "refusal":
+        logger.warning("Extracción declinada por el modelo")
+        return None
+    return response.parsed_output
+
+
+async def extract_order(text: str, selected_product: str | None = None, kit_size: int | None = None) -> PedidoExtraido | None:
+    context = []
+    if selected_product:
+        context.append(f"El cliente ya había elegido: {selected_product}.")
+    if kit_size:
+        context.append(f"El cliente está armando un kit de {kit_size} mezclas; el mensaje dice cuáles quiere.")
+    content = "\n".join([*context, f"Mensaje del cliente: «{text}»"])
+    return await _extract(_order_instructions(), content, PedidoExtraido)
+
+
+async def extract_shipping(text: str) -> EnvioExtraido | None:
+    return await _extract(_SHIPPING_INSTRUCTIONS, f"Mensaje del cliente: «{text}»", EnvioExtraido)

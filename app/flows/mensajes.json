@@ -105,7 +105,7 @@
           "id": "P4", "tipo": "botones",
           "texto": "El kit mini es perfecto para probar o para regalar 🎁\nTrae nuestras 6 mezclas en versión miniatura, una cuchara artesanal y un mini manual de uso, por $60.000.\n\n¿Qué prefieres?",
           "opciones": [
-            {"id": "p4_kit_mini", "titulo": "Kit mini", "va_a": "P6"},
+            {"id": "p4_kit_mini", "titulo": "Kit mini", "va_a": "P6", "producto": "kit_mini"},
             {"id": "p4_armar", "titulo": "Armar mi kit", "va_a": "P4B"},
             {"id": "p4_regalo", "titulo": "Regalo empresarial", "va_a": "R1"}
           ],
@@ -116,11 +116,11 @@
           "texto": "¡Arma tu kit a tu gusto! 🎁 Cada kit trae mezclas de 100 g y una cuchara artesanal.\n¿Cuántas mezclas quieres?",
           "boton_lista": "Ver kits",
           "opciones": [
-            {"id": "kit_2", "titulo": "2 mezclas · $48.000", "va_a": "P6"},
-            {"id": "kit_3", "titulo": "3 mezclas · $70.000", "va_a": "P6"},
-            {"id": "kit_4", "titulo": "4 mezclas · $88.000", "va_a": "P6"},
-            {"id": "kit_5", "titulo": "5 mezclas · $110.000", "va_a": "P6"},
-            {"id": "kit_6", "titulo": "6 mezclas · $133.000", "va_a": "P6"}
+            {"id": "kit_2", "titulo": "2 mezclas · $48.000", "va_a": "P6", "kit": 2},
+            {"id": "kit_3", "titulo": "3 mezclas · $70.000", "va_a": "P6", "kit": 3},
+            {"id": "kit_4", "titulo": "4 mezclas · $88.000", "va_a": "P6", "kit": 4},
+            {"id": "kit_5", "titulo": "5 mezclas · $110.000", "va_a": "P6", "kit": 5},
+            {"id": "kit_6", "titulo": "6 mezclas · $133.000", "va_a": "P6", "kit": 6}
           ],
           "notas": "Después pregunta cuáles mezclas quiere (texto libre) y sigue al pedido. La mezcla tierra de fuego viene en 60 g."
         },

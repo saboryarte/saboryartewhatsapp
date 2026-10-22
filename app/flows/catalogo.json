@@ -27,7 +27,7 @@
     }
   ],
   "kit_mini": {
-    "id": "kit_mini", "nombre": "Kit mini", "precio": 60000,
+    "id": "kit_mini", "nombre": "Kit mini", "presentacion": "Kit", "precio": 60000,
     "descripcion": "Las 6 mezclas en miniatura (unos 40 g de cada sal y unos 25 g de tierra de fuego), una cuchara artesanal y un mini manual de uso."
   },
   "kits_armados": {"2": 48000, "3": 70000, "4": 88000, "5": 110000, "6": 133000}

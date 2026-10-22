@@ -12,7 +12,8 @@ Agente de WhatsApp construido con **Python + FastAPI** que recibe mensajes via [
 - Menú principal como lista de WhatsApp: los saludos puros ("hola", "buenas tardes") y la palabra "menú" reciben el menú G1 con 7 opciones. Con el saludo, el texto es una bienvenida aleatoria personalizada con el nombre del perfil (`app/greetings.py`)
 - Estado de conversación por remitente (SQLite, caduca a las 24 h): Claude recibe el historial reciente y se recuerda la opción elegida del menú
 - Deduplicación por `message.id`: un reintento de Meta no genera una segunda respuesta
-- Ruta de compra navegable con listas y botones: catálogo, ficha de cada mezcla, las más queridas, kits, recomendación por uso y dudas frecuentes. La toma de pedidos aún está en construcción
+- Ruta de compra navegable con listas y botones: catálogo, ficha de cada mezcla, las más queridas, kits, recomendación por uso y dudas frecuentes
+- Toma de pedidos (P6 → P7 → P8): Claude extrae del texto las mezclas, cantidades y datos de envío; el código valida contra el catálogo y calcula subtotal, envío por ciudad y total. El pedido aún no se registra ni se pasa al equipo
 - Claude responde con la voz de Saboryarte y solo con la base de conocimiento pública (`docs/knowledge-base/saboryarte.md`)
 
 ---
@@ -114,10 +115,11 @@ whatsapp-claude-agent/
 │   ├── __init__.py
 │   ├── main.py        # Rutas FastAPI (GET y POST /webhook)
 │   ├── whatsapp.py    # Modelos Pydantic + envío de mensajes via Meta Graph API
-│   ├── claude.py      # Consulta a Claude via Anthropic SDK
+│   ├── claude.py      # Respuestas de Claude y extracción estructurada de pedido y envío
 │   ├── greetings.py   # Detección de saludos y de "menú", y mensajes de bienvenida aleatorios
 │   ├── router.py      # Decide qué responder según el estado y los pasos de los flujos
 │   ├── prompt.py      # System prompt de Claude: voz de marca + base de conocimiento pública
+│   ├── orders.py      # Cálculos del pedido: subtotal, tarifa de envío por ciudad y resumen (P8)
 │   ├── state.py       # Estado de conversación y deduplicación (SQLite)
 │   ├── flows/
 │   │   ├── __init__.py    # Lectura de mensajes.json y catalogo.json (pasos, opciones, fichas)

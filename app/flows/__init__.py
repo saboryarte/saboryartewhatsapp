@@ -15,8 +15,9 @@ EN_CONSTRUCCION = (
     "Mientras tanto, cuéntame en un mensaje qué necesitas y con gusto te ayudo."
 )
 _EN_CONSTRUCCION_POR_PASO = {
-    "P6": "¡Qué buena elección! 🙌 Tomar pedidos por este chat todavía está en construcción.\n\n"
-    "Mientras tanto, puedes seguir viendo el catálogo o escribirme tus dudas. Escribe «menú» para volver a empezar.",
+    "P11": "¡Gracias! Tu pedido quedó armado ✨ Registrarlo y pasarlo al equipo para el pago y el despacho "
+    "todavía está en construcción, así que *este pedido aún no quedó registrado*.\n\n"
+    "Mientras tanto, puedes seguir viendo el catálogo o escribir «menú» para volver a empezar.",
     "T1": "Todavía no puedo pasarte con una persona desde este chat 🛠️ Esa parte está en construcción.\n\n"
     "Mientras tanto, cuéntame qué necesitas y te ayudo con gusto.",
 }
@@ -87,7 +88,22 @@ def _catalogo() -> dict[str, Any]:
 
 
 def get_product(product_id: str) -> dict[str, Any] | None:
-    return next((p for p in _catalogo()["productos"] if p["id"] == product_id), None)
+    """Busca entre las mezclas y el kit mini."""
+    return next((p for p in orderable_products() if p["id"] == product_id), None)
+
+
+def orderable_products() -> list[dict[str, Any]]:
+    """Productos que se pueden pedir por unidad: las 6 mezclas y el kit mini."""
+    return [*_catalogo()["productos"], _catalogo()["kit_mini"]]
+
+
+def mix_ids() -> set[str]:
+    """Ids de las 6 mezclas (las que pueden ir en un kit armado)."""
+    return {p["id"] for p in _catalogo()["productos"]}
+
+
+def kit_price(size: int) -> int | None:
+    return _catalogo()["kits_armados"].get(str(size))
 
 
 def format_price(value: int) -> str:
