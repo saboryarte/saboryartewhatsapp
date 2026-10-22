@@ -6,7 +6,7 @@ Agente de WhatsApp construido con **Python + FastAPI** que recibe mensajes via [
 
 - `GET /webhook` — verificación del webhook por parte de Meta
 - `POST /webhook` — recibe mensajes de WhatsApp, consulta a Claude y envía la respuesta
-- Integración con **Claude Opus** via Anthropic SDK (pensamiento adaptativo)
+- Integración con Claude via Anthropic SDK. **Sonnet 5.5 es el modelo más alto que usa el bot**: responde el texto libre (esfuerzo bajo, system prompt cacheado) y **Haiku 5.5** extrae los datos de pedido y envío. La elección está medida en `evals/` (ver abajo)
 - Variables de entorno con validación via **pydantic-settings**
 - Pruebas con **pytest**
 - Menú principal como lista de WhatsApp: los saludos puros ("hola", "buenas tardes") y la palabra "menú" reciben el menú G1 con 7 opciones. Con el saludo, el texto es una bienvenida aleatoria personalizada con el nombre del perfil (`app/greetings.py`)
@@ -111,6 +111,16 @@ pytest --cov=app --cov-report=term-missing
 ```
 
 ---
+
+## Comparar modelos
+
+`evals/casos_respuestas_libres.json` tiene 16 casos (13 críticos) para las respuestas libres: datos de envío y pago, salud, otras marcas, descuentos, granel, intentos de manipulación, reclamos graves y voz de marca. El script los corre varias veces por modelo con el prompt de producción y un juez (Claude Opus 5.5, a ciegas y con la base de conocimiento) decide si cada respuesta cumple los criterios y la voz:
+
+```bash
+python -m evals.comparar_modelos --modelos claude-sonnet-5-5
+```
+
+Llama a la API real (unos US$0,25 por corrida con Sonnet 5.5; el script se detiene antes de US$0,95). Vuelve a correrlo cuando cambies el prompt, la base de conocimiento o el modelo. Los resultados quedan en `evals/resultados/`.
 
 ## Estructura del proyecto
 

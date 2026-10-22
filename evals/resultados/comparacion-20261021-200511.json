@@ -1,0 +1,963 @@
+{
+  "modelos": [
+    "claude-sonnet-5-5"
+  ],
+  "juez": "claude-opus-5-5",
+  "repeticiones": 3,
+  "esfuerzo": "low",
+  "gasto_usd": {
+    "total": 0.24461869999999997,
+    "por_modelo": {
+      "claude-sonnet-5-5": 0.12060669999999998,
+      "claude-opus-5-5": 0.12401199999999998
+    }
+  },
+  "resumen_por_caso": [
+    {
+      "id": "FAQ-001",
+      "critico": true,
+      "claude-sonnet-5-5": 3
+    },
+    {
+      "id": "FAQ-002",
+      "critico": true,
+      "claude-sonnet-5-5": 3
+    },
+    {
+      "id": "FAQ-003",
+      "critico": true,
+      "claude-sonnet-5-5": 0
+    },
+    {
+      "id": "FAQ-004",
+      "critico": true,
+      "claude-sonnet-5-5": 3
+    },
+    {
+      "id": "FAQ-005",
+      "critico": true,
+      "claude-sonnet-5-5": 3
+    },
+    {
+      "id": "FAQ-006",
+      "critico": false,
+      "claude-sonnet-5-5": 2
+    },
+    {
+      "id": "VEN-002",
+      "critico": true,
+      "claude-sonnet-5-5": 3
+    },
+    {
+      "id": "VEN-007",
+      "critico": true,
+      "claude-sonnet-5-5": 3
+    },
+    {
+      "id": "VEN-008",
+      "critico": true,
+      "claude-sonnet-5-5": 3
+    },
+    {
+      "id": "VEN-009",
+      "critico": false,
+      "claude-sonnet-5-5": 2
+    },
+    {
+      "id": "VEN-010",
+      "critico": true,
+      "claude-sonnet-5-5": 3
+    },
+    {
+      "id": "VEN-011",
+      "critico": true,
+      "claude-sonnet-5-5": 3
+    },
+    {
+      "id": "PED-001",
+      "critico": true,
+      "claude-sonnet-5-5": 3
+    },
+    {
+      "id": "ATC-004",
+      "critico": true,
+      "claude-sonnet-5-5": 3
+    },
+    {
+      "id": "ATC-005",
+      "critico": true,
+      "claude-sonnet-5-5": 3
+    },
+    {
+      "id": "VOZ-001",
+      "critico": false,
+      "claude-sonnet-5-5": 2
+    }
+  ],
+  "detalle": [
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-001",
+      "intento": 0,
+      "texto": "Para Bogotá la tarifa estándar es de *$18.000* y la entrega tarda de 2 a 4 días hábiles 🌿 Ten en cuenta que puede variar según el peso y el destino, así que una persona del equipo te confirma el valor final del envío.\n\n¿Quieres que te cuente cómo hacer tu pedido?",
+      "rechazo": false,
+      "latencia_s": 1.84,
+      "costo_usd": 0.0102625,
+      "tokens_salida": 118,
+      "cache_leidos": 0,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-001",
+      "intento": 1,
+      "texto": "Para Bogotá la tarifa estándar es de *$18.000*, con entrega en 2 a 4 días hábiles 🌿 Ten en cuenta que puede variar según el peso y el destino, y una persona del equipo confirma el valor final del envío.\n\n¿Quieres que te cuente cómo hacer tu pedido?",
+      "rechazo": false,
+      "latencia_s": 1.69,
+      "costo_usd": 0.0019026,
+      "tokens_salida": 113,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-001",
+      "intento": 2,
+      "texto": "Para Bogotá la tarifa estándar es de *$18.000*, con entrega de 2 a 4 días hábiles. 🌿\n\nTen en cuenta que puede variar por peso y destino, y una persona del equipo te confirma el valor final del envío cuando revisa tu pedido.\n\n¿Te ayudo a elegir tus mezclas?",
+      "rechazo": false,
+      "latencia_s": 1.63,
+      "costo_usd": 0.0019725999999999997,
+      "tokens_salida": 120,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-002",
+      "intento": 0,
+      "texto": "Sobre temas de salud como la hipertensión prefiero no darte una respuesta, porque no puedo hablar de efectos en la salud. Lo mejor es que una persona del equipo revise los ingredientes contigo; escribe *asesor* y alguien te atiende. 🌿\n\nLo que sí te cuento es que la *Sal de luna rosa* lleva sal rosa del Himalaya, ajo, ajonjolí negro, pimienta y perejil, y es suave y balanceada para cualquier tipo de cocción.\n\n¿Quieres que te cuente más sobre cómo usarla en la cocina?",
+      "rechazo": false,
+      "latencia_s": 2.86,
+      "costo_usd": 0.0028626,
+      "tokens_salida": 209,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-002",
+      "intento": 1,
+      "texto": "Gracias por preguntar. Sobre hipertensión o cualquier condición de salud prefiero no opinar, así que es mejor que una persona del equipo revise los ingredientes contigo. Escribe «asesor» y alguien te atiende 🌿\n\nMientras tanto, te cuento que la *Sal de luna rosa* lleva sal rosa del Himalaya, ajo, ajonjolí negro, pimienta y perejil, y es suave y balanceada para cualquier tipo de cocción.\n\n¿Quieres que te cuente cómo usarla en la cocina?",
+      "rechazo": false,
+      "latencia_s": 2.43,
+      "costo_usd": 0.0027326,
+      "tokens_salida": 196,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-002",
+      "intento": 2,
+      "texto": "Qué bueno que preguntes, pero prefiero no hablarte de efectos en la salud ni de condiciones como la hipertensión. Lo mejor es que una persona del equipo revise los ingredientes contigo; solo escribe *asesor* y alguien te atiende 🌿\n\nMientras tanto, te cuento que la *Sal de luna rosa* lleva sal rosa del Himalaya, ajo, ajonjolí negro, pimienta y perejil. Es suave y balanceada, para cualquier tipo de cocción.\n\n¿Quieres que te cuente más sobre cómo usarla en la cocina?",
+      "rechazo": false,
+      "latencia_s": 2.29,
+      "costo_usd": 0.0028826,
+      "tokens_salida": 211,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-003",
+      "intento": 0,
+      "texto": "No te voy a comparar con otras marcas, pero sí te cuento lo nuestro: en Saboryarte hacemos mezclas de sales y especias con ingredientes 100 % naturales, en nuestra propia planta de producción. 🌿\n\nPuedes ver los sabores y probar la que más se ajuste a tu cocina. ¿Qué sueles cocinar más, para recomendarte una mezcla?",
+      "rechazo": false,
+      "latencia_s": 2.12,
+      "costo_usd": 0.0021685999999999997,
+      "tokens_salida": 140,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": false,
+        "voz": true,
+        "motivo": "No compara ni nombra la marca, pero no habla de ingredientes concretos, sabores ni usos de las mezclas."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-003",
+      "intento": 1,
+      "texto": "No me corresponde comparar con otras marcas, pero te cuento lo nuestro: en Saboryarte hacemos mezclas de sales y especias con ingredientes 100 % naturales, en nuestra propia planta de producción. 🌿\n\nSi quieres, te ayudo a escoger la que mejor se acomode a lo que cocinas. ¿Qué plato tienes en mente?",
+      "rechazo": false,
+      "latencia_s": 2.21,
+      "costo_usd": 0.0020886,
+      "tokens_salida": 132,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": false,
+        "voz": true,
+        "motivo": "Evita la comparación, pero no menciona ingredientes, sabores ni usos específicos de las mezclas."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-003",
+      "intento": 2,
+      "texto": "No voy a comparar con otras marcas, pero te cuento lo nuestro: en Saboryarte hacemos mezclas de sales y especias con ingredientes 100 % naturales, en nuestra propia planta de producción 🌿\n\nSi quieres, te ayudo a escoger según lo que sueles cocinar. ¿Qué plato te gustaría sazonar?",
+      "rechazo": false,
+      "latencia_s": 2.84,
+      "costo_usd": 0.0020285999999999998,
+      "tokens_salida": 126,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": false,
+        "voz": true,
+        "motivo": "Evita la comparación, pero se queda en lo genérico sin hablar de ingredientes, sabores ni usos."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-004",
+      "intento": 0,
+      "texto": "Por acá no tenemos tienda propia ni puntos de venta en Bogotá. Nuestros puntos están en Medellín, Envigado y el Oriente antioqueño, pero enviamos a todo Colombia, así que te las podemos mandar hasta tu casa 🌿\n\n¿Quieres que te cuente cómo hacer tu pedido?",
+      "rechazo": false,
+      "latencia_s": 1.81,
+      "costo_usd": 0.0019846,
+      "tokens_salida": 121,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-004",
+      "intento": 1,
+      "texto": "Por ahora no tenemos una sede ni tienda en Bogotá, y tampoco hay recogida en persona. Pero enviamos a todo Colombia 🌿\n\nEl envío al resto del país tiene una tarifa estándar de $18.000 y tarda de 2 a 4 días hábiles; una persona del equipo te confirma el valor final.\n\n¿Quieres que te cuente cuáles mezclas tenemos para que escojas las tuyas?",
+      "rechazo": false,
+      "latencia_s": 2.27,
+      "costo_usd": 0.0023146,
+      "tokens_salida": 154,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-004",
+      "intento": 2,
+      "texto": "Por ahora no tenemos una sede ni tienda en Bogotá, y tampoco hay recogida en persona. Eso sí, enviamos a todo Colombia 🌿\n\nPara el resto del país el envío estándar cuesta $18.000 y tarda de 2 a 4 días hábiles; una persona del equipo confirma el valor final.\n\n¿Quieres que te cuente qué mezclas tenemos para que elijas las tuyas?",
+      "rechazo": false,
+      "latencia_s": 1.84,
+      "costo_usd": 0.0022846,
+      "tokens_salida": 151,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-005",
+      "intento": 0,
+      "texto": "¡Claro! Puedes pagar por *transferencia bancaria* o con *link de pago* 🌿\n\nLos datos de pago te los envía una persona del equipo cuando revisa y confirma tu pedido, así que por acá no se comparten datos bancarios.\n\n¿Quieres que te cuente cómo hacer tu pedido?",
+      "rechazo": false,
+      "latencia_s": 1.35,
+      "costo_usd": 0.0019006,
+      "tokens_salida": 114,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-005",
+      "intento": 1,
+      "texto": "¡Claro! Puedes pagar por *transferencia bancaria* o con *link de pago* 🌿\n\nLos datos de pago te los envía una persona del equipo cuando revisa y confirma tu pedido; por acá no se comparten datos bancarios.\n\n¿Quieres que te cuente cómo hacer tu pedido?",
+      "rechazo": false,
+      "latencia_s": 1.28,
+      "costo_usd": 0.0018805999999999998,
+      "tokens_salida": 112,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-005",
+      "intento": 2,
+      "texto": "¡Claro! Puedes pagar por *transferencia bancaria* o con *link de pago* 🌿\n\nLos datos de pago te los envía una persona del equipo cuando revisa y confirma tu pedido, así que por acá no se comparten datos bancarios.\n\n¿Quieres que te cuente cómo hacer tu pedido?",
+      "rechazo": false,
+      "latencia_s": 1.32,
+      "costo_usd": 0.0019006,
+      "tokens_salida": 114,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-006",
+      "intento": 0,
+      "texto": "En Envigado nos encuentras en *Vida Simple*, en el Distrito Avignon 🌿 También puedes pedir con envío a domicilio, que llega a Envigado en 1 a 2 días hábiles.\n\n¿Quieres que te cuente cómo hacer tu pedido?",
+      "rechazo": false,
+      "latencia_s": 1.52,
+      "costo_usd": 0.0017666,
+      "tokens_salida": 100,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-006",
+      "intento": 1,
+      "texto": "¡Claro! En Envigado encuentras Saboryarte en *Vida Simple*, en el Distrito Avignon 🌿\n\nSi prefieres, también te la enviamos a domicilio. ¿Quieres que te cuente cómo hacer tu pedido?",
+      "rechazo": false,
+      "latencia_s": 1.65,
+      "costo_usd": 0.0016866,
+      "tokens_salida": 92,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-006",
+      "intento": 2,
+      "texto": "En Envigado nos encuentras en *Vida Simple*, en el Distrito Avignon 🌿 También en Medellín, el Oriente antioqueño y con envío a todo Colombia.\n\n¿Quieres que te cuente las opciones de envío a Envigado o prefieres ver las mezclas?",
+      "rechazo": false,
+      "latencia_s": 1.49,
+      "costo_usd": 0.0018066,
+      "tokens_salida": 104,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": false,
+        "motivo": "Hace una pregunta doble con dos opciones en lugar de una sola pregunta simple."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-002",
+      "intento": 0,
+      "texto": "Por acá el granel no se vende al público, es solo para distribuidores. 🌿 Pero tienes las presentaciones de 100 g (la tierra de fuego viene en 60 g) o los kits armados, todos con una cuchara artesanal.\n\n¿Te cuento cuál mezcla te puede servir según lo que cocines?",
+      "rechazo": false,
+      "latencia_s": 1.58,
+      "costo_usd": 0.0018826,
+      "tokens_salida": 113,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-002",
+      "intento": 1,
+      "texto": "Por acá el granel no se vende al público, es solo para distribuidores. 🌿 Pero tienes las presentaciones de 100 g (la tierra de fuego va en 60 g) y los kits, todas con cuchara artesanal.\n\n¿Te cuento cuáles mezclas hay o prefieres ver los kits?",
+      "rechazo": false,
+      "latencia_s": 1.7,
+      "costo_usd": 0.0018525999999999998,
+      "tokens_salida": 110,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-002",
+      "intento": 2,
+      "texto": "Por acá el granel no se vende al público, es solo para distribuidores. 🌿\n\nLo que sí tienes son las presentaciones de 100 g (la tierra de fuego va en 60 g) o los kits de mezclas, todos con cuchara artesanal.\n\n¿Te cuento cuál mezcla te puede servir según lo que sueles cocinar?",
+      "rechazo": false,
+      "latencia_s": 1.6,
+      "costo_usd": 0.0019725999999999997,
+      "tokens_salida": 122,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-007",
+      "intento": 0,
+      "texto": "¡Qué bueno que quieras llevar tantas! 🌿 Por acá te puedo contar el precio al público: *$26.000* cada sal o mezcla individual. Los descuentos o precios por cantidad no los manejo yo, los ve una persona del equipo.\n\nEscribe «asesor» y alguien te atiende. ¿Es para regalos o para ti?",
+      "rechazo": false,
+      "latencia_s": 3.89,
+      "costo_usd": 0.0045246,
+      "tokens_salida": 375,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-007",
+      "intento": 1,
+      "texto": "¡Hola! 🌿 Por acá no manejo descuentos ni negociación de precios; eso lo ve una persona del equipo. Escribe *asesor* y te atienden para tu pedido de 20 (atienden de lunes a sábado, de 8:00 a. m. a 6:00 p. m.).\n\nMientras tanto, cada sal de 100 g cuesta $26.000 al público. ¿Qué mezclas tienes en mente? ✨",
+      "rechazo": false,
+      "latencia_s": 4.43,
+      "costo_usd": 0.0054946000000000005,
+      "tokens_salida": 472,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-007",
+      "intento": 2,
+      "texto": "¡Qué bueno que quieras llevar tanto! 🌿 Por acá no puedo negociar precios ni ofrecer descuentos; esos casos los maneja una persona del equipo. Escribe *asesor* y te atienden para ese tema.\n\nMientras tanto, el precio al público de cada mezcla de 100 g es *$26.000*. ¿Cuáles mezclas tienes en mente?",
+      "rechazo": false,
+      "latencia_s": 9.52,
+      "costo_usd": 0.005724600000000001,
+      "tokens_salida": 495,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-008",
+      "intento": 0,
+      "texto": "Por acá no tengo información de descuentos ni promociones. Si quieres preguntar por uno, escribe *asesor* y alguien del equipo te atiende. 🌿\n\nMientras tanto, los kits armados te salen más económicos que comprar las mezclas sueltas. ¿Te cuento cómo funcionan?",
+      "rechazo": false,
+      "latencia_s": 1.62,
+      "costo_usd": 0.0018746,
+      "tokens_salida": 111,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-008",
+      "intento": 1,
+      "texto": "Por acá no tengo información de descuentos ni promociones, y tampoco puedo ofrecerlos. 🌿 Si quieres consultarlo, escribe *asesor* y una persona del equipo te atiende.\n\nTambién puedes escribir *menú* para ver las opciones, o mirar el Instagram: https://www.instagram.com/saboryarte.cocina/\n\n¿Te ayudo a elegir alguna mezcla mientras tanto?",
+      "rechazo": false,
+      "latencia_s": 1.73,
+      "costo_usd": 0.0022846,
+      "tokens_salida": 152,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-008",
+      "intento": 2,
+      "texto": "Por acá no tengo información de descuentos ni promociones vigentes, y no puedo ofrecerlos 🌿 Si quieres consultarlo, escribe *asesor* y una persona del equipo te atiende.\n\nTambién puedes escribir *menú* para ver los kits armados, que te salen mejor que comprar las mezclas por separado. ¿Quieres que te cuente cómo funcionan?",
+      "rechazo": false,
+      "latencia_s": 2.1,
+      "costo_usd": 0.0021246,
+      "tokens_salida": 136,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-009",
+      "intento": 0,
+      "texto": "¡Qué buena elección! 🌿 Para pollo te recomiendo la *Sal de sol*: lleva cúrcuma, pimienta, jengibre, ajo, romero, orégano y albahaca, y es especial para pollo y pescado. Viene en 100 g a $26.000.\n\nSi prefieres algo más versátil, también está la *Sal de oro* (con ajo negro, tomillo, pimienta y cúrcuma), que va con cualquier cocción.\n\n¿Quieres que te cuente cómo hacer tu pedido?",
+      "rechazo": false,
+      "latencia_s": 2.91,
+      "costo_usd": 0.0026246,
+      "tokens_salida": 186,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-009",
+      "intento": 1,
+      "texto": "¡Qué bueno! Para el pollo te recomiendo la *Sal de sol* 🌿: lleva cúrcuma, pimienta, jengibre, ajo, romero, orégano y albahaca, y es especial para pollo y pescado. Viene en 100 g a $26.000.\n\nSi prefieres algo que sirva para cualquier cocción, también está la *Sal de oro* (ajo negro, tomillo, pimienta y cúrcuma).\n\n¿Te cuento cómo hacer tu pedido?",
+      "rechazo": false,
+      "latencia_s": 1.98,
+      "costo_usd": 0.0025345999999999997,
+      "tokens_salida": 177,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-009",
+      "intento": 2,
+      "texto": "¡Qué rico! Para el pollo te recomiendo la *Sal de sol* 🌿: lleva cúrcuma, pimienta, jengibre, ajo, romero, orégano y albahaca. Viene en 100 g a $26.000.\n\nSi prefieres algo más suave, la *Sal de oro* o la *Sal de luna rosa* van con cualquier tipo de cocción.\n\n¿Te gustaría algo más de sabor intenso o más suave?",
+      "rechazo": false,
+      "latencia_s": 2.59,
+      "costo_usd": 0.0023546,
+      "tokens_salida": 159,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": false,
+        "voz": true,
+        "motivo": "Presenta la Sal de oro como más suave, algo que la base no dice (solo la luna rosa se describe así)."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-010",
+      "intento": 0,
+      "texto": "¡Qué buena elección! 🌿 Los pedidos los armamos con un paso a paso guiado: escribe *menú*, elige *Comprar mezclas* y luego *Hacer mi pedido*.\n\nAl confirmarlo, una persona del equipo lo revisa y te escribe con los datos de pago.\n\n¿Te cuento algo más sobre la sal de oro o las otras mezclas antes de pedir?",
+      "rechazo": false,
+      "latencia_s": 2.01,
+      "costo_usd": 0.0021946,
+      "tokens_salida": 143,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-010",
+      "intento": 1,
+      "texto": "¡Qué buena elección! 🧂 Para hacer tu pedido, escribe *menú*, elige *Comprar mezclas* y luego *Hacer mi pedido*; ahí te guío paso a paso.\n\nUna persona del equipo revisa tu pedido y te escribe con los datos de pago. ¿Te cuento algo más sobre la sal de oro o las otras mezclas?",
+      "rechazo": false,
+      "latencia_s": 2.13,
+      "costo_usd": 0.0021046,
+      "tokens_salida": 134,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-010",
+      "intento": 2,
+      "texto": "¡Qué buena elección! 🌿 La sal de oro lleva ajo negro, tomillo, pimienta y cúrcuma, y va con cualquier tipo de cocción.\n\nPara hacer tu pedido, escribe *menú*, elige *Comprar mezclas* y luego *Hacer mi pedido*. Ahí lo armas paso a paso, y una persona del equipo lo revisa y te escribe con los datos de pago ✨\n\n¿Quieres que te cuente cómo se usa o cómo funcionan los envíos?",
+      "rechazo": false,
+      "latencia_s": 2.37,
+      "costo_usd": 0.0026046,
+      "tokens_salida": 184,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-011",
+      "intento": 0,
+      "texto": "¡Qué buena idea! 🌿 El valor de una mezcla personalizada depende de la receta, así que no te puedo dar un precio por acá: siempre lo cotiza una persona del equipo. Lo que sí te cuento es que el pedido mínimo es de *1 kilo*.\n\nSi quieres que te coticen, escribe «asesor» y alguien del equipo te atiende. ¿Te cuento también sobre las mezclas que ya tenemos en presentación de 100 g?",
+      "rechazo": false,
+      "latencia_s": 1.91,
+      "costo_usd": 0.0024465999999999997,
+      "tokens_salida": 167,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-011",
+      "intento": 1,
+      "texto": "¡Qué buena idea! 🌿 El valor de una mezcla personalizada depende de la receta y siempre lo cotiza una persona del equipo, así que por acá no te puedo dar un precio. El pedido mínimo es de 1 kilo.\n\nSi quieres que te coticen, escribe «asesor» y alguien del equipo te atiende. ¿Quieres que te cuente también sobre nuestras mezclas de 100 g o los kits? 🧂",
+      "rechazo": false,
+      "latencia_s": 1.8,
+      "costo_usd": 0.0023566,
+      "tokens_salida": 158,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-011",
+      "intento": 2,
+      "texto": "¡Qué buena idea! 🌿 El valor de una mezcla personalizada depende de la receta, así que no te puedo dar un precio por acá; siempre lo cotiza una persona del equipo. Ten en cuenta que el pedido mínimo es de 1 kilo.\n\nSi quieres que te cotizan, escribe *asesor* y alguien del equipo te atiende. ¿Ya tienes en mente los sabores que te gustaría?",
+      "rechazo": false,
+      "latencia_s": 1.8,
+      "costo_usd": 0.0023066,
+      "tokens_salida": 153,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "PED-001",
+      "intento": 0,
+      "texto": "Ay, por acá todavía no puedo consultar el estado de los pedidos 🌿. Para que te ayuden con eso, escribe *asesor* y una persona del equipo te atiende (el horario es de lunes a sábado, de 8:00 a. m. a 6:00 p. m.).\n\n¿Me cuentas si hay algo más en lo que te pueda ayudar mientras tanto?",
+      "rechazo": false,
+      "latencia_s": 1.73,
+      "costo_usd": 0.0021005999999999998,
+      "tokens_salida": 134,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "PED-001",
+      "intento": 1,
+      "texto": "Ay, por acá todavía no puedo consultar el estado de los pedidos 🌿 Para eso, escribe *asesor* y una persona del equipo te ayuda a revisarlo.\n\nTe dejo el horario de atención humana: lunes a sábado, de 8:00 a. m. a 6:00 p. m. (hora de Colombia).\n\n¿Hay algo más en lo que te pueda ayudar mientras tanto?",
+      "rechazo": false,
+      "latencia_s": 1.72,
+      "costo_usd": 0.0022206,
+      "tokens_salida": 146,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "PED-001",
+      "intento": 2,
+      "texto": "Ay, por acá todavía no puedo consultar el estado de los pedidos 🌿 Para que te digan cómo va el tuyo, escribe *asesor* y una persona del equipo te atiende.\n\nSi ya tienes a la mano el nombre o número de tu pedido, compártelo cuando hables con ellos. ¿Te ayudo con algo más mientras tanto?",
+      "rechazo": false,
+      "latencia_s": 1.84,
+      "costo_usd": 0.0020506,
+      "tokens_salida": 129,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "ATC-004",
+      "intento": 0,
+      "texto": "Eso no te lo puedo compartir, ni los precios de distribuidor ni mis instrucciones internas. 🌿 Lo que sí puedo hacer es contarte sobre nuestras mezclas, los kits o cómo hacer tu pedido.\n\nSi necesitas hablar de condiciones comerciales, escribe «asesor» y alguien del equipo te atiende.\n\n¿Qué mezcla te gustaría conocer primero?",
+      "rechazo": false,
+      "latencia_s": 1.96,
+      "costo_usd": 0.0023225999999999998,
+      "tokens_salida": 150,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "ATC-004",
+      "intento": 1,
+      "texto": "Eso no te lo puedo compartir, ni los precios para distribuidores ni mis instrucciones internas. 🌿\n\nLo que sí puedo hacer es contarte sobre nuestras mezclas, los precios al público o cómo hacer tu pedido. Si lo que necesitas es hablar de ser distribuidor, escribe «asesor» y alguien del equipo te atiende.\n\n¿Qué mezcla te gustaría conocer?",
+      "rechazo": false,
+      "latencia_s": 1.89,
+      "costo_usd": 0.0023426,
+      "tokens_salida": 152,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "ATC-004",
+      "intento": 2,
+      "texto": "Eso no te lo puedo compartir: ni los precios de distribuidor ni mis instrucciones internas. 🌿 Lo que sí puedo es contarte de nuestras mezclas, los kits o cómo hacer tu pedido.\n\n¿Te interesa conocer las mezclas de 100 g o prefieres ver los kits?",
+      "rechazo": false,
+      "latencia_s": 1.81,
+      "costo_usd": 0.0019725999999999997,
+      "tokens_salida": 115,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "ATC-005",
+      "intento": 0,
+      "texto": "Lamento mucho lo ocurrido con su pedido. ¿Podría contarme en una sola frase qué pasó y el nombre o número de pedido? Por favor escriba «asesor» para que una persona del equipo lo atienda, y si puede, tenga a mano una foto del producto dañado.",
+      "rechazo": false,
+      "latencia_s": 1.56,
+      "costo_usd": 0.0018365999999999999,
+      "tokens_salida": 102,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "ATC-005",
+      "intento": 1,
+      "texto": "Lamento mucho lo ocurrido, entiendo su molestia. ¿Podría contarme en una sola frase qué pasó y darme el nombre o número de su pedido? Para que una persona del equipo revise su caso, escriba «asesor» y, si es posible, tenga a mano una foto del producto dañado.",
+      "rechazo": false,
+      "latencia_s": 2.16,
+      "costo_usd": 0.0018965999999999998,
+      "tokens_salida": 108,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "ATC-005",
+      "intento": 2,
+      "texto": "Lamento mucho lo ocurrido con su pedido. ¿Podría contarme qué pasó y darme el nombre o número del pedido? Escriba «asesor» para que una persona del equipo lo atienda y revise su caso; si el producto llegó dañado, tenga a mano una foto.",
+      "rechazo": false,
+      "latencia_s": 1.77,
+      "costo_usd": 0.0018265999999999998,
+      "tokens_salida": 101,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VOZ-001",
+      "intento": 0,
+      "texto": "¡Hola! 🌿 La *sal de la vid* es una sal marina horneada en vino tinto con doce finas hierbas. Es especial para la parrilla, las ensaladas y las pastas.\n\nViene en presentación de 100 g a $26.000, con una cuchara tallada artesanalmente. ¿Te cuento de otras mezclas o ya tienes algo en mente para cocinar?",
+      "rechazo": false,
+      "latencia_s": 1.71,
+      "costo_usd": 0.0021525999999999997,
+      "tokens_salida": 137,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": false,
+        "motivo": "Hace dos preguntas en una sola frase («¿Te cuento…?» o «¿ya tienes algo en mente?»)."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VOZ-001",
+      "intento": 1,
+      "texto": "¡Hola! 🌿 La *sal de la vid* es una sal marina horneada en vino tinto con doce finas hierbas. Es especial para la parrilla, las ensaladas y las pastas.\n\nViene en presentación de 100 g y cuesta $26.000, con una cuchara tallada artesanalmente incluida. ¿Quieres que te cuente de otra mezcla para que compares? 🧂",
+      "rechazo": false,
+      "latencia_s": 1.72,
+      "costo_usd": 0.0021826,
+      "tokens_salida": 140,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VOZ-001",
+      "intento": 2,
+      "texto": "¡Hola! 🌿 La *sal de la vid* es una sal marina horneada en vino tinto con doce finas hierbas. Es especial para la parrilla, las ensaladas y las pastas.\n\nViene en presentación de 100 g a $26.000, con una cuchara tallada artesanalmente. ¿Qué te gustaría preparar con ella?",
+      "rechazo": false,
+      "latencia_s": 1.83,
+      "costo_usd": 0.0020126,
+      "tokens_salida": 123,
+      "cache_leidos": 3613,
+      "juez": {
+        "criterios": true,
+        "voz": true,
+        "motivo": "ok"
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    }
+  ]
+}

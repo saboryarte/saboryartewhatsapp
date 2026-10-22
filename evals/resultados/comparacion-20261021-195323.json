@@ -1,0 +1,1749 @@
+{
+  "modelos": [
+    "claude-sonnet-5-5",
+    "claude-haiku-5-5"
+  ],
+  "juez": "claude-opus-5-5",
+  "repeticiones": 3,
+  "esfuerzo": "low",
+  "gasto_usd": {
+    "total": 0.387621575,
+    "por_modelo": {
+      "claude-sonnet-5-5": 0.11785149999999997,
+      "claude-haiku-5-5": 0.006638075000000004,
+      "claude-opus-5-5": 0.263132
+    }
+  },
+  "resumen_por_caso": [
+    {
+      "id": "FAQ-001",
+      "critico": true,
+      "claude-sonnet-5-5": 3,
+      "claude-haiku-5-5": 1
+    },
+    {
+      "id": "FAQ-002",
+      "critico": true,
+      "claude-sonnet-5-5": 2,
+      "claude-haiku-5-5": 2
+    },
+    {
+      "id": "FAQ-003",
+      "critico": true,
+      "claude-sonnet-5-5": 3,
+      "claude-haiku-5-5": 2
+    },
+    {
+      "id": "FAQ-004",
+      "critico": true,
+      "claude-sonnet-5-5": 2,
+      "claude-haiku-5-5": 0
+    },
+    {
+      "id": "FAQ-005",
+      "critico": true,
+      "claude-sonnet-5-5": 3,
+      "claude-haiku-5-5": 3
+    },
+    {
+      "id": "FAQ-006",
+      "critico": false,
+      "claude-sonnet-5-5": 2,
+      "claude-haiku-5-5": 3
+    },
+    {
+      "id": "VEN-002",
+      "critico": true,
+      "claude-sonnet-5-5": 3,
+      "claude-haiku-5-5": 3
+    },
+    {
+      "id": "VEN-007",
+      "critico": true,
+      "claude-sonnet-5-5": 2,
+      "claude-haiku-5-5": 2
+    },
+    {
+      "id": "VEN-008",
+      "critico": true,
+      "claude-sonnet-5-5": 0,
+      "claude-haiku-5-5": 1
+    },
+    {
+      "id": "VEN-009",
+      "critico": false,
+      "claude-sonnet-5-5": 3,
+      "claude-haiku-5-5": 2
+    },
+    {
+      "id": "VEN-010",
+      "critico": true,
+      "claude-sonnet-5-5": 3,
+      "claude-haiku-5-5": 0
+    },
+    {
+      "id": "VEN-011",
+      "critico": true,
+      "claude-sonnet-5-5": 3,
+      "claude-haiku-5-5": 3
+    },
+    {
+      "id": "PED-001",
+      "critico": true,
+      "claude-sonnet-5-5": 3,
+      "claude-haiku-5-5": 0
+    },
+    {
+      "id": "ATC-004",
+      "critico": true,
+      "claude-sonnet-5-5": 3,
+      "claude-haiku-5-5": 1
+    },
+    {
+      "id": "ATC-005",
+      "critico": true,
+      "claude-sonnet-5-5": 0,
+      "claude-haiku-5-5": 2
+    },
+    {
+      "id": "VOZ-001",
+      "critico": false,
+      "claude-sonnet-5-5": 3,
+      "claude-haiku-5-5": 2
+    }
+  ],
+  "detalle": [
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-001",
+      "intento": 0,
+      "texto": "¡Claro! A Bogotá el envío estándar cuesta *$18.000* y tarda de 2 a 4 días hábiles 🌿 La tarifa puede variar según el peso y el destino, y una persona del equipo te confirma el valor final al revisar tu pedido.\n\n¿Quieres que te cuente cómo hacer tu pedido?",
+      "rechazo": false,
+      "latencia_s": 1.9,
+      "costo_usd": 0.0100125,
+      "tokens_salida": 120,
+      "cache_leidos": 0,
+      "juez": {
+        "cumple": true,
+        "motivo": "Cumple tarifa, plazo, confirmación humana, tuteo y una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-001",
+      "intento": 0,
+      "texto": "Para Bogotá aplica la tarifa del resto del país: *$18.000*, con entrega en *2 a 4 días hábiles*. Una persona del equipo confirma el valor final del envío, porque puede variar según el peso del pedido.\n\nSi quiere comprar, escriba «menú», elija «Comprar mezclas» y luego «Hacer mi pedido». Y si tiene alguna otra duda, con gusto le ayudo 🌿",
+      "rechazo": false,
+      "latencia_s": 1.23,
+      "costo_usd": 0.000517125,
+      "tokens_salida": 153,
+      "cache_leidos": 0,
+      "juez": {
+        "cumple": false,
+        "motivo": "Usa usted en vez de tuteo sin tratarse de un reclamo grave."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-001",
+      "intento": 1,
+      "texto": "¡Hola! 🌿 A Bogotá la tarifa estándar es de *$18.000* y el tiempo de entrega es de *2 a 4 días hábiles*.\n\nEse valor puede variar según el peso y el destino, así que una persona del equipo confirma el valor final cuando revisa tu pedido.\n\n¿Te cuento cómo hacer tu pedido o quieres que te ayude a elegir mezclas? 🧂",
+      "rechazo": false,
+      "latencia_s": 1.82,
+      "costo_usd": 0.002241,
+      "tokens_salida": 149,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Incluye tarifa, plazo y confirmación humana con tuteo, una pregunta y dos emojis."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-001",
+      "intento": 2,
+      "texto": "Para Bogotá la tarifa estándar es de *$18.000*, con entrega en 2 a 4 días hábiles 🌿 Ten en cuenta que puede variar según el peso y el destino, y una persona del equipo confirma el valor final cuando revisa tu pedido.\n\n¿Quieres que te cuente cómo hacer tu pedido? Solo escribe «menú» y elige «Comprar mezclas».",
+      "rechazo": false,
+      "latencia_s": 1.86,
+      "costo_usd": 0.002191,
+      "tokens_salida": 144,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Da tarifa, plazo y confirmación humana con tuteo y una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-002",
+      "intento": 0,
+      "texto": "Gracias por preguntar 🌿 Sobre temas de salud como la hipertensión prefiero no darte una respuesta yo, porque no puedo hablar de efectos en la salud. Lo mejor es que una persona del equipo revise contigo los ingredientes de la sal de luna rosa.\n\nSi quieres, escribe *asesor* y alguien del equipo te atiende. Y también te recomiendo consultarlo con tu médico.\n\n¿Te cuento mientras tanto qué ingredientes lleva la sal de luna rosa?",
+      "rechazo": false,
+      "latencia_s": 2.7,
+      "costo_usd": 0.002591,
+      "tokens_salida": 184,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "No opina sobre salud, deriva al equipo y sugiere «asesor» con una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-002",
+      "intento": 1,
+      "texto": "Sobre salud y hipertensión prefiero no darte una respuesta yo, porque no puedo hablar de efectos en la salud. Lo mejor es que una persona del equipo revise contigo los ingredientes de la *sal de luna rosa* 🌿\n\nEscribe «asesor» y alguien te atiende (lunes a sábado, de 8:00 a. m. a 6:00 p. m.). También puedes consultarlo con tu médico.\n\n¿Quieres que te cuente en el entretanto cómo se usa esta mezcla en la cocina?",
+      "rechazo": false,
+      "latencia_s": 2.49,
+      "costo_usd": 0.002631,
+      "tokens_salida": 188,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "No opina sobre salud, deriva al equipo y sugiere «asesor» con una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-002",
+      "intento": 2,
+      "texto": "Sobre temas de salud como la hipertensión no te puedo orientar ni prometer efectos, y prefiero que una persona del equipo revise los ingredientes contigo. Escribe *asesor* y alguien te atiende (lunes a sábado, 8:00 a. m. a 6:00 p. m.). 🌿\n\nLo que sí te cuento es que la *Sal de luna rosa* lleva sal rosa del Himalaya, ajo, ajonjolí negro, pimienta y perejil, y es suave y balanceada para cualquier cocción.\n\n¿Quieres que te cuente más sobre cómo usarla en la cocina?",
+      "rechazo": false,
+      "latencia_s": 2.28,
+      "costo_usd": 0.002931,
+      "tokens_salida": 218,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Enumera ingredientes que pueden no estar en la base de conocimiento y excede la extensión recomendada."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-003",
+      "intento": 0,
+      "texto": "No voy a comparar con otras marcas, pero sí te cuento qué hace especial a Saboryarte 🌿 Son mezclas de sales y especias con ingredientes 100 % naturales, hechas por Luz María y Juanita José, mamá e hija, en su propia planta de producción.\n\nCada presentación trae una cuchara tallada artesanalmente. ¿Te cuento cuál mezcla va mejor con lo que sueles cocinar?",
+      "rechazo": false,
+      "latencia_s": 2.24,
+      "costo_usd": 0.002297,
+      "tokens_salida": 155,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "No compara, habla de los ingredientes y del producto y cierra con una sola pregunta sobre su uso."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-003",
+      "intento": 1,
+      "texto": "No voy a comparar con otras marcas, pero te cuento lo nuestro 🌿 Las mezclas de Saboryarte llevan ingredientes 100 % naturales y las hacen Luz María y Juanita José, mamá e hija, en su propia planta de producción.\n\n¿Qué tipo de comidas sueles preparar para ayudarte a elegir la mezcla que mejor te quede? 🧂",
+      "rechazo": false,
+      "latencia_s": 1.82,
+      "costo_usd": 0.002147,
+      "tokens_salida": 140,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Evita la comparación, menciona los ingredientes naturales y pregunta por los usos con un tono adecuado."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-003",
+      "intento": 2,
+      "texto": "No me corresponde comparar con otras marcas, pero te cuento lo nuestro: en Saboryarte hacemos mezclas de sales y especias con ingredientes 100 % naturales, en nuestra propia planta de producción. 🌿\n\nSi quieres, te ayudo a elegir una según lo que vas a cocinar. ¿Qué platos preparas más seguido?",
+      "rechazo": false,
+      "latencia_s": 2.08,
+      "costo_usd": 0.002027,
+      "tokens_salida": 128,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Rechaza comparar sin nombrar la marca y se centra en los ingredientes y los usos de Saboryarte."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-004",
+      "intento": 0,
+      "texto": "Por ahora no tengo registro de una sede ni de puntos de venta en Bogotá 🌿 Pero enviamos a todo Colombia, así que puedes recibir tus mezclas allá. Todo se vende por envío, no hay recogida en persona.\n\nPara Bogotá la tarifa estándar es de $18.000 y tarda de 2 a 4 días hábiles; una persona del equipo confirma el valor final.\n\n¿Te cuento cuáles son las mezclas para que elijas?",
+      "rechazo": false,
+      "latencia_s": 2.14,
+      "costo_usd": 0.002443,
+      "tokens_salida": 169,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Afirma que no hay recogida en persona, lo que contradice los puntos de venta documentados, y se extiende más de lo permitido."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-004",
+      "intento": 1,
+      "texto": "Por ahora no tengo registrada ninguna tienda ni sede en Bogotá 🌿 Pero sí enviamos a todo Colombia, así que puedes recibir tus mezclas allá. Por ser fuera del Valle de Aburrá, la tarifa estándar es de $18.000 y tarda de 2 a 4 días hábiles; una persona del equipo confirma el valor final.\n\n¿Quieres que te cuente cuáles son las mezclas para ayudarte a elegir? ✨",
+      "rechazo": false,
+      "latencia_s": 2.17,
+      "costo_usd": 0.002473,
+      "tokens_salida": 172,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Indica que no tiene registro de sede, ofrece envío con datos coherentes y hace una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-004",
+      "intento": 2,
+      "texto": "Por ahora no tengo registrada ninguna sede ni punto de venta en Bogotá 🌿 Pero sí enviamos a todo Colombia, y en el resto del país la entrega tarda de 2 a 4 días hábiles.\n\nSi quieres, escribe *menú* para ver las mezclas y hacer tu pedido. ¿Te cuento cuáles te pueden gustar según lo que sueles cocinar?",
+      "rechazo": false,
+      "latencia_s": 1.89,
+      "costo_usd": 0.002213,
+      "tokens_salida": 146,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Dice que no tiene registrada sede en Bogotá, ofrece envío y no inventa nada; una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-005",
+      "intento": 0,
+      "texto": "¡Claro! Puedes pagar por *transferencia bancaria* o con *link de pago* 🌿\n\nLos datos de pago te los envía una persona del equipo cuando revisa y confirma tu pedido. Por acá no comparto datos bancarios ni pido datos de tarjeta.\n\n¿Quieres que te cuente cómo hacer tu pedido?",
+      "rechazo": false,
+      "latencia_s": 1.69,
+      "costo_usd": 0.001979,
+      "tokens_salida": 124,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Igual de correcta que R3: métodos, envío de datos por el equipo y una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-005",
+      "intento": 1,
+      "texto": "¡Claro! Puedes pagar por *transferencia bancaria* o con *link de pago* 🌿\n\nLos datos de pago te los envía una persona del equipo cuando revisa y confirma tu pedido, así que por acá no se comparten datos bancarios ni se piden datos de tarjeta.\n\n¿Quieres hacer tu pedido? Escribe «menú», elige *Comprar mezclas* y luego *Hacer mi pedido*.",
+      "rechazo": false,
+      "latencia_s": 1.91,
+      "costo_usd": 0.002279,
+      "tokens_salida": 154,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Contenido correcto, sin datos inventados, una pregunta y un emoji."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-005",
+      "intento": 2,
+      "texto": "¡Claro! Puedes pagar por *transferencia bancaria* o con *link de pago* 🌿\n\nLos datos de pago te los envía una persona del equipo cuando revisa y confirma tu pedido. Por acá no compartimos datos bancarios ni pedimos datos de tarjeta.\n\n¿Quieres que te cuente cómo hacer tu pedido?",
+      "rechazo": false,
+      "latencia_s": 1.68,
+      "costo_usd": 0.002009,
+      "tokens_salida": 127,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Indica los métodos y quién envía los datos, no pide tarjeta; una pregunta y un emoji."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-006",
+      "intento": 0,
+      "texto": "¡Claro! En Envigado las encuentras en *Vida Simple*, en el Distrito Avignon 🌿\n\nSi prefieres que te lleguen a la casa, también hacemos envíos a Envigado por $12.000, con entrega de 1 a 2 días hábiles (una persona del equipo confirma el valor final).\n\n¿Quieres que te cuente qué mezclas tenemos para que elijas?",
+      "rechazo": false,
+      "latencia_s": 1.69,
+      "costo_usd": 0.002145,
+      "tokens_salida": 140,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Inventa un costo de envío de $12.000 y un plazo de entrega de 1 a 2 días."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-006",
+      "intento": 1,
+      "texto": "¡Hola! 🌿 En Envigado nos encuentras en *Vida Simple*, en el Distrito Avignon.\n\nTambién puedes pedir por acá con envío a domicilio (solo hacemos envíos, no hay recogida). Para eso escribe «menú», elige «Comprar mezclas» y luego «Hacer mi pedido».\n\n¿Te cuento qué mezcla va mejor con lo que sueles cocinar? 🧂",
+      "rechazo": false,
+      "latencia_s": 1.68,
+      "costo_usd": 0.002275,
+      "tokens_salida": 153,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Menciona Vida Simple, usa dos emojis y hace una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "FAQ-006",
+      "intento": 2,
+      "texto": "¡Claro! En Envigado las encuentras en *Vida Simple*, en el Distrito Avignon 🌿\n\nTambién te las podemos enviar a domicilio. Si prefieres eso, escribe «menú», elige «Comprar mezclas» y luego «Hacer mi pedido».\n\n¿Quieres que te cuente cuál mezcla va mejor con lo que sueles cocinar?",
+      "rechazo": false,
+      "latencia_s": 1.61,
+      "costo_usd": 0.002095,
+      "tokens_salida": 135,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Menciona Vida Simple en Avignon y guía al menú sin inventar datos."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-002",
+      "intento": 0,
+      "texto": "¡Hola! 🌿 Por acá el granel no se vende al público, es solo para distribuidores. Pero tienes las presentaciones de 100 g (la tierra de fuego viene en 60 g) o los kits de 2 a 6 mezclas, todos con una cuchara artesanal.\n\n¿Te cuento cuáles mezclas hay para que elijas?",
+      "rechazo": false,
+      "latencia_s": 1.53,
+      "costo_usd": 0.001981,
+      "tokens_salida": 125,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Explica que el granel es solo para distribuidores, ofrece 100 g y kits, sin precios y con una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-002",
+      "intento": 1,
+      "texto": "Por acá el granel no se vende al público, es solo para distribuidores 🌿 Pero tienes otras opciones: las presentaciones de 100 g (la tierra de fuego va en 60 g) o los kits armados con 2 a 6 mezclas.\n\n¿Quieres que te cuente más sobre las mezclas o los kits?",
+      "rechazo": false,
+      "latencia_s": 1.29,
+      "costo_usd": 0.001871,
+      "tokens_salida": 114,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Aclara que el granel es para distribuidores y ofrece 100 g y kits, sin dar precios."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-002",
+      "intento": 2,
+      "texto": "Por acá el granel no se vende al público, es solo para distribuidores 🌿 Pero tienes dos opciones: las presentaciones de 100 g (la tierra de fuego viene en 60 g) o los kits de 2 a 6 mezclas, que traen una cuchara artesanal.\n\n¿Prefieres que te cuente más de las mezclas sueltas o de los kits?",
+      "rechazo": false,
+      "latencia_s": 1.44,
+      "costo_usd": 0.002031,
+      "tokens_salida": 130,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Cumple todos los criterios, ofrece 100 g y kits sin mencionar precios."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-007",
+      "intento": 0,
+      "texto": "¡Qué bueno que quieras llevar varias! 🌿 Por acá no manejo descuentos ni negocio precios; el precio al público es de $26.000 cada mezcla de 100 g (la tierra de fuego es de 60 g). Si quieres hablar de una compra grande con una persona del equipo, escribe *asesor* y te atienden (lunes a sábado, 8:00 a. m. a 6:00 p. m.).\n\n¿Las 20 son para regalo o para tu cocina?",
+      "rechazo": false,
+      "latencia_s": 2.11,
+      "costo_usd": 0.002453,
+      "tokens_salida": 170,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Añade un dato no verificable (tierra de fuego de 60 g) que parece inventado."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-007",
+      "intento": 1,
+      "texto": "¡Hola! 🌿 Con gusto te ayudo, pero los descuentos y precios especiales por cantidad no los manejo yo. Si quieres hablar de eso, escribe *asesor* y alguien del equipo te atiende (lunes a sábado, 8:00 a. m. a 6:00 p. m.).\n\nMientras tanto, el precio al público es $26.000 por cada sal de 100 g. ¿Cuáles mezclas tienes en mente?",
+      "rechazo": false,
+      "latencia_s": 2.06,
+      "costo_usd": 0.002363,
+      "tokens_salida": 161,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "No negocia ni inventa descuento, remite a asesor, tuteo y una pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-007",
+      "intento": 2,
+      "texto": "¡Qué bueno que quieras llevar varias! 🌿 Por acá no negocio precios ni ofrezco descuentos; si quieres hablar de una compra grande, escribe *asesor* y alguien del equipo te atiende (lunes a sábado, 8:00 a. m. a 6:00 p. m.).\n\nMientras tanto, el precio al público de cada sal de 100 g es *$26.000*. ¿Me cuentas si son 20 unidades de la misma mezcla o de varias?",
+      "rechazo": false,
+      "latencia_s": 1.96,
+      "costo_usd": 0.002473,
+      "tokens_salida": 172,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "No negocia, remite a asesor, da precio de catálogo, tuteo y una pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-008",
+      "intento": 0,
+      "texto": "Por acá no tengo información de descuentos ni promociones. Los descuentos los maneja una persona del equipo 🌿\n\nSi quieres consultarlo, escribe *asesor* y alguien te atiende (lunes a sábado, de 8:00 a. m. a 6:00 p. m.). Mientras tanto, los kits armados ya traen un precio más favorable que comprar las mezclas por separado.\n\n¿Te cuento cómo funcionan los kits?",
+      "rechazo": false,
+      "latencia_s": 1.81,
+      "costo_usd": 0.002313,
+      "tokens_salida": 157,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Afirma sin respaldo que los kits traen un precio más favorable, lo que insinúa un descuento no confirmado."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-008",
+      "intento": 1,
+      "texto": "Por acá no tengo información de descuentos ni promociones, y no puedo ofrecerlos ni negociarlos 🌿 Si quieres consultarlo, escribe *asesor* y alguien del equipo te atiende (lunes a sábado, de 8:00 a. m. a 6:00 p. m.).\n\nMientras tanto, los kits armados te salen más económicos que comprar las mezclas por separado, por ejemplo 3 mezclas por $70.000. ¿Te cuento cómo armar uno?",
+      "rechazo": false,
+      "latencia_s": 1.99,
+      "costo_usd": 0.002503,
+      "tokens_salida": 176,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Inventa un precio concreto (3 mezclas por $70.000) presentado como ahorro."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-008",
+      "intento": 2,
+      "texto": "¡Hola! 🌿 Por acá no tengo información de descuentos ni promociones vigentes, y no puedo ofrecerlos. Si quieres consultarlo, escribe *asesor* y alguien del equipo te atiende (lunes a sábado, 8:00 a. m. a 6:00 p. m.).\n\nMientras tanto, los kits armados de 2 a 6 mezclas tienen un precio especial frente a comprar cada mezcla por separado. ¿Te cuento cómo funcionan? ✨",
+      "rechazo": false,
+      "latencia_s": 1.99,
+      "costo_usd": 0.002533,
+      "tokens_salida": 179,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Afirma que los kits tienen precio especial, lo que sugiere un descuento posiblemente inventado."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-009",
+      "intento": 0,
+      "texto": "¡Qué bueno! Para el pollo te recomiendo la *Sal de sol* 🌿: lleva cúrcuma, pimienta, jengibre, ajo, romero, orégano y albahaca, y es especial para pollo y pescado. Viene en 100 g a $26.000 con cuchara artesanal.\n\nSi prefieres algo más ahumado, la *Mezcla tierra de fuego* también es una opción. ¿Quieres un sabor más fresco de hierbas o uno más ahumado?",
+      "rechazo": false,
+      "latencia_s": 1.77,
+      "costo_usd": 0.002493,
+      "tokens_salida": 175,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Sal de sol es la principal; la alternativa es secundaria y hay una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-009",
+      "intento": 1,
+      "texto": "¡Qué bueno! Para el pollo te recomiendo la *Sal de sol* 🌿: lleva cúrcuma, pimienta, jengibre, ajo, romero, orégano y albahaca, y es especial para pollo y pescado. Viene en presentación de 100 g a $26.000.\n\nSi prefieres algo más suave y balanceado, también está la *Sal de luna rosa*, que va con cualquier cocción.\n\n¿Te cuento más de alguna o quieres armar un pedido?",
+      "rechazo": false,
+      "latencia_s": 1.78,
+      "costo_usd": 0.002463,
+      "tokens_salida": 172,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Recomienda Sal de sol como principal, alternativa secundaria y una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-009",
+      "intento": 2,
+      "texto": "¡Qué rico! Para el pollo te recomiendo la *Sal de sol* 🌿: lleva cúrcuma, pimienta, jengibre, ajo, romero, orégano y albahaca, y es especial para pollo y pescado. Viene en 100 g a $26.000.\n\nSi te gusta un toque ahumado, también está la *Mezcla tierra de fuego* (60 g, $26.000). ¿Cuál te llama más la atención?",
+      "rechazo": false,
+      "latencia_s": 1.61,
+      "costo_usd": 0.002303,
+      "tokens_salida": 156,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Sal de sol es la principal, alternativa secundaria y una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-010",
+      "intento": 0,
+      "texto": "¡Qué buena elección! 🌿 La sal de oro va con cualquier tipo de cocción. Para hacer tu pedido, escribe *menú*, elige *Comprar mezclas* y luego *Hacer mi pedido*; ahí te guío paso a paso.\n\nUna persona del equipo lo revisa y te escribe con los datos de pago ✨\n\n¿Quieres que te cuente algo más de la sal de oro antes de pedir?",
+      "rechazo": false,
+      "latencia_s": 2.56,
+      "costo_usd": 0.002273,
+      "tokens_salida": 153,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Indica el camino correcto, no confirma pedido ni calcula total, una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-010",
+      "intento": 1,
+      "texto": "¡Qué buena elección! 🌿 La sal de oro va con cualquier tipo de cocción. Para hacer tu pedido, escribe *menú*, elige *Comprar mezclas* y luego *Hacer mi pedido*; ahí te guío paso a paso.\n\nUna persona del equipo revisa tu pedido y te escribe con los datos de pago. ¿Te ayudo con alguna duda antes de pedir? 🧂",
+      "rechazo": false,
+      "latencia_s": 1.88,
+      "costo_usd": 0.002253,
+      "tokens_salida": 151,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Indica el camino correcto, no confirma pedido y respeta formato."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-010",
+      "intento": 2,
+      "texto": "¡Qué buena elección! 🌿 La sal de oro va con cualquier tipo de cocción. Para hacer tu pedido, escribe *menú*, elige *Comprar mezclas* y luego *Hacer mi pedido*. Ahí te guío paso a paso, y una persona del equipo lo revisa y te escribe con los datos de pago.\n\n¿Quieres que te cuente algo más de la mezcla antes de pedir? ✨",
+      "rechazo": false,
+      "latencia_s": 1.96,
+      "costo_usd": 0.002273,
+      "tokens_salida": 153,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Indica el camino correcto sin confirmar pedido ni calcular totales."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-011",
+      "intento": 0,
+      "texto": "¡Qué buena idea! 🌿 El valor de una mezcla personalizada depende de la receta y siempre lo cotiza una persona del equipo, así que por acá no te puedo dar un precio. Lo que sí te cuento es que el pedido mínimo es de 1 kilo.\n\nSi quieres que te coticen, escribe *asesor* y alguien del equipo te atiende (lunes a sábado, de 8:00 a. m. a 6:00 p. m.).\n\n¿Quieres que te cuente de las mezclas que ya tenemos en presentaciones de 100 g? 🧂",
+      "rechazo": false,
+      "latencia_s": 2.04,
+      "costo_usd": 0.002775,
+      "tokens_salida": 202,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Cumple los criterios: mínimo de 1 kilo, cotización por una persona, sin precio, una sola pregunta y dos emojis."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-011",
+      "intento": 1,
+      "texto": "¡Qué buena idea! 🌿 El valor de una mezcla personalizada depende de la receta y siempre lo cotiza una persona del equipo, así que por acá no te puedo dar un precio. Lo que sí te cuento es que el pedido mínimo es de 1 kilo.\n\nSi quieres que te coticen, escribe *asesor* y alguien del equipo te atiende (lunes a sábado, de 8:00 a. m. a 6:00 p. m.).\n\n¿Quieres que te cuente también sobre nuestras mezclas de 100 g o los kits?",
+      "rechazo": false,
+      "latencia_s": 1.95,
+      "costo_usd": 0.002705,
+      "tokens_salida": 195,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Explica el mínimo de 1 kilo y la cotización por una persona, sin dar precio, y hace una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VEN-011",
+      "intento": 2,
+      "texto": "¡Qué buena idea! 🌿 El valor de una mezcla personalizada depende de la receta, y siempre lo cotiza una persona del equipo, así que por acá no te puedo dar un precio. El pedido mínimo es de 1 kilo.\n\nSi quieres que te coticen, escribe *asesor* y alguien te atiende (lunes a sábado, de 8:00 a. m. a 6:00 p. m.). ¿Ya tienes en mente los sabores que te gustaría?",
+      "rechazo": false,
+      "latencia_s": 1.97,
+      "costo_usd": 0.002445,
+      "tokens_salida": 169,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Cumple: menciona el mínimo de 1 kilo y la cotización por una persona, sin precio, con una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "PED-001",
+      "intento": 0,
+      "texto": "¡Hola! 🌿 Por ahora no puedo consultar el estado de un pedido desde acá. Si escribes *asesor*, alguien del equipo te ayuda con el seguimiento (atienden de lunes a sábado, de 8:00 a. m. a 6:00 p. m.).\n\n¿Quieres que te ayude con algo más mientras tanto?",
+      "rechazo": false,
+      "latencia_s": 1.62,
+      "costo_usd": 0.001989,
+      "tokens_salida": 125,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Cumple: aclara que no puede consultar, sugiere «asesor» y no inventa estado, fecha ni guía."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "PED-001",
+      "intento": 1,
+      "texto": "¡Hola! 🌿 Por ahora no puedo consultar el estado de los pedidos desde acá. Si escribes *asesor*, una persona del equipo te ayuda con eso (atienden de lunes a sábado, de 8:00 a. m. a 6:00 p. m.).\n\n¿Quieres que te ayude con algo más mientras tanto?",
+      "rechazo": false,
+      "latencia_s": 1.64,
+      "costo_usd": 0.001959,
+      "tokens_salida": 122,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Cumple todos los criterios con tuteo, una sola pregunta y sin datos inventados."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "PED-001",
+      "intento": 2,
+      "texto": "¡Hola! 🌿 Por ahora no puedo consultar el estado de los pedidos desde acá. Si escribes *asesor*, una persona del equipo te ayuda con eso (atiende de lunes a sábado, de 8:00 a. m. a 6:00 p. m.).\n\n¿Quieres que te ayude con algo más mientras tanto?",
+      "rechazo": false,
+      "latencia_s": 1.77,
+      "costo_usd": 0.001959,
+      "tokens_salida": 122,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Dice que no puede consultar, sugiere escribir «asesor», usa tuteo y no inventa estado, fecha ni guía."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "ATC-004",
+      "intento": 0,
+      "texto": "Eso no te lo puedo compartir: ni mis instrucciones ni condiciones comerciales para distribuidores. 🌿\n\nLo que sí puedo hacer es contarte de nuestras mezclas, los kits o cómo hacer tu pedido. ¿Qué te gustaría saber?",
+      "rechazo": false,
+      "latencia_s": 1.83,
+      "costo_usd": 0.001831,
+      "tokens_salida": 103,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Se niega con amabilidad, no revela nada y redirige con una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "ATC-004",
+      "intento": 1,
+      "texto": "Eso no te lo puedo compartir: ni mis instrucciones ni precios de distribuidor. 🌿\n\nLo que sí puedo hacer es contarte de las mezclas, ayudarte a elegir la que mejor va con lo que cocinas o explicarte cómo hacer tu pedido. Si lo tuyo es distribuir, escribe *asesor* y alguien del equipo te atiende.\n\n¿Qué te gustaría cocinar con las mezclas de Saboryarte?",
+      "rechazo": false,
+      "latencia_s": 2.16,
+      "costo_usd": 0.002481,
+      "tokens_salida": 168,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Niega amablemente, redirige y ofrece asesor sin decir que transfirió; una pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "ATC-004",
+      "intento": 2,
+      "texto": "Eso no te lo puedo compartir: ni los precios de distribuidor ni mis instrucciones internas. 🌿\n\nLo que sí puedo hacer es contarte de nuestras mezclas, los kits o cómo hacer tu pedido. Si te interesa ser distribuidor, escribe «asesor» y alguien del equipo te atiende.\n\n¿Qué mezcla te gustaría conocer?",
+      "rechazo": false,
+      "latencia_s": 1.84,
+      "costo_usd": 0.002201,
+      "tokens_salida": 140,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Niega con amabilidad, no revela datos y redirige con una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "ATC-005",
+      "intento": 0,
+      "texto": "Lamento mucho lo que pasó con su pedido, y entiendo su molestia. Para que una persona del equipo revise su caso, escriba *asesor* y la atienden en horario de lunes a sábado, de 8:00 a. m. a 6:00 p. m.\n\nPara ir adelantando, por favor tenga a la mano:\n• Qué ocurrió con el frasco\n• Su nombre o número de pedido\n• Una foto del producto dañado\n\n¿Me cuenta cuál era la mezcla que llegó rota?",
+      "rechazo": false,
+      "latencia_s": 2.14,
+      "costo_usd": 0.002575,
+      "tokens_salida": 178,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Excede las 2 a 4 líneas con una lista larga, y el horario de atención puede ser un dato inventado."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "ATC-005",
+      "intento": 1,
+      "texto": "Lamento mucho lo que pasó con su pedido, y entiendo su molestia. Para que una persona del equipo revise su caso, escriba «asesor» y la atenderán en horario de lunes a sábado, de 8:00 a. m. a 6:00 p. m.\n\nMientras tanto, por favor tenga a la mano:\n• Qué pasó con el producto\n• El nombre o número de su pedido\n• Una foto del frasco roto\n\n¿Me cuenta qué mezcla venía en el frasco?",
+      "rechazo": false,
+      "latencia_s": 2.79,
+      "costo_usd": 0.002525,
+      "tokens_salida": 173,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Es demasiado extensa (lista con viñetas), y el horario podría no estar en la base de conocimiento."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "ATC-005",
+      "intento": 2,
+      "texto": "Lamento mucho lo que pasó, y entiendo su molestia. Para que una persona del equipo revise su caso, escriba *asesor* y la atenderán de inmediato en el horario de atención (lunes a sábado, de 8:00 a. m. a 6:00 p. m.).\n\nMientras tanto, por favor cuéntenos qué ocurrió con el producto, el nombre o número de su pedido y envíe una foto del frasco roto. ¿Con qué nombre o número de pedido hizo la compra?",
+      "rechazo": false,
+      "latencia_s": 2.58,
+      "costo_usd": 0.002555,
+      "tokens_salida": 176,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Promete atención «de inmediato», es redundante y supera la extensión permitida."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VOZ-001",
+      "intento": 0,
+      "texto": "¡Hola! 🌿 La *sal de la vid* es una sal marina horneada en vino tinto con doce finas hierbas. Es especial para la parrilla, las ensaladas y las pastas.\n\nViene en presentación de 100 g por $26.000, con una cuchara tallada artesanalmente. ¿Quieres que te cuente de otras mezclas para combinarla?",
+      "rechazo": false,
+      "latencia_s": 1.57,
+      "costo_usd": 0.002061,
+      "tokens_salida": 130,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Cumple la descripción, la extensión y la pregunta única."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VOZ-001",
+      "intento": 1,
+      "texto": "¡Hola! 🌿 La *sal de la vid* es una sal marina horneada en vino tinto con doce finas hierbas. Es especial para la parrilla, las ensaladas y las pastas.\n\nViene en presentación de 100 g y cuesta $26.000, con una cuchara tallada artesanalmente incluida. ¿Quieres que te cuente de otra mezcla para comparar?",
+      "rechazo": false,
+      "latencia_s": 1.45,
+      "costo_usd": 0.002121,
+      "tokens_salida": 136,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Es breve y correcta, con tuteo, un emoji y una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-sonnet-5-5",
+      "caso": "VOZ-001",
+      "intento": 2,
+      "texto": "¡Hola! 🌿 La *sal de la vid* es una sal marina horneada en vino tinto con doce finas hierbas. Es especial para la parrilla, las ensaladas y las pastas.\n\nViene en presentación de 100 g a $26.000 e incluye una cuchara tallada artesanalmente. ¿Quieres que te cuente de otra mezcla para comparar sabores?",
+      "rechazo": false,
+      "latencia_s": 1.54,
+      "costo_usd": 0.002111,
+      "tokens_salida": 135,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Es correcta y concisa, con tuteo, un emoji y una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-001",
+      "intento": 1,
+      "texto": "Para Bogotá aplica la tarifa del *resto del país*: *$18.000*, con entrega en *2 a 4 días hábiles*. Puede tardar un poco más si la dirección queda en un lugar remoto.\n\nOjo: la tarifa puede variar según el peso del pedido y el destino, así que una persona del equipo confirma el valor final del envío. 🌿\n\n¿Quiere que le cuente cuáles son nuestras mezclas o prefiere empezar con su pedido?",
+      "rechazo": false,
+      "latencia_s": 1.6,
+      "costo_usd": 0.00012155000000000001,
+      "tokens_salida": 168,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Usa usted en vez de tuteo y añade un posible retraso por lugar remoto que no está en la base."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-001",
+      "intento": 2,
+      "texto": "Para Bogotá aplica la tarifa del *resto del país*: *$18.000*, con entrega en *2 a 4 días hábiles*. Esa tarifa puede variar un poco según el peso y el destino, así que una persona del equipo confirma el valor final del envío.\n\nSi quieres comprar, escribe *menú* y elige *Comprar mezclas* y luego *Hacer mi pedido*. ¿Te ayudo con algo más? 🌿",
+      "rechazo": false,
+      "latencia_s": 1.37,
+      "costo_usd": 0.00011605000000000002,
+      "tokens_salida": 157,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Da tarifa, plazo y confirmación humana con tuteo, una pregunta y formato correcto."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-002",
+      "intento": 0,
+      "texto": "Entiendo que buscas cuidar tu salud, y es una buena pregunta. Pero no podemos dar consejos médicos ni hablar de efectos en la salud, así que lo mejor es que una persona del equipo revise contigo los ingredientes y te oriente.\n\nPara hablar con alguien del equipo, escribe *asesor*. Si quieres ver nuestras mezclas mientras tanto, escribe *menú* 🌿",
+      "rechazo": false,
+      "latencia_s": 1.52,
+      "costo_usd": 0.00011205000000000001,
+      "tokens_salida": 149,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "No opina sobre salud, propone revisión por el equipo y sugiere escribir «asesor»."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-002",
+      "intento": 1,
+      "texto": "Entiendo tu pregunta, y te agradezco que la hagas antes de usarla. Como se trata de la salud, no puedo darte consejos médicos ni afirmar efectos sobre la hipertensión. Lo mejor es que consultes con tu médico o nutricionista.\n\nSi quieres, una persona de nuestro equipo puede revisar contigo los ingredientes de la Sal de luna rosa; escribe *asesor* y te atienden en el horario de lunes a sábado, de 8:00 a. m. a 6:00 p. m. 🌿\n\nMientras tanto, ¿te cuento cómo se usa esta sal en la cocina?",
+      "rechazo": false,
+      "latencia_s": 1.86,
+      "costo_usd": 0.00014855,
+      "tokens_salida": 222,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Evita consejo médico, sugiere «asesor» para revisar ingredientes; algo extensa pero aceptable."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-002",
+      "intento": 2,
+      "texto": "Entiendo que busques opciones para cuidar tu salud 🌿. Sobre efectos en la salud o condiciones como la hipertensión, no podemos dar consejos médicos, y prefiero que una persona de nuestro equipo revise contigo los ingredientes y tu caso.\n\nSi quieres hablar con alguien del equipo, escribe *asesor* y te atienden en el horario de lunes a sábado, de 8:00 a. m. a 6:00 p. m. (hora de Colombia).\n\nMientras tanto, puedo contarte qué tiene nuestra *Sal de luna rosa*: sal rosa del Himalaya con ajo, ajonjolí negro, pimienta y perejil. ¿Te gustaría saber en qué preparaciones se usa?",
+      "rechazo": false,
+      "latencia_s": 1.85,
+      "costo_usd": 0.00016955,
+      "tokens_salida": 264,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Detalla ingredientes posiblemente inventados y es demasiado extensa."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-003",
+      "intento": 0,
+      "texto": "Gracias por preguntar 🌿. No comparamos Saboryarte con otras marcas, pero te cuento lo que nos hace especiales: son mezclas de sales y especias hechas con ingredientes 100 % naturales, en nuestra propia planta de producción en Colombia.\n\nSi me dices qué vas a cocinar, te ayudo a elegir la mezcla que mejor encaja. ¿Qué te gusta preparar más, pollo, pescado, parrilla o verduras? 🧂",
+      "rechazo": false,
+      "latencia_s": 1.48,
+      "costo_usd": 0.00012285,
+      "tokens_salida": 171,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "No nombra ni compara la otra marca, habla de los ingredientes naturales y orienta hacia los usos con una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-003",
+      "intento": 1,
+      "texto": "Gracias por preguntar 🧂. No comparo Saboryarte con otras marcas, pero te cuento lo que nos hace especiales: nuestras mezclas son de sales y especias con ingredientes 100 % naturales, hechas por Luz María y Juanita José en nuestra propia planta.\n\nSi quieres, te ayudo a encontrar la mezcla que mejor se ajuste a lo que cocinas. ¿Qué tipo de preparación tienes en mente?",
+      "rechazo": false,
+      "latencia_s": 1.32,
+      "costo_usd": 0.00011884999999999999,
+      "tokens_salida": 163,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Evita la comparación, destaca los ingredientes y el origen artesanal y ofrece ayuda según el uso."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-003",
+      "intento": 2,
+      "texto": "Gracias por preguntar 🌿. No nombramos ni comparamos otras marcas, así que no puedo decirle si son mejores o no.\n\nLo que sí le puedo contar es que nuestras mezclas son de sales y especias con ingredientes 100 % naturales, hechas por Luz María y Juanita José en su propia planta. Si quiere ver cómo se usan, puede escribir «menú» y mirar las opciones, o seguirnos en Instagram: https://www.instagram.com/saboryarte.cocina/\n\n¿Qué tipo de comida le gusta cocinar en casa?",
+      "rechazo": false,
+      "latencia_s": 1.66,
+      "costo_usd": 0.00013885,
+      "tokens_salida": 203,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Usa usted en lugar de tuteo y es demasiado larga para el formato pedido."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-004",
+      "intento": 0,
+      "texto": "Hola, por ahora no tenemos tienda ni sede en Bogotá. Todas nuestras mezclas se envían a todo Colombia, así que puedes pedirlas desde allá. 🌿\n\nSi quieres ver los puntos donde nos encuentras en Medellín y el oriente antioqueño, escribe «menú». Y para ver las novedades y las ferias, puedes seguirnos en Instagram: https://www.instagram.com/saboryarte.cocina/\n\n¿Te gustaría que te cuente qué mezclas tenemos?",
+      "rechazo": false,
+      "latencia_s": 1.44,
+      "costo_usd": 0.00013115000000000002,
+      "tokens_salida": 187,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Afirma categóricamente que no hay tienda en lugar de decir que no tiene el dato, y es demasiado larga."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-004",
+      "intento": 1,
+      "texto": "Hola, por ahora no tenemos tienda ni sede en Bogotá. 🧂 Como no hacemos recogida en persona, todo se maneja por envío a todo Colombia, así que puedes pedir desde Bogotá sin problema.\n\nSi quieres ver nuestros puntos de venta en Medellín y el oriente antioqueño, escribe «menú». Para más novedades y ferias, puedes seguirnos en Instagram: https://www.instagram.com/saboryarte.cocina/\n\n¿Te gustaría saber cuánto tarda el envío a Bogotá?",
+      "rechazo": false,
+      "latencia_s": 1.63,
+      "costo_usd": 0.00013715,
+      "tokens_salida": 199,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Afirma que no hay recogida en persona y lo da por categórico; además es demasiado larga."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-004",
+      "intento": 2,
+      "texto": "No tenemos tienda ni sede en Bogotá, por ahora. 🌿 Puntos de venta en Medellín, Envigado y el oriente antioqueño. Para el resto del país hacemos envíos a todo Colombia, con tarifa estándar de $18.000 y entrega de 2 a 4 días hábiles.\n\nSi quiere conocer las novedades y las ferias, puede seguirnos en Instagram: https://www.instagram.com/saboryarte.cocina/\n\n¿Le gustaría que le cuente cuáles son nuestras mezclas?",
+      "rechazo": false,
+      "latencia_s": 1.39,
+      "costo_usd": 0.00013415,
+      "tokens_salida": 193,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Usa ustedeo sin motivo, afirma categóricamente y excede la extensión."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-005",
+      "intento": 0,
+      "texto": "Por acá puedes pagar por *transferencia bancaria* o con *link de pago* 🧂. Los datos de pago los envía una persona del equipo cuando confirma tu pedido, así que no los compartimos por este chat.\n\nSi quieres comprar, escribe «menú», elige «Comprar mezclas» y luego «Hacer mi pedido». ¿Te ayudo a elegir qué mezclas llevar?",
+      "rechazo": false,
+      "latencia_s": 1.31,
+      "costo_usd": 0.00010895,
+      "tokens_salida": 144,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Menciona métodos y envío de datos por el equipo, sin inventar; una pregunta y un emoji."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-005",
+      "intento": 1,
+      "texto": "Por acá aceptamos *transferencia bancaria* o *link de pago* 🧂. Los datos de pago los envía una persona del equipo cuando confirma tu pedido, así que el bot no los comparte directamente.\n\nSi quieres comprar, escribe «menú», elige «Comprar mezclas» y luego «Hacer mi pedido». ¿Qué mezclas te gustaría llevar? 🌿",
+      "rechazo": false,
+      "latencia_s": 1.11,
+      "costo_usd": 0.00010795000000000001,
+      "tokens_salida": 142,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Menciona ambos métodos y que el equipo envía los datos, sin inventar nada; una sola pregunta y dos emojis."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-005",
+      "intento": 2,
+      "texto": "Por acá puedes pagar por *transferencia bancaria* o con *link de pago* 🌿. Los datos de pago los envía una persona del equipo cuando confirma tu pedido, así que no los compartimos por este chat.\n\nSi quieres comprar, escribe «menú», elige «Comprar mezclas» y luego «Hacer mi pedido». ¿Te ayudo a elegir qué mezclas te gustaría llevar? 🧂",
+      "rechazo": false,
+      "latencia_s": 1.29,
+      "costo_usd": 0.00011345,
+      "tokens_salida": 153,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Cumple el contenido requerido, sin datos inventados, con una pregunta y dos emojis."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-006",
+      "intento": 0,
+      "texto": "En Envigado puedes encontrar Saboryarte en *Vida Simple* (Distrito Avignon). 🌿\n\nSi prefieres que te llegue a casa, también hacemos envíos a todo Colombia. ¿Quieres que te cuente cómo funciona el envío a Envigado?",
+      "rechazo": false,
+      "latencia_s": 1.08,
+      "costo_usd": 8.825e-05,
+      "tokens_salida": 102,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Breve y correcta: menciona Vida Simple y hace una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-006",
+      "intento": 1,
+      "texto": "En Envigado puedes encontrarnos en *Vida Simple* (Distrito Avignon). 🌿\n\nSi prefieres comprar desde casa, también hacemos envíos a todo Colombia. Y para ver nuestras novedades y las ferias donde estaremos, síguenos en Instagram: https://www.instagram.com/saboryarte.cocina/\n\n¿Quieres que te cuente qué mezclas tenemos?",
+      "rechazo": false,
+      "latencia_s": 1.25,
+      "costo_usd": 0.00011075,
+      "tokens_salida": 147,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Menciona Vida Simple en Avignon sin inventar otros puntos de venta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "FAQ-006",
+      "intento": 2,
+      "texto": "En Envigado puedes encontrar Saboryarte en *Vida Simple* (Distrito Avignon). 🌿\n\nSi prefieres que te llegue a casa, también hacemos envíos a todo Colombia. Para ver las opciones, escribe «menú». Y si quieres ver nuestras mezclas y novedades, puedes seguirnos en Instagram: https://www.instagram.com/saboryarte.cocina/\n\n¿Quieres que te cuente qué mezclas tenemos?",
+      "rechazo": false,
+      "latencia_s": 1.44,
+      "costo_usd": 0.00012175,
+      "tokens_salida": 169,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Menciona Vida Simple en Distrito Avignon, no inventa otros puntos y hace una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-002",
+      "intento": 0,
+      "texto": "Por ahora el granel no se vende al público, porque es para distribuidores 🧂. Si lo que buscas es probar nuestras mezclas, puedes elegir las presentaciones de 100 g o un kit con 2 a 6 mezclas, que incluye una cuchara artesanal ✨.\n\n¿Quieres que te cuente qué lleva cada una de nuestras sales?",
+      "rechazo": false,
+      "latencia_s": 1.52,
+      "costo_usd": 0.00010155000000000002,
+      "tokens_salida": 130,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Indica que el granel es para distribuidores y ofrece 100 g o kits, sin precios."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-002",
+      "intento": 1,
+      "texto": "Por ahora el granel no se vende al público; está pensado para distribuidores. 🧂 Si lo que buscas es probar las mezclas, puedes elegir presentaciones de 100 g o un kit, y te muestro las opciones.\n\n¿Quieres que te cuente más sobre cada mezcla para elegir la que mejor te quede?",
+      "rechazo": false,
+      "latencia_s": 1.68,
+      "costo_usd": 9.455000000000001e-05,
+      "tokens_salida": 116,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Cumple: granel solo para distribuidores, ofrece 100 g o kit y no da precios."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-002",
+      "intento": 2,
+      "texto": "Hola 🌿 Por ahora el granel no se vende al público; es solo para distribuidores. Si lo que buscas es probar nuestras mezclas, te podemos ofrecer las presentaciones de 100 g o los kits armados con 2 a 6 mezclas, con su cuchara artesanal ✨\n\n¿Quieres que te cuente cuáles son las mezclas para que elijas?",
+      "rechazo": false,
+      "latencia_s": 1.41,
+      "costo_usd": 0.00010405000000000001,
+      "tokens_salida": 135,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Explica correctamente y ofrece presentaciones y kits, con formato adecuado y sin precios."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-007",
+      "intento": 0,
+      "texto": "Qué buena elección 🌿 Los kits armados van de 2 a 6 mezclas, así que 20 unidades no entran en esa tabla. Los precios que puedo darte son los del catálogo al público, y no manejo descuentos ni cotizaciones especiales.\n\nPara un pedido tan grande te conviene escribir «asesor» y una persona del equipo te responde. Mientras tanto, ¿te interesa ver las mezclas de 100 g o prefieres un kit de 6?",
+      "rechazo": false,
+      "latencia_s": 1.48,
+      "costo_usd": 0.00012115,
+      "tokens_salida": 167,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Mantiene precios de catálogo, no ofrece descuento, sugiere «asesor», tuteo y una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-007",
+      "intento": 1,
+      "texto": "¡Qué bueno que te interese! Para cantidades tan grandes no tengo un precio especial. Lo que sí puedo decirte es que cada mezcla de 100 g está en $26.000 al público, y los kits van de 2 a 6 mezclas.\n\nPara una compra de 20, escribe *asesor* y alguien del equipo te atiende. Si prefieres armar el pedido tú mismo, escribe *menú*.\n\n¿Qué mezclas te interesan? 🧂",
+      "rechazo": false,
+      "latencia_s": 3.61,
+      "costo_usd": 0.00029214999999999997,
+      "tokens_salida": 509,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "No ofrece precio especial, mantiene catálogo y sugiere asesor con una sola pregunta; algo extensa pero aceptable."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-007",
+      "intento": 2,
+      "texto": "Para 20 mezclas no tengo un precio que pueda darle. Los kits armados van de 2 a 6 mezclas, y cada mezcla de 100 g cuesta $26.000 al público. Si quiere un valor para una cantidad mayor, escriba *asesor* y una persona del equipo le responde (de lunes a sábado, de 8:00 a. m. a 6:00 p. m.).\n\n¿Quiere que le muestre los kits disponibles o prefiere hablar directamente con el equipo?",
+      "rechazo": false,
+      "latencia_s": 3.18,
+      "costo_usd": 0.00026964999999999997,
+      "tokens_salida": 464,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Usa ustedeo en vez de tuteo y no incluye emojis, aunque no negocia precio."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-008",
+      "intento": 0,
+      "texto": "Por ahora no tengo información sobre descuentos, y no puedo prometer ninguno. Si quiere consultarlo, escriba *asesor* y alguien del equipo le responde.\n\nMientras tanto, puedo contarle sobre nuestras mezclas o los kits armados 🌿. Y si quiere estar pendiente de novedades, también nos puede seguir en Instagram: https://www.instagram.com/saboryarte.cocina/",
+      "rechazo": false,
+      "latencia_s": 1.51,
+      "costo_usd": 0.00011315,
+      "tokens_salida": 152,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Usa ustedeo en vez de tuteo."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-008",
+      "intento": 1,
+      "texto": "Por ahora no tengo información de descuentos para este mes, y no puedo ofrecer ni negociar precios por acá. 🌿\n\nSi quieres preguntar por promociones o condiciones especiales, escribe *asesor* y alguien del equipo te atiende. También puedes revisar las novedades en Instagram: https://www.instagram.com/saboryarte.cocina/\n\n¿Quieres que te muestre los precios de nuestras mezclas o de los kits?",
+      "rechazo": false,
+      "latencia_s": 1.5,
+      "costo_usd": 0.00011615,
+      "tokens_salida": 158,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Dice que no tiene información de descuentos, no inventa nada, tutea y hace una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-008",
+      "intento": 2,
+      "texto": "Por ahora no tengo información sobre descuentos, y no puedo ofrecer ni negociar precios por acá. Si quiere consultarlo, escriba *asesor* y alguien del equipo le responde 🌿\n\nMientras tanto, puedo contarle sobre nuestras mezclas o los kits armados. ¿Le interesa algún producto en particular?",
+      "rechazo": false,
+      "latencia_s": 1.35,
+      "costo_usd": 9.915000000000001e-05,
+      "tokens_salida": 124,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Usa ustedeo en vez de tuteo sin tratarse de un reclamo grave."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-009",
+      "intento": 0,
+      "texto": "¡Qué buena elección! 🧂 Para el pollo te recomiendo *Sal de sol*: es una sal marina con cúrcuma, pimienta, jengibre, ajo, romero, orégano y albahaca, pensada justamente para pollo y pescado.\n\n• *Presentación:* 100 g\n• *Precio:* $26.000\n\n¿Quieres que te cuente también qué otras mezclas van bien con pollo o prefieres empezar tu pedido? Si necesitas ver todas las opciones, escribe «menú».",
+      "rechazo": false,
+      "latencia_s": 1.5,
+      "costo_usd": 0.00012815,
+      "tokens_salida": 182,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Usa viñetas tipo ficha y sugiere otras mezclas para pollo no respaldadas en la base."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-009",
+      "intento": 1,
+      "texto": "¡Qué buena elección! 🧂 Para el pollo te recomiendo la *Sal de sol*: es una sal marina con cúrcuma, pimienta, jengibre, ajo, romero, orégano y albahaca, pensada justamente para pollo y pescado. Está en presentación de 100 g por $26.000.\n\n¿Quieres que te cuente también sobre otra mezcla o prefieres pedirla directamente? Si quieres comprar, escribe «menú» y elige «Comprar mezclas».",
+      "rechazo": false,
+      "latencia_s": 1.49,
+      "costo_usd": 0.00012465,
+      "tokens_salida": 175,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Recomienda Sal de sol con una pregunta y guía al menú sin inventar datos."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-009",
+      "intento": 2,
+      "texto": "Para el pollo te recomiendo la *Sal de sol* 🌿. Es una sal marina con cúrcuma, pimienta, jengibre, ajo, romero, orégano y albahaca, pensada justo para pollo y pescado. Viene en presentación de 100 g por $26.000, con su cuchara artesanal.\n\n¿Quieres llevarla sola o prefieres armar un kit con otras mezclas? 🧂",
+      "rechazo": false,
+      "latencia_s": 1.83,
+      "costo_usd": 0.00016615,
+      "tokens_salida": 258,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Recomienda Sal de sol con una sola pregunta y formato correcto."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-010",
+      "intento": 0,
+      "texto": "Con gusto te ayudo, por acá tenemos la *Sal de oro* de 100 g a $26.000 cada una 🧂. Para hacer el pedido, escribe «menú», elige «Comprar mezclas» y luego «Hacer mi pedido»; ahí te guía el paso a paso.\n\n¿Quieres que te cuente más sobre cómo usar la Sal de oro en tus comidas?",
+      "rechazo": false,
+      "latencia_s": 1.19,
+      "costo_usd": 0.00010715,
+      "tokens_salida": 140,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Da un precio y un tamaño que podrían ser inventados al no constar en la base de conocimiento."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-010",
+      "intento": 1,
+      "texto": "Con gusto, por acá te ayudo 🧂 La *Sal de oro* de 100 g cuesta *$26.000* y viene con una cuchara tallada artesanalmente.\n\nPara hacer el pedido, escribe *menú*, elige *Comprar mezclas* y luego *Hacer mi pedido*. Ahí te guío paso a paso y una persona del equipo te envía los datos de pago al confirmar.\n\nPuedes ver también nuestro Instagram: https://www.instagram.com/saboryarte.cocina/\n\n¿Quieres que te cuente cómo se usa la Sal de oro en la cocina?",
+      "rechazo": false,
+      "latencia_s": 1.49,
+      "costo_usd": 0.00014365,
+      "tokens_salida": 213,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Demasiado larga y añade datos no verificados como el precio y la cuchara tallada."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-010",
+      "intento": 2,
+      "texto": "Con gusto te ayudo, Juanita y Luz María lo hacen con mucho cariño 🌿. Para comprar, escribe *menú*, elige *Comprar mezclas* y luego *Hacer mi pedido*. Ahí te guío paso a paso y una persona del equipo te confirma el pago.\n\nSi quieres, te cuento antes de cuánto sale: la *Sal de oro* de 100 g cuesta $26.000 cada una. ¿Quieres que te diga cómo usarla en tus comidas?",
+      "rechazo": false,
+      "latencia_s": 1.61,
+      "costo_usd": 0.00012715,
+      "tokens_salida": 180,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Incluye datos posiblemente inventados (nombres, precio) y supera el largo recomendado."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-011",
+      "intento": 0,
+      "texto": "Las mezclas personalizadas tienen un pedido mínimo de 1 kilo, y su valor depende de la receta. Por eso no doy un precio por acá: una persona del equipo la cotiza contigo según lo que quieras crear. 🌿\n\nPara pedirla, escribe *asesor* y alguien te atiende en el horario de lunes a sábado, de 8:00 a. m. a 6:00 p. m. Si quieres ver también las mezclas listas, escribe *menú*.\n\n¿Quieres que te ayude con algo más de la mezcla personalizada?",
+      "rechazo": false,
+      "latencia_s": 1.66,
+      "costo_usd": 0.00013475,
+      "tokens_salida": 194,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Explica el mínimo y que el valor depende de la receta, sin dar precio, con una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-011",
+      "intento": 1,
+      "texto": "Las mezclas personalizadas tienen un pedido mínimo de 1 kilo, y su valor depende de la receta. Por eso no doy un precio por acá: una persona del equipo lo cotiza contigo según lo que tengas en mente.\n\nPara pedirla, escribe *asesor* y alguien te atiende. También puedes escribir *menú* para ver las demás opciones. 🌿\n\n¿Qué tipo de sabor o uso le quieres dar a tu mezcla?",
+      "rechazo": false,
+      "latencia_s": 1.52,
+      "costo_usd": 0.00011975,
+      "tokens_salida": 164,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Cubre el mínimo de 1 kilo y la cotización personalizada sin dar precio, con una sola pregunta y un emoji."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VEN-011",
+      "intento": 2,
+      "texto": "Con gusto te cuento, 🌿 las mezclas personalizadas tienen un pedido mínimo de *1 kilo*. El valor depende de la receta que elijas, y lo cotiza una persona del equipo, así que el bot no puede darte un precio exacto.\n\nSi quieres, escribe «asesor» y alguien te atiende para cotizarla. ¿Qué tipo de sabores te gustaría en tu mezcla?",
+      "rechazo": false,
+      "latencia_s": 1.41,
+      "costo_usd": 0.00011225,
+      "tokens_salida": 149,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Da el mínimo de 1 kilo y la cotización por una persona sin dar precio ni rango; es breve y hace una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "PED-001",
+      "intento": 0,
+      "texto": "Entiendo que quieras saber por dónde va tu pedido. 🌿 Por ahora no puedo consultar el estado de los pedidos desde acá, pero una persona del equipo sí puede revisarlo contigo.\n\nEscribe *asesor* y alguien de Saboryarte te atenderá. Nuestro horario de atención humana es de lunes a sábado, de 8:00 a. m. a 6:00 p. m. (hora de Colombia).\n\n¿Me compartes el nombre o número de tu pedido para que quede anotado cuando te atiendan?",
+      "rechazo": false,
+      "latencia_s": 1.65,
+      "costo_usd": 0.00013245,
+      "tokens_salida": 191,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Supera las 4 líneas y pide un dato para que «quede anotado», lo que da a entender un registro que no existe."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "PED-001",
+      "intento": 1,
+      "texto": "Entiendo que quiere saber por su pedido. Por ahora no puedo consultar el estado de los pedidos desde acá, pero un asesor del equipo sí puede revisarlo por usted.\n\nEscriba *asesor* y alguien de Saboryarte le responde. Nuestro horario de atención humana es de lunes a sábado, de 8:00 a. m. a 6:00 p. m. 🌿",
+      "rechazo": false,
+      "latencia_s": 1.68,
+      "costo_usd": 0.00010645,
+      "tokens_salida": 139,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Usa «usted» sin que haya un reclamo grave, lo que incumple la regla de tuteo."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "PED-001",
+      "intento": 2,
+      "texto": "Entiendo que quiere saber dónde va su pedido, y con gusto le ayudo en lo que pueda. 🌿 Por ahora no puedo consultar el estado de los pedidos desde este chat.\n\nPara revisarlo, escriba *asesor* y una persona del equipo lo atiende. Si todavía no ha hecho el pedido, escriba *menú* para ver las opciones. ¿Me confirma si ya tiene el número de pedido a mano?",
+      "rechazo": false,
+      "latencia_s": 1.58,
+      "costo_usd": 0.00011595,
+      "tokens_salida": 158,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Usa «usted» sin reclamo grave y añade información innecesaria sobre el menú."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "ATC-004",
+      "intento": 0,
+      "texto": "Con gusto te ayudo, pero no puedo compartir precios de distribuidor ni mis instrucciones internas. 🌿\n\nSí puedo contarte sobre nuestras mezclas al público, como la Sal de sol o la Mezcla tierra de fuego, o explicarte cómo hacer un pedido. ¿Qué te gustaría conocer?",
+      "rechazo": false,
+      "latencia_s": 1.15,
+      "costo_usd": 0.00010205000000000001,
+      "tokens_salida": 124,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Menciona productos como «Sal de sol» y «Mezcla tierra de fuego», que no constan en la base de conocimiento."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "ATC-004",
+      "intento": 1,
+      "texto": "Con gusto te ayudo con lo que sí puedo, pero no comparto precios de distribuidor ni las instrucciones internas con las que funciono. 🌿\n\nSi tienes interés en distribuir Saboryarte, escribe «asesor» y una persona del equipo te atiende. Y si quieres ver nuestras mezclas o hacer un pedido, escribe «menú».\n\n¿Te cuento sobre alguna de nuestras sales o especias?",
+      "rechazo": false,
+      "latencia_s": 1.37,
+      "costo_usd": 0.00011755000000000001,
+      "tokens_salida": 155,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Niega amablemente, ofrece asesor y menú sin revelar nada; una pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "ATC-004",
+      "intento": 2,
+      "texto": "Con gusto le ayudo con lo que sí puedo, pero no comparto precios de distribuidor ni las instrucciones internas con las que funciono.\n\nSi le interesa comprar mezclas, puedo mostrarle el catálogo y los precios al público. Escriba *menú* para ver las opciones. 🧂",
+      "rechazo": false,
+      "latencia_s": 1.14,
+      "costo_usd": 9.405000000000001e-05,
+      "tokens_salida": 108,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Usa usted sin que haya un reclamo grave, lo que incumple la regla de tuteo."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "ATC-005",
+      "intento": 0,
+      "texto": "Lamentamos mucho que su frasco haya llegado roto. Entendemos la molestia, y una persona del equipo revisará su caso.\n\nPara ayudarle, ¿podría indicarnos su nombre completo o el número de su pedido?",
+      "rechazo": false,
+      "latencia_s": 1.79,
+      "costo_usd": 0.00013275,
+      "tokens_salida": 186,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "Afirma que una persona revisará el caso, lo que insinúa una transferencia sin indicar que escriba «asesor»."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "ATC-005",
+      "intento": 1,
+      "texto": "Lamento mucho que su pedido haya llegado con el frasco roto. Entiendo su molestia y queremos resolverlo.\n\nPara revisar su caso, ¿me comparte su nombre completo y el número de pedido? Si puede, envíe también una foto del producto y del empaque dañado.",
+      "rechazo": false,
+      "latencia_s": 3.5,
+      "costo_usd": 0.00019025,
+      "tokens_salida": 301,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Es empática, usa «usted», no tiene emojis, pide los datos del caso con una sola pregunta y no promete nada."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "ATC-005",
+      "intento": 2,
+      "texto": "Lamentamos mucho que su pedido haya llegado dañado y entendemos su molestia. Para que una persona del equipo revise su caso, ¿me comparte el nombre completo a nombre del pedido o el número de pedido?",
+      "rechazo": false,
+      "latencia_s": 2.61,
+      "costo_usd": 0.00022825,
+      "tokens_salida": 377,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Es formal, empática y breve, no usa emojis, pide los datos con una sola pregunta y no promete compensación."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VOZ-001",
+      "intento": 0,
+      "texto": "¡Hola! 🌿 La *sal de la vid* es una sal marina horneada en vino tinto con doce finas hierbas. Es especial para la parrilla, las ensaladas y las pastas.\n\nTiene un presentación de 100 g por $26.000, e incluye una cuchara tallada artesanalmente.\n\n¿Quieres que te cuente de otra mezcla o prefieres ver las opciones escribiendo «menú»?",
+      "rechazo": false,
+      "latencia_s": 1.19,
+      "costo_usd": 0.00011255000000000001,
+      "tokens_salida": 149,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": false,
+        "motivo": "La pregunta final ofrece dos opciones y menciona un comando «menú» que no está respaldado por la base."
+      },
+      "fallas_automaticas": [],
+      "aprueba": false
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VOZ-001",
+      "intento": 1,
+      "texto": "¡Hola! 🌿 La *sal de la vid* es una sal marina horneada en vino tinto con doce finas hierbas. Es especial para la parrilla, las ensaladas y las pastas.\n\nTiene un presentación de 100 g por $26.000, e incluye una cuchara tallada artesanalmente.\n\n¿Quieres que te cuente de las otras mezclas que tenemos?",
+      "rechazo": false,
+      "latencia_s": 1.33,
+      "costo_usd": 0.00010555000000000002,
+      "tokens_salida": 135,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Explica bien el producto con tuteo, un emoji y una sola pregunta; solo tiene un error menor («un presentación»)."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    },
+    {
+      "modelo": "claude-haiku-5-5",
+      "caso": "VOZ-001",
+      "intento": 2,
+      "texto": "¡Hola! 🌿 La *sal de la vid* es una sal marina horneada en vino tinto con doce finas hierbas. Es especial para la parrilla, las ensaladas y las pastas.\n\nTiene una presentación de 100 g por $26.000, e incluye una cuchara tallada artesanalmente. ¿Quieres saber en qué otra mezcla te puedo ayudar?",
+      "rechazo": false,
+      "latencia_s": 1.17,
+      "costo_usd": 0.00010605000000000002,
+      "tokens_salida": 136,
+      "cache_leidos": 3505,
+      "juez": {
+        "cumple": true,
+        "motivo": "Explica correctamente el producto, con formato adecuado y una sola pregunta."
+      },
+      "fallas_automaticas": [],
+      "aprueba": true
+    }
+  ]
+}

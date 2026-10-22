@@ -12,18 +12,28 @@ logger = logging.getLogger(__name__)
 
 _client = AsyncAnthropic(api_key=settings.anthropic_api_key)
 
+# Sonnet 5.5 es el modelo más alto que usa el bot (decisión de costo del 21 oct 2026; ver evals/).
+# Sin «fallbacks» del servidor: podrían enrutar a un modelo más caro.
+_RESPONSE_MODEL = "claude-sonnet-5-5"
+
 
 async def ask_claude(prompt: str, history: list[dict] | None = None) -> str:
     """history: intercambios previos de la conversación, alternando user/assistant y empezando por user."""
     async with _client.messages.stream(
-        model="claude-opus-4-8",
-        max_tokens=1024,
+        model=_RESPONSE_MODEL,
+        max_tokens=16000,
         thinking={"type": "adaptive"},
-        system=system_prompt(),
+        # Chat de atención: esfuerzo bajo. Aprobó 45/48 en evals/comparar_modelos.py.
+        output_config={"effort": "low"},
+        # El system prompt (voz de marca + base de conocimiento) es igual en cada llamada: se cachea.
+        system=[{"type": "text", "text": system_prompt(), "cache_control": {"type": "ephemeral"}}],
         messages=[*(history or []), {"role": "user", "content": prompt}],
     ) as stream:
         message = await stream.get_final_message()
 
+    if message.stop_reason == "refusal":
+        logger.warning("Respuesta declinada por el modelo")
+        return ""
     for block in message.content:
         if block.type == "text":
             return block.text
@@ -33,7 +43,8 @@ async def ask_claude(prompt: str, history: list[dict] | None = None) -> str:
 # ── Extracción estructurada (pedido y datos de envío) ─────────────────────────
 # Claude solo interpreta el texto del cliente; el código valida contra el catálogo y hace las cuentas.
 
-_EXTRACTION_MODEL = "claude-opus-5-5"
+# Extracción simple y con esquema: Haiku 5.5 basta y cuesta una fracción.
+_EXTRACTION_MODEL = "claude-haiku-5-5"
 
 
 class LineaPedido(BaseModel):
@@ -83,13 +94,10 @@ Reglas:
 async def _extract(instructions: str, content: str, output_format: type[BaseModel]) -> BaseModel | None:
     """Devuelve la extracción validada, o None si la API falla o el modelo declina."""
     try:
-        response = await _client.beta.messages.parse(
+        response = await _client.messages.parse(
             model=_EXTRACTION_MODEL,
             max_tokens=16000,
             output_config={"effort": "low"},
-            # Si el modelo declina por política, la API reintenta en otro modelo dentro de la misma llamada.
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
             system=instructions,
             messages=[{"role": "user", "content": content}],
             output_format=output_format,
