@@ -28,9 +28,11 @@ def mocks(monkeypatch):
         "text": AsyncMock(return_value=True),
         "list": AsyncMock(return_value=True),
     }
-    monkeypatch.setattr("app.main.ask_claude", m["ask"])
-    monkeypatch.setattr("app.main.send_text", m["text"])
-    monkeypatch.setattr("app.main.send_list", m["list"])
+    monkeypatch.setattr("app.router.ask_claude", m["ask"])
+    monkeypatch.setattr("app.router.send_text", m["text"])
+    monkeypatch.setattr("app.router.send_list", m["list"])
+    m["buttons"] = AsyncMock(return_value=True)
+    monkeypatch.setattr("app.router.send_buttons", m["buttons"])
     return m
 
 
@@ -108,7 +110,7 @@ class TestDeduplicacion:
     def test_eleccion_duplicada_responde_una(self, client, mocks):
         client.post("/webhook", json=eleccion_lista("wamid.ldup", "menu_comprar"))
         client.post("/webhook", json=eleccion_lista("wamid.ldup", "menu_comprar"))
-        mocks["text"].assert_called_once()
+        mocks["list"].assert_called_once()
 
 
 class TestMenu:
@@ -124,7 +126,7 @@ class TestMenu:
         mocks["text"].assert_called_once_with(REMITENTE, EN_CONSTRUCCION.format(opcion="🤝 Soy proveedor"))
         conv = load_conversation(REMITENTE)
         assert (conv.flujo_activo, conv.paso) == ("proveedor", "V1")
-        assert conv.historial[0] == {"role": "user", "content": "Elegí «🤝 Soy proveedor» en el menú"}
+        assert conv.historial[0] == {"role": "user", "content": "Elegí «🤝 Soy proveedor»"}
 
     def test_respuesta_de_boton_tambien_se_reconoce(self, client, mocks):
         payload = _payload({"id": "wamid.b1", "type": "interactive", "interactive": {
@@ -148,7 +150,7 @@ class TestMenu:
     def test_saludo_a_mitad_de_flujo_va_a_claude(self, client, mocks):
         client.post("/webhook", json=eleccion_lista("wamid.f1", "menu_comprar", "🧂 Comprar mezclas"))
         client.post("/webhook", json=texto("wamid.f2", "hola"))
-        mocks["list"].assert_not_called()
+        mocks["list"].assert_called_once()  # solo P1, no el menú G1
         mocks["ask"].assert_called_once()
 
 
@@ -207,6 +209,18 @@ class TestWhatsAppInteractivo:
         filas = lista["action"]["sections"][0]["rows"]
         assert len(filas) == 7
         assert filas[0] == {"id": "menu_comprar", "title": "🧂 Comprar mezclas", "description": "Catálogo, kits y pedidos"}
+
+    def test_send_buttons_arma_el_payload_de_botones(self, graph):
+        enviados, _ = graph
+        botones = [{"id": "p9s_si", "title": "Sí"}, {"id": "p9s_no", "title": "No"}]
+        assert asyncio.run(whatsapp.send_buttons(REMITENTE, "¿Te sirvió?", botones)) is True
+        interactivo = enviados[0]["interactive"]
+        assert interactivo["type"] == "button"
+        assert interactivo["body"] == {"text": "¿Te sirvió?"}
+        assert interactivo["action"]["buttons"] == [
+            {"type": "reply", "reply": {"id": "p9s_si", "title": "Sí"}},
+            {"type": "reply", "reply": {"id": "p9s_no", "title": "No"}},
+        ]
 
     def test_envio_rechazado_devuelve_false(self, graph):
         _, respuesta = graph

@@ -1,6 +1,7 @@
 from anthropic import AsyncAnthropic
 
 from .config import settings
+from .prompt import system_prompt
 
 _client = AsyncAnthropic(api_key=settings.anthropic_api_key)
 
@@ -11,6 +12,7 @@ async def ask_claude(prompt: str, history: list[dict] | None = None) -> str:
         model="claude-opus-4-8",
         max_tokens=1024,
         thinking={"type": "adaptive"},
+        system=system_prompt(),
         messages=[*(history or []), {"role": "user", "content": prompt}],
     ) as stream:
         message = await stream.get_final_message()

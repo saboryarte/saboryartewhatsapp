@@ -83,6 +83,18 @@ async def send_list(to: str, body: str, button: str, rows: list[dict[str, str]],
     })
 
 
+async def send_buttons(to: str, body: str, buttons: list[dict[str, str]]) -> bool:
+    """Envía hasta 3 botones de respuesta. Cada botón lleva id y title."""
+    return await _send(to, {
+        "type": "interactive",
+        "interactive": {
+            "type": "button",
+            "body": {"text": body},
+            "action": {"buttons": [{"type": "reply", "reply": b} for b in buttons]},
+        },
+    })
+
+
 def interactive_reply(interactive: dict[str, Any] | None) -> dict[str, Any] | None:
     """Extrae {id, title} de la respuesta a una lista o a un botón; None si no es una respuesta."""
     if not interactive:

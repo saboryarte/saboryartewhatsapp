@@ -5,14 +5,21 @@ from pathlib import Path
 from typing import Any
 
 _MENSAJES_PATH = Path(__file__).with_name("mensajes.json")
+_CATALOGO_PATH = Path(__file__).with_name("catalogo.json")
 
 MENU_PRINCIPAL = "G1"
 
-# Respuesta temporal mientras las rutas del menú no estén construidas (fase 1).
+# Respuestas temporales para los pasos que aún no están construidos.
 EN_CONSTRUCCION = (
     "¡Listo! Elegiste «{opcion}» 🌿 Esa parte del asistente todavía está en construcción.\n\n"
     "Mientras tanto, cuéntame en un mensaje qué necesitas y con gusto te ayudo."
 )
+_EN_CONSTRUCCION_POR_PASO = {
+    "P6": "¡Qué buena elección! 🙌 Tomar pedidos por este chat todavía está en construcción.\n\n"
+    "Mientras tanto, puedes seguir viendo el catálogo o escribirme tus dudas. Escribe «menú» para volver a empezar.",
+    "T1": "Todavía no puedo pasarte con una persona desde este chat 🛠️ Esa parte está en construcción.\n\n"
+    "Mientras tanto, cuéntame qué necesitas y te ayudo con gusto.",
+}
 
 
 @cache
@@ -42,10 +49,6 @@ def step_options(step_id: str) -> list[dict[str, Any]]:
     return step.get("opciones", [])
 
 
-def find_option(step_id: str, option_id: str) -> dict[str, Any] | None:
-    return next((op for op in step_options(step_id) if op["id"] == option_id), None)
-
-
 def list_rows(step_id: str) -> list[dict[str, str]]:
     """Filas para send_list a partir de las opciones del paso."""
     rows = []
@@ -55,3 +58,54 @@ def list_rows(step_id: str) -> list[dict[str, str]]:
             row["description"] = op["descripcion"]
         rows.append(row)
     return rows
+
+
+def under_construction(step_id: str, option_title: str) -> str:
+    """Respuesta para una opción que lleva a un paso que aún no está construido."""
+    return _EN_CONSTRUCCION_POR_PASO.get(step_id) or EN_CONSTRUCCION.format(opcion=option_title)
+
+
+@cache
+def _opciones_por_id() -> dict[str, tuple[str, dict[str, Any]]]:
+    """Índice opción_id → (paso_id, opción). Los ids de opción son únicos en todo mensajes.json."""
+    return {op["id"]: (step_id, op) for step_id, (_, step) in _pasos().items() for op in step.get("opciones", [])}
+
+
+def find_any_option(option_id: str) -> tuple[str, dict[str, Any]] | None:
+    """Busca una opción en cualquier paso: el cliente puede tocar una lista o botón enviados antes."""
+    return _opciones_por_id().get(option_id)
+
+
+def button_rows(step_id: str) -> list[dict[str, str]]:
+    """Botones para send_buttons a partir de las opciones del paso."""
+    return [{"id": op["id"], "title": op["titulo"]} for op in step_options(step_id)]
+
+
+@cache
+def _catalogo() -> dict[str, Any]:
+    return json.loads(_CATALOGO_PATH.read_text(encoding="utf-8"))
+
+
+def get_product(product_id: str) -> dict[str, Any] | None:
+    return next((p for p in _catalogo()["productos"] if p["id"] == product_id), None)
+
+
+def format_price(value: int) -> str:
+    return "$" + f"{value:,}".replace(",", ".")
+
+
+def product_card(product: dict[str, Any]) -> str:
+    """Texto de la ficha de producto (P2F)."""
+    return (
+        f"*{product['nombre']}* ✨\n{product['descripcion']}\n\n"
+        f"{product['presentacion']}, con cuchara tallada artesanalmente · {format_price(product['precio'])}"
+    )
+
+
+def recommendation(product_ids: list[str]) -> str:
+    """Texto con las mezclas recomendadas para un uso (P5)."""
+    lines = []
+    for product_id in product_ids:
+        product = get_product(product_id)
+        lines.append(f"• *{product['nombre']}*: {product['descripcion']}")
+    return "Te recomiendo estas mezclas 🌿\n\n" + "\n".join(lines)

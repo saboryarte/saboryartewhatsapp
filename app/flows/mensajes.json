@@ -73,12 +73,12 @@
           "texto": "Estas son nuestras 6 mezclas ✨ Toca la que quieras conocer y te cuento de qué está hecha.",
           "boton_lista": "Ver mezclas",
           "opciones": [
-            {"id": "prod_sal_de_oro", "titulo": "Sal de oro", "va_a": "P2F"},
-            {"id": "prod_sal_de_sol", "titulo": "Sal de sol", "va_a": "P2F"},
-            {"id": "prod_sal_de_luna_rosa", "titulo": "Sal de luna rosa", "va_a": "P2F"},
-            {"id": "prod_sal_de_la_vid", "titulo": "Sal de la vid", "va_a": "P2F"},
-            {"id": "prod_sal_chilemon", "titulo": "Sal chilemon", "va_a": "P2F"},
-            {"id": "prod_tierra_de_fuego", "titulo": "Mezcla tierra de fuego", "va_a": "P2F"}
+            {"id": "prod_sal_de_oro", "titulo": "Sal de oro", "va_a": "P2F", "producto": "sal_de_oro"},
+            {"id": "prod_sal_de_sol", "titulo": "Sal de sol", "va_a": "P2F", "producto": "sal_de_sol"},
+            {"id": "prod_sal_de_luna_rosa", "titulo": "Sal de luna rosa", "va_a": "P2F", "producto": "sal_de_luna_rosa"},
+            {"id": "prod_sal_de_la_vid", "titulo": "Sal de la vid", "va_a": "P2F", "producto": "sal_de_la_vid"},
+            {"id": "prod_sal_chilemon", "titulo": "Sal chilemon", "va_a": "P2F", "producto": "sal_chilemon"},
+            {"id": "prod_tierra_de_fuego", "titulo": "Mezcla tierra de fuego", "va_a": "P2F", "producto": "tierra_de_fuego"}
           ]
         },
         {
@@ -95,9 +95,9 @@
           "id": "P3", "tipo": "botones",
           "texto": "Las que más se llevan nuestros clientes:\n\n• Sal de oro: con ajo negro, tomillo, pimienta y cúrcuma. Va con cualquier tipo de cocción.\n• Sal de sol: con jengibre, romero, orégano y albahaca. Especial para pollo y pescado.\n• Chilemon: con limón deshidratado y chiles. Perfecta para frutas y para michelar. ¡Con mango es una delicia! 🥭\n\nCada una viene de 100 g, con una cuchara tallada artesanalmente, por $26.000. ¿Cuál quieres probar?",
           "opciones": [
-            {"id": "p3_oro", "titulo": "Sal de oro", "va_a": "P6"},
-            {"id": "p3_sol", "titulo": "Sal de sol", "va_a": "P6"},
-            {"id": "p3_chilemon", "titulo": "Chilemon", "va_a": "P6"}
+            {"id": "p3_oro", "titulo": "Sal de oro", "va_a": "P6", "producto": "sal_de_oro"},
+            {"id": "p3_sol", "titulo": "Sal de sol", "va_a": "P6", "producto": "sal_de_sol"},
+            {"id": "p3_chilemon", "titulo": "Chilemon", "va_a": "P6", "producto": "sal_chilemon"}
           ],
           "notas": "Cada botón lleva a P6 con esa mezcla ya elegida. Enviar con foto de producto."
         },
@@ -129,13 +129,13 @@
           "texto": "Te ayudo a escoger 🌿 ¿En qué comidas la usarías más?",
           "boton_lista": "Ver opciones",
           "opciones": [
-            {"id": "uso_carnes", "titulo": "Carnes y parrilla", "descripcion": "Carnes, parrilla y costillas", "recomienda": ["Sal de la vid", "Mezcla tierra de fuego"]},
-            {"id": "uso_pollo", "titulo": "Pollo y pescado", "recomienda": ["Sal de sol"]},
-            {"id": "uso_verduras", "titulo": "Verduras y arroces", "descripcion": "Verduras, arroces y ensaladas", "recomienda": ["Sal de sol", "Sal de la vid"]},
-            {"id": "uso_frutas", "titulo": "Frutas y para michelar", "recomienda": ["Sal chilemon"]},
-            {"id": "uso_todo", "titulo": "Para todo un poco", "recomienda": ["Sal de oro", "Sal de luna rosa"]}
+            {"id": "uso_carnes", "titulo": "Carnes y parrilla", "descripcion": "Carnes, parrilla y costillas", "recomienda": ["sal_de_la_vid", "tierra_de_fuego"]},
+            {"id": "uso_pollo", "titulo": "Pollo y pescado", "recomienda": ["sal_de_sol"]},
+            {"id": "uso_verduras", "titulo": "Verduras y arroces", "descripcion": "Verduras, arroces y ensaladas", "recomienda": ["sal_de_sol", "sal_de_la_vid"]},
+            {"id": "uso_frutas", "titulo": "Frutas y para michelar", "recomienda": ["sal_chilemon"]},
+            {"id": "uso_todo", "titulo": "Para todo un poco", "recomienda": ["sal_de_oro", "sal_de_luna_rosa"]}
           ],
-          "notas": "Se responde con la ficha (P2F) de la mezcla recomendada. Recomendaciones sugeridas: ajustar con el equipo."
+          "notas": "Se responde con las mezclas recomendadas (ids de app/flows/catalogo.json) y luego la lista P2. Recomendaciones sugeridas: ajustar con el equipo."
         },
         {
           "id": "P6", "tipo": "libre",
@@ -168,7 +168,7 @@
             {"id": "faq_uso", "titulo": "Cómo usar mis mezclas", "va_a": "P9C"},
             {"id": "faq_donde", "titulo": "Dónde las encuentro", "va_a": "O1"},
             {"id": "faq_quienes", "titulo": "Quiénes somos", "va_a": "P9B"},
-            {"id": "faq_otra", "titulo": "Otra duda", "notas": "Texto libre; responde Claude con la base de conocimiento o traspasa si no hay dato."}
+            {"id": "faq_otra", "titulo": "Otra duda", "va_a": "P9O"}
           ],
           "notas": "Respuestas cortas. Si menciona alergias o salud: «Para eso prefiero que te ayude una persona del equipo y revise los ingredientes contigo» y traspaso con prioridad alta. Cambios o daños: una persona revisa cada caso."
         },
@@ -190,6 +190,11 @@
             {"id": "p9s_no", "titulo": "No", "va_a": "T1"}
           ],
           "notas": "Paso agregado en la adaptación: en el artefacto estaba descrito en la nota de P9."
+        },
+        {
+          "id": "P9O", "tipo": "libre",
+          "texto": "¡Claro! Escríbeme tu duda y con gusto te ayudo 🌿",
+          "notas": "Paso agregado en la adaptación para «Otra duda». La respuesta la da Claude con la base de conocimiento; después se pregunta P9S."
         },
         {
           "id": "P10", "tipo": "texto",

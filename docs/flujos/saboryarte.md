@@ -382,7 +382,7 @@ Esto va al *system prompt* y es el criterio para evaluar las respuestas de Claud
 | V4 | Cucharas y accesorios artesanales | Cucharas y accesorios (+ descripción) |
 
 **Otros cambios**
-- **Pasos explícitos nuevos:** P2F (ficha de producto con sus 3 botones), P9S («¿Te sirvió?») y G4 (segundo fallo de comprensión). En el artefacto estaban descritos dentro de notas.
+- **Pasos explícitos nuevos:** P2F (ficha de producto con sus 3 botones), P9S («¿Te sirvió?»), P9O («Otra duda») y G4 (segundo fallo de comprensión). En el artefacto estaban descritos dentro de notas.
 - **O1** estaba marcado como lista sin opciones; pasa a texto.
 - **Precios de distribuidor** salieron de la tabla pública y de la nota de D8, y se movieron a `interno/distribuidores.md`.
 - **Calificación de distribuidores:** la tabla se convirtió en una regla determinista, y cada opción de D2 trae `canal_objetivo`.
@@ -398,10 +398,10 @@ Ordenado según las fases de la guía.
 |---|---|---|---|
 | 1 | **Estado de conversación** por remitente (§3) | Todas | ✅ Fase 1: SQLite (`app/state.py`), caduca a las 24 h; Claude recibe los últimos 20 mensajes. |
 | 2 | **Deduplicación** por `message.id` | Todas (evita pedidos duplicados) | ✅ Fase 1. |
-| 3 | **Enviar listas y botones** (`interactive`) a partir de `mensajes.json` | Todas | 🟡 Listas sí (menú G1). Botones pendientes. |
-| 4 | **Recibir respuestas** `interactive` (`button_reply`, `list_reply`) y enrutar por `id` de opción | Todas | 🟡 Se leen y se guarda la ruta elegida del menú G1. Las rutas responden «en construcción». |
+| 3 | **Enviar listas y botones** (`interactive`) a partir de `mensajes.json` | Todas | ✅ Listas y botones (`app/router.py`). |
+| 4 | **Recibir respuestas** `interactive` (`button_reply`, `list_reply`) y enrutar por `id` de opción | Todas | 🟡 Navegables: G1, P1–P5, P2F, P9 con sus respuestas (P9B, P9C, P9O, P9S, O1). El resto responde «en construcción», incluidos P6–P8 (pedido). |
 | 5 | **Router** con las reglas transversales y el horario | Todas | 🟡 Saludo → menú, «menú» reinicia, un saludo a mitad de flujo no reinicia. Faltan el horario, «asesor», salud y los dos fallos seguidos. |
-| 6 | ***System prompt*** con voz de marca + `knowledge-base/saboryarte.md` | Consultas, Ventas | Claude no recibe contexto del negocio. |
+| 6 | ***System prompt*** con voz de marca + `knowledge-base/saboryarte.md` | Consultas, Ventas | ✅ `app/prompt.py`. Avisa a Claude que aún no toma pedidos ni traspasa. |
 | 7 | **Cálculo de totales** (catálogo + tarifa por ciudad) para P8 | Compra | No existe. |
 | 8 | **Traspaso real:** dónde llega la ficha, cómo responde el equipo y cómo se reactiva el bot | Todas | No existe. Decisión pendiente (ver abajo). |
 | 9 | **Mensajes no textuales:** O2, y en M3 aceptar audio y foto | Mezcla | Se ignoran sin responder. |

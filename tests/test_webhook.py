@@ -17,9 +17,9 @@ def set_env(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def mock_externos(monkeypatch):
-    monkeypatch.setattr("app.main.ask_claude", AsyncMock(return_value="respuesta de Claude"))
-    monkeypatch.setattr("app.main.send_text", AsyncMock(return_value=None))
-    monkeypatch.setattr("app.main.send_list", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.router.ask_claude", AsyncMock(return_value="respuesta de Claude"))
+    monkeypatch.setattr("app.router.send_text", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.router.send_list", AsyncMock(return_value=None))
 
 
 @pytest.fixture
@@ -145,7 +145,7 @@ class TestReceiveWebhook:
 
     def test_actualizacion_estado_devuelve_200(self, client, monkeypatch):
         ask_mock = AsyncMock(return_value="x")
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [
@@ -195,7 +195,7 @@ class TestReceiveWebhook:
 
     def test_mensaje_texto_sin_from_no_invoca_claude(self, client, monkeypatch):
         ask_mock = AsyncMock(return_value="x")
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "entry-1", "changes": [{"field": "messages", "value": {
@@ -211,7 +211,7 @@ class TestReceiveWebhook:
 
     def test_mensaje_texto_sin_cuerpo_no_invoca_claude(self, client, monkeypatch):
         ask_mock = AsyncMock(return_value="x")
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "entry-1", "changes": [{"field": "messages", "value": {
@@ -227,7 +227,7 @@ class TestReceiveWebhook:
 
     def test_preview_url_sin_body_no_invoca_claude(self, client, monkeypatch):
         ask_mock = AsyncMock(return_value="x")
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "entry-1", "changes": [{"field": "messages", "value": {
@@ -243,7 +243,7 @@ class TestReceiveWebhook:
 
     def test_texto_sin_remitente_no_invoca_claude(self, client, monkeypatch):
         ask_mock = AsyncMock(return_value="x")
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "entry-1", "changes": [{"field": "messages", "value": {
@@ -259,8 +259,8 @@ class TestReceiveWebhook:
 
     def test_texto_con_remitente_y_cuerpo_invoca_claude(self, client, monkeypatch):
         ask_mock = AsyncMock(return_value="respuesta")
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
-        monkeypatch.setattr("app.main.send_text", AsyncMock(return_value=None))
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.send_text", AsyncMock(return_value=None))
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "entry-1", "changes": [{"field": "messages", "value": {
@@ -277,7 +277,7 @@ class TestReceiveWebhook:
     def test_campo_distinto_de_messages_ignorado(self, client, monkeypatch):
         """Cambios con field != 'messages' deben ignorarse y devolver 200."""
         ask_mock = AsyncMock(return_value="x")
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "entry-1", "changes": [
@@ -291,7 +291,7 @@ class TestReceiveWebhook:
     def test_value_sin_mensajes_ni_statuses_devuelve_200(self, client, monkeypatch):
         """Un value vacío (solo metadata) no debe generar error."""
         ask_mock = AsyncMock(return_value="x")
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "entry-1", "changes": [
@@ -311,8 +311,8 @@ class TestReceiveWebhook:
         """Payload con from_user_id (BSUID) debe invocar Claude y enviar respuesta."""
         ask_mock = AsyncMock(return_value="respuesta bsuid")
         send_mock = AsyncMock(return_value=None)
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
-        monkeypatch.setattr("app.main.send_text", send_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.send_text", send_mock)
         resp = client.post("/webhook", json=BSUID_PAYLOAD)
         assert resp.status_code == 200
         ask_mock.assert_called_once_with("Hola desde BSUID", [])
@@ -321,8 +321,8 @@ class TestReceiveWebhook:
     def test_bsuid_envia_al_from_user_id_no_al_contact(self, client, monkeypatch):
         """send_text debe usar message.from_user_id, no contact.user_id, cuando ambos están presentes."""
         send_mock = AsyncMock(return_value=None)
-        monkeypatch.setattr("app.main.ask_claude", AsyncMock(return_value="ok"))
-        monkeypatch.setattr("app.main.send_text", send_mock)
+        monkeypatch.setattr("app.router.ask_claude", AsyncMock(return_value="ok"))
+        monkeypatch.setattr("app.router.send_text", send_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "e1", "changes": [{"field": "messages", "value": {
@@ -339,8 +339,8 @@ class TestReceiveWebhook:
     def test_ambos_identificadores_prefiere_phone(self, client, monkeypatch):
         """Cuando from (teléfono) y from_user_id (BSUID) están presentes, se usa from."""
         send_mock = AsyncMock(return_value=None)
-        monkeypatch.setattr("app.main.ask_claude", AsyncMock(return_value="ok"))
-        monkeypatch.setattr("app.main.send_text", send_mock)
+        monkeypatch.setattr("app.router.ask_claude", AsyncMock(return_value="ok"))
+        monkeypatch.setattr("app.router.send_text", send_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "e1", "changes": [{"field": "messages", "value": {
@@ -364,8 +364,8 @@ class TestReceiveWebhook:
     def test_fallback_a_contact_user_id(self, client, monkeypatch):
         """Sin from ni from_user_id, debe usar contact.user_id como remitente."""
         send_mock = AsyncMock(return_value=None)
-        monkeypatch.setattr("app.main.ask_claude", AsyncMock(return_value="ok"))
-        monkeypatch.setattr("app.main.send_text", send_mock)
+        monkeypatch.setattr("app.router.ask_claude", AsyncMock(return_value="ok"))
+        monkeypatch.setattr("app.router.send_text", send_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "e1", "changes": [{"field": "messages", "value": {
@@ -382,7 +382,7 @@ class TestReceiveWebhook:
     def test_sin_ningun_remitente_no_invoca_claude(self, client, monkeypatch):
         """Sin from, from_user_id ni contact.user_id, el mensaje debe descartarse."""
         ask_mock = AsyncMock(return_value="x")
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "e1", "changes": [{"field": "messages", "value": {
@@ -399,8 +399,8 @@ class TestReceiveWebhook:
     def test_legacy_envia_al_numero_de_telefono(self, client, monkeypatch):
         """Payload legacy debe enviar la respuesta al número de teléfono del campo from."""
         send_mock = AsyncMock(return_value=None)
-        monkeypatch.setattr("app.main.ask_claude", AsyncMock(return_value="ok"))
-        monkeypatch.setattr("app.main.send_text", send_mock)
+        monkeypatch.setattr("app.router.ask_claude", AsyncMock(return_value="ok"))
+        monkeypatch.setattr("app.router.send_text", send_mock)
         resp = client.post("/webhook", json=TEXT_PAYLOAD)
         assert resp.status_code == 200
         send_mock.assert_called_once_with("521234567890", "ok")
@@ -411,8 +411,8 @@ class TestReceiveWebhook:
         """Regresión: contact sin profile no debe generar 422."""
         ask_mock = AsyncMock(return_value="ok")
         send_mock = AsyncMock(return_value=None)
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
-        monkeypatch.setattr("app.main.send_text", send_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.send_text", send_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "e1", "changes": [{"field": "messages", "value": {
@@ -430,7 +430,7 @@ class TestReceiveWebhook:
     def test_regresion_status_read_devuelve_200(self, client, monkeypatch):
         """Regresión: status update 'read' debe devolver 200 sin invocar Claude."""
         ask_mock = AsyncMock(return_value="x")
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "e1", "changes": [{"field": "messages", "value": {
@@ -448,7 +448,7 @@ class TestReceiveWebhook:
     def test_regresion_sin_contacts_devuelve_200(self, client, monkeypatch):
         """Regresión: evento sin contacts (p.ej. solo statuses) debe devolver 200."""
         ask_mock = AsyncMock(return_value="x")
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "e1", "changes": [{"field": "messages", "value": {
@@ -467,8 +467,8 @@ class TestReceiveWebhook:
         """Si Claude devuelve cadena vacía, no debe llamarse send_text."""
         ask_mock = AsyncMock(return_value="")
         send_mock = AsyncMock(return_value=None)
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
-        monkeypatch.setattr("app.main.send_text", send_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.send_text", send_mock)
         resp = client.post("/webhook", json=TEXT_PAYLOAD)
         assert resp.status_code == 200
         ask_mock.assert_called_once_with("Hola mundo", [])
@@ -531,8 +531,8 @@ class TestSaludos:
     def test_saludo_envia_menu_con_bienvenida_sin_invocar_claude(self, client, monkeypatch):
         ask_mock = AsyncMock(return_value="x")
         list_mock = AsyncMock(return_value=True)
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
-        monkeypatch.setattr("app.main.send_list", list_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.send_list", list_mock)
         resp = client.post("/webhook", json=_payload_texto("¡Hola! 😊"))
         assert resp.status_code == 200
         ask_mock.assert_not_called()
@@ -548,7 +548,7 @@ class TestSaludos:
 
     def test_saludo_sin_profile_envia_menu(self, client, monkeypatch):
         list_mock = AsyncMock(return_value=True)
-        monkeypatch.setattr("app.main.send_list", list_mock)
+        monkeypatch.setattr("app.router.send_list", list_mock)
         resp = client.post("/webhook", json=_payload_texto("buenas", nombre=None))
         assert resp.status_code == 200
         cuerpo = list_mock.call_args.args[1]
@@ -556,7 +556,7 @@ class TestSaludos:
 
     def test_saludo_con_intencion_va_a_claude(self, client, monkeypatch):
         ask_mock = AsyncMock(return_value="respuesta")
-        monkeypatch.setattr("app.main.ask_claude", ask_mock)
+        monkeypatch.setattr("app.router.ask_claude", ask_mock)
         resp = client.post("/webhook", json=_payload_texto("Hola, ¿tienen envíos a Bogotá?"))
         assert resp.status_code == 200
         ask_mock.assert_called_once_with("Hola, ¿tienen envíos a Bogotá?", [])

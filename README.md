@@ -12,6 +12,8 @@ Agente de WhatsApp construido con **Python + FastAPI** que recibe mensajes via [
 - Menú principal como lista de WhatsApp: los saludos puros ("hola", "buenas tardes") y la palabra "menú" reciben el menú G1 con 7 opciones. Con el saludo, el texto es una bienvenida aleatoria personalizada con el nombre del perfil (`app/greetings.py`)
 - Estado de conversación por remitente (SQLite, caduca a las 24 h): Claude recibe el historial reciente y se recuerda la opción elegida del menú
 - Deduplicación por `message.id`: un reintento de Meta no genera una segunda respuesta
+- Ruta de compra navegable con listas y botones: catálogo, ficha de cada mezcla, las más queridas, kits, recomendación por uso y dudas frecuentes. La toma de pedidos aún está en construcción
+- Claude responde con la voz de Saboryarte y solo con la base de conocimiento pública (`docs/knowledge-base/saboryarte.md`)
 
 ---
 
@@ -114,9 +116,12 @@ whatsapp-claude-agent/
 │   ├── whatsapp.py    # Modelos Pydantic + envío de mensajes via Meta Graph API
 │   ├── claude.py      # Consulta a Claude via Anthropic SDK
 │   ├── greetings.py   # Detección de saludos y de "menú", y mensajes de bienvenida aleatorios
+│   ├── router.py      # Decide qué responder según el estado y los pasos de los flujos
+│   ├── prompt.py      # System prompt de Claude: voz de marca + base de conocimiento pública
 │   ├── state.py       # Estado de conversación y deduplicación (SQLite)
 │   ├── flows/
-│   │   ├── __init__.py    # Lectura de mensajes.json (pasos, opciones, filas de lista)
+│   │   ├── __init__.py    # Lectura de mensajes.json y catalogo.json (pasos, opciones, fichas)
+│   │   ├── catalogo.json  # Productos con precio al público (fichas y recomendaciones)
 │   │   └── mensajes.json  # Texto, botones y listas de cada paso de los flujos de Saboryarte
 │   └── config.py      # Configuración via variables de entorno
 ├── docs/

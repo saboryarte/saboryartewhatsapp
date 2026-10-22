@@ -83,3 +83,13 @@ def test_mensajes_y_base_publica_sin_datos_de_distribuidor():
     publico += (ROOT / "docs/knowledge-base/saboryarte.md").read_text(encoding="utf-8")
     for dato in DATOS_INTERNOS:
         assert dato not in publico, dato
+
+
+def test_productos_referenciados_existen_en_catalogo():
+    catalogo = json.loads((ROOT / "app/flows/catalogo.json").read_text(encoding="utf-8"))
+    ids_catalogo = {p["id"] for p in catalogo["productos"]}
+    for paso in PASOS:
+        for op in paso.get("opciones", []):
+            referenciados = [op["producto"]] if "producto" in op else op.get("recomienda", [])
+            for producto in referenciados:
+                assert producto in ids_catalogo, f"{op['id']} → {producto}"
