@@ -22,6 +22,7 @@ from pydantic import BaseModel
 
 from app.config import settings
 from app.prompt import system_prompt
+from app.usage import claude_cost
 
 _BASE_CONOCIMIENTO = (Path(__file__).resolve().parent.parent / "docs" / "knowledge-base" / "saboryarte.md").read_text(encoding="utf-8")
 
@@ -31,13 +32,6 @@ REPETICIONES = 3
 ESFUERZO = "low"  # chat de atención: esfuerzo bajo
 LIMITE_USD = 0.95
 CONCURRENCIA = 6
-
-# US$ por millón de tokens (tabla de precios del 2026-10-06). Escritura de caché = 1,25 × entrada.
-PRECIOS = {
-    "claude-sonnet-5-5": {"entrada": 2.00, "salida": 10.00, "cache_lectura": 0.20},
-    "claude-haiku-5-5": {"entrada": 0.10, "salida": 0.50, "cache_lectura": 0.01},
-    "claude-opus-5-5": {"entrada": 4.00, "salida": 20.00, "cache_lectura": 0.20},
-}
 
 RAIZ = Path(__file__).resolve().parent
 CASOS = json.loads((RAIZ / "casos_respuestas_libres.json").read_text(encoding="utf-8"))
@@ -51,13 +45,7 @@ class PresupuestoAgotado(Exception):
 
 
 def _registrar_costo(modelo: str, usage) -> float:
-    p = PRECIOS[modelo]
-    costo = (
-        usage.input_tokens * p["entrada"]
-        + (usage.cache_creation_input_tokens or 0) * p["entrada"] * 1.25
-        + (usage.cache_read_input_tokens or 0) * p["cache_lectura"]
-        + usage.output_tokens * p["salida"]
-    ) / 1_000_000
+    costo = claude_cost(modelo, usage)
     gasto["total"] += costo
     gasto["por_modelo"][modelo] = gasto["por_modelo"].get(modelo, 0.0) + costo
     return costo

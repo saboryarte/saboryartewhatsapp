@@ -122,6 +122,17 @@ python -m evals.comparar_modelos --modelos claude-sonnet-5-5
 
 Llama a la API real (unos US$0,25 por corrida con Sonnet 5.5; el script se detiene antes de US$0,95). Vuelve a correrlo cuando cambies el prompt, la base de conocimiento o el modelo. Los resultados quedan en `evals/resultados/`.
 
+## Costo real por conversación
+
+Cada llamada a Claude (tokens de entrada, caché escrita y leída, salida y costo) y cada mensaje que Meta acepta quedan registrados en la misma base SQLite, a nombre del cliente. El registro se guarda 90 días. Para ver el reporte:
+
+```bash
+python -m app.usage            # últimos 30 días
+python -m app.usage --dias 7
+```
+
+Muestra el costo de Claude y los mensajes enviados por conversación (una pausa de más de 24 h abre otra) y los mensajes de WhatsApp del mes con su costo estimado: 1.000 mensajes de servicio gratis al mes y US$0,0008 cada uno después (tarifa de Colombia, oct 2026). Los precios están en `app/usage.py`, y los evals usan los mismos. El reporte solo muestra los últimos 4 dígitos de cada número.
+
 ## Estructura del proyecto
 
 ```
@@ -138,6 +149,7 @@ whatsapp-claude-agent/
 │   ├── handoff.py     # Traspaso: horario, ficha, silencio, reactivación y alertas
 │   ├── notify.py      # Aviso al equipo por correo (SMTP)
 │   ├── state.py       # Estado de conversación y deduplicación (SQLite)
+│   ├── usage.py       # Registro y reporte del costo real (tokens de Claude y mensajes enviados)
 │   ├── flows/
 │   │   ├── __init__.py    # Lectura de mensajes.json y catalogo.json (pasos, opciones, fichas)
 │   │   ├── catalogo.json  # Productos con precio al público (fichas y recomendaciones)

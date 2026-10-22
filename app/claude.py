@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from .config import settings
 from .flows import orderable_products
 from .prompt import system_prompt
+from .usage import record_claude
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,8 @@ async def ask_claude(prompt: str, history: list[dict] | None = None) -> str:
         messages=[*(history or []), {"role": "user", "content": prompt}],
     ) as stream:
         message = await stream.get_final_message()
+    # Se registra antes de revisar el rechazo: una respuesta declinada también se cobra.
+    record_claude(_RESPONSE_MODEL, message.usage)
 
     if message.stop_reason == "refusal":
         logger.warning("Respuesta declinada por el modelo")
@@ -108,6 +111,7 @@ async def _extract(instructions: str, content: str, output_format: type[BaseMode
     except anthropic.APIStatusError as e:
         logger.error("Extracción: error de la API de Anthropic (HTTP %s)", e.status_code)
         return None
+    record_claude(_EXTRACTION_MODEL, response.usage)
     if response.stop_reason == "refusal":
         logger.warning("Extracción declinada por el modelo")
         return None

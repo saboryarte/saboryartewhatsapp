@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from .config import settings
 from .router import check_unanswered_handoffs, handle_choice, handle_team_message, handle_text
 from .state import load_conversation, mark_processed, save_conversation
+from .usage import remitente_actual
 from .whatsapp import WhatsAppContact, WhatsAppMessage, WhatsAppPayload
 
 logging.basicConfig(level=settings.log_level)
@@ -115,12 +116,17 @@ async def _process_payload(payload: WhatsAppPayload) -> None:
                         continue
                 conversation = load_conversation(sender)
                 conversation.nombre = _profile_name(value.contacts, sender) or conversation.nombre
-                if message.type == "text":
-                    logger.info("Mensaje de texto recibido (id: %s)", message.id)
-                    await handle_text(body, sender, conversation.nombre, conversation)
-                else:
-                    logger.info("Respuesta interactiva recibida (id: %s)", message.id)
-                    await handle_choice(message.interactive, sender, conversation)
+                # Las llamadas a Claude de este mensaje quedan registradas a nombre de este cliente.
+                token = remitente_actual.set(sender)
+                try:
+                    if message.type == "text":
+                        logger.info("Mensaje de texto recibido (id: %s)", message.id)
+                        await handle_text(body, sender, conversation.nombre, conversation)
+                    else:
+                        logger.info("Respuesta interactiva recibida (id: %s)", message.id)
+                        await handle_choice(message.interactive, sender, conversation)
+                finally:
+                    remitente_actual.reset(token)
                 save_conversation(conversation)
 
             for status_update in value.statuses or []:
