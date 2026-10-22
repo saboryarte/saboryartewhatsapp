@@ -313,9 +313,26 @@ Para que el cliente no tenga que repetir nada. Forma propuesta (lo que genera el
 }
 ```
 
-**Después del traspaso:** el bot se silencia mientras la persona atiende y se reactiva al cerrar (T3). Si nadie responde en **[tiempo por definir]**, se avisa al equipo.
+**Después del traspaso:** el bot se silencia mientras la persona atiende y se reactiva al cerrar (T3). Si nadie responde en **60 minutos de horario de atención** (`HANDOFF_ALERT_MINUTES`), se envía una alerta al equipo.
 
-> ⚠️ El artefacto habla de una «nota interna en la conversación». La Cloud API de WhatsApp no tiene notas internas ni bandeja compartida. Hay que elegir dónde recibe el equipo la ficha y desde dónde responde (ver §6).
+### Cómo funciona con coexistencia (decisión del 21 oct 2026)
+
+El equipo atiende desde la **app de WhatsApp Business**, en el mismo número del bot. La Cloud API no tiene notas internas, así que la ficha llega **por correo** (`HANDOFF_EMAIL_TO`). La conversación completa, incluidos los mensajes del bot, se ve igual en la app.
+
+| Momento | Qué pasa | Implementado en |
+|---|---|---|
+| El cliente pide una persona («asesor», «Hablar con alguien», «No» en «¿Te sirvió?») | T1 (o T2 fuera de horario), bot en silencio, correo con la ficha | `app/router.py` → `_handoff` |
+| El cliente confirma el pedido (P8) | P11 (o P11F fuera de horario), etiquetas Producto y Pendiente de pago, correo con la ficha y el total | `app/router.py` → `_handoff` |
+| Alguien del equipo escribe desde la app | Meta envía el eco (`smb_message_echoes`); el bot registra la respuesta o, si no había traspaso, se silencia para no hablar encima de la persona | `handle_team_message` |
+| El equipo termina | Envía la respuesta rápida con la frase **«Te dejo de nuevo con nuestro asistente»**; el bot envía T3 y vuelve a responder | `CLOSING_PHRASE` en `app/handoff.py` |
+| El cliente escribe «menú» | Termina el traspaso y vuelve el menú (salida del cliente, aunque nadie haya respondido) | `handle_text` |
+| El equipo olvidó cerrar | Si ya respondió y lleva 12 h sin escribir (`HANDOFF_IDLE_HOURS`), el bot retoma con el siguiente mensaje del cliente | `team_went_idle` |
+| Nadie responde | Tras 60 minutos de horario de atención, correo de alerta con la ficha (una sola vez) | `check_unanswered_handoffs`, revisado cada minuto |
+
+**Respuesta rápida sugerida para la app** (Herramientas para la empresa → Respuestas rápidas, atajo `/bot`):
+> ¡Fue un gusto ayudarte! Te dejo de nuevo con nuestro asistente virtual 🌿 Si necesitas algo más, escríbeme «menú».
+
+Pendientes del traspaso: los disparadores por tema (salud o alergias, quejas, cliente molesto, facturación, descuentos, alianzas) y los dos fallos de comprensión seguidos. `_handoff` ya está listo para recibirlos con su motivo y prioridad.
 
 ---
 
@@ -400,15 +417,15 @@ Ordenado según las fases de la guía.
 | 2 | **Deduplicación** por `message.id` | Todas (evita pedidos duplicados) | ✅ Fase 1. |
 | 3 | **Enviar listas y botones** (`interactive`) a partir de `mensajes.json` | Todas | ✅ Listas y botones (`app/router.py`). |
 | 4 | **Recibir respuestas** `interactive` (`button_reply`, `list_reply`) y enrutar por `id` de opción | Todas | 🟡 Ruta de compra completa hasta P8: G1, P1–P8, P2F, P9 con sus respuestas (P9B, P9C, P9O, P9S, O1). P11, el traspaso y las demás rutas responden «en construcción». |
-| 5 | **Router** con las reglas transversales y el horario | Todas | 🟡 Saludo → menú, «menú» reinicia, un saludo a mitad de flujo no reinicia. Faltan el horario, «asesor», salud y los dos fallos seguidos. |
+| 5 | **Router** con las reglas transversales y el horario | Todas | 🟡 Saludo → menú (G1 o G2 según horario), «menú» reinicia, «asesor» traspasa, un saludo a mitad de flujo no reinicia. Faltan salud, quejas y los dos fallos seguidos. |
 | 6 | ***System prompt*** con voz de marca + `knowledge-base/saboryarte.md` | Consultas, Ventas | ✅ `app/prompt.py`. Avisa a Claude que aún no toma pedidos ni traspasa. |
 | 7 | **Cálculo de totales** (catálogo + tarifa por ciudad) para P8 | Compra | ✅ `app/orders.py`. Claude solo extrae productos y datos de envío del texto (salidas estructuradas); el código valida contra el catálogo y hace las cuentas. |
-| 8 | **Traspaso real:** dónde llega la ficha, cómo responde el equipo y cómo se reactiva el bot | Todas | No existe. Decisión pendiente (ver abajo). |
+| 8 | **Traspaso real:** dónde llega la ficha, cómo responde el equipo y cómo se reactiva el bot | Todas | 🟡 Núcleo listo con coexistencia (§4). Falta dar de alta el número en coexistencia y configurar el correo. |
 | 9 | **Mensajes no textuales:** O2, y en M3 aceptar audio y foto | Mezcla | Se ignoran sin responder. |
 | 10 | **Plantillas aprobadas por Meta:** postventa (O4) y seguimientos a distribuidores | Postventa, Distribuidor | No existen. |
 | 11 | **Archivos:** fotos de producto, presentación de regalos y propuesta comercial (PDF) | P2F, P3, R7, D8 | No hay envío de medios. |
 
-**Decisión clave para el traspaso (punto 8).** Con la Cloud API, el número no se puede atender a la vez desde la app de WhatsApp Business, salvo que la cuenta use el modo de coexistencia. Opciones:
+**Decisión clave para el traspaso (punto 8): se eligió coexistencia (21 oct 2026).** Opciones que se evaluaron:
 1. **Bandeja compartida conectada a la API** (por ejemplo, una herramienta tipo Chatwoot): el equipo responde desde ahí y ve la ficha como nota. Es lo más parecido a lo que describe el artefacto.
 2. **Aviso al equipo por otro canal** (otro WhatsApp, correo o Slack) con la ficha, y respuesta desde una pantalla propia. Es más simple, pero requiere construir esa pantalla.
 3. **Coexistencia**, si la cuenta la permite: el equipo responde desde la app de WhatsApp Business y el bot se silencia al detectar mensajes del negocio.
@@ -416,6 +433,15 @@ Ordenado según las fases de la guía.
 ---
 
 ## 8. Pendientes por confirmar con Saboryarte
+
+**Para activar la coexistencia en el número real:**
+- [ ] El número que usará el bot está hoy en la **app de WhatsApp Business** (no en WhatsApp personal), versión **2.24.17 o superior**.
+- [ ] El alta se hace con **Embedded Signup** (`featureType: whatsapp_business_app_onboarding`), que solo pueden ofrecer un **Solution Partner (BSP) o un Tech Provider**. Decidir: pasar por un BSP (por ejemplo, 360dialog) o registrar la app de Meta como Tech Provider.
+- [ ] Confirmar que **Colombia (+57)** es un país habilitado para coexistencia en la documentación vigente de Meta.
+- [ ] Planear el día del alta: hay **24 h** para sincronizar contactos e historial, y cada paso de sincronización se puede correr una sola vez. Tener la app abierta durante la sincronización.
+- [ ] Avisar al equipo de los cambios en la app: se desvinculan los dispositivos enlazados (hay que volver a vincularlos; WhatsApp para Windows no es compatible), se desactivan las listas de difusión y los mensajes temporales o de una sola vista, y el teléfono principal se desconecta tras unos **14 días sin abrir la app**.
+- [ ] Suscribir la app de Meta a los campos **smb_message_echoes** y **smb_app_state_sync** (además de **messages**).
+- [ ] Configurar `HANDOFF_EMAIL_TO` y `SMTP_*` con el correo que revisa el equipo, y guardar la respuesta rápida `/bot` en la app.
 
 - [ ] Política de tratamiento de datos (Ley 1581 de 2012) publicada y su enlace para G0.
 - [ ] Tiempo máximo sin respuesta humana antes de avisar al equipo (§4).

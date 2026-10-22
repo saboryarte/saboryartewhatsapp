@@ -1,18 +1,40 @@
+import asyncio
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, PlainTextResponse
 
 from .config import settings
-from .router import handle_choice, handle_text
+from .router import check_unanswered_handoffs, handle_choice, handle_team_message, handle_text
 from .state import load_conversation, mark_processed, save_conversation
 from .whatsapp import WhatsAppContact, WhatsAppMessage, WhatsAppPayload
 
 logging.basicConfig(level=settings.log_level)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="WhatsApp Claude Agent", version="1.0.0")
+# Cada cuánto se revisan los traspasos que nadie del equipo ha respondido.
+_ALERT_CHECK_SECONDS = 60
+
+
+async def _alert_loop() -> None:
+    while True:
+        await asyncio.sleep(_ALERT_CHECK_SECONDS)
+        try:
+            await check_unanswered_handoffs()
+        except Exception:
+            logger.exception("Error revisando traspasos sin respuesta")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    task = asyncio.create_task(_alert_loop())
+    yield
+    task.cancel()
+
+
+app = FastAPI(title="WhatsApp Claude Agent", version="1.0.0", lifespan=lifespan)
 
 
 @app.exception_handler(RequestValidationError)
@@ -67,10 +89,13 @@ def _resolve_sender(message: WhatsAppMessage, contacts: list[WhatsAppContact] | 
 async def _process_payload(payload: WhatsAppPayload) -> None:
     for entry in payload.entry:
         for change in entry.changes:
+            value = change.value
+
+            if change.field == "smb_message_echoes":
+                await _process_team_echoes(value.message_echoes or [])
+                continue
             if change.field != "messages":
                 continue
-
-            value = change.value
 
             for message in value.messages or []:
                 if not mark_processed(message.id):
@@ -88,12 +113,13 @@ async def _process_payload(payload: WhatsAppPayload) -> None:
                     if not body:
                         logger.debug("Evento de texto sin cuerpo ignorado (id: %s, keys: %s)", message.id, list((message.text or {}).keys()))
                         continue
+                conversation = load_conversation(sender)
+                conversation.nombre = _profile_name(value.contacts, sender) or conversation.nombre
+                if message.type == "text":
                     logger.info("Mensaje de texto recibido (id: %s)", message.id)
-                    conversation = load_conversation(sender)
-                    await handle_text(body, sender, _profile_name(value.contacts, sender), conversation)
+                    await handle_text(body, sender, conversation.nombre, conversation)
                 else:
                     logger.info("Respuesta interactiva recibida (id: %s)", message.id)
-                    conversation = load_conversation(sender)
                     await handle_choice(message.interactive, sender, conversation)
                 save_conversation(conversation)
 
@@ -103,6 +129,21 @@ async def _process_payload(payload: WhatsAppPayload) -> None:
                     status_update.get("id"),
                     status_update.get("status"),
                 )
+
+
+async def _process_team_echoes(echoes: list[WhatsAppMessage]) -> None:
+    """Mensajes que el equipo envió desde la app de WhatsApp Business (coexistencia)."""
+    for echo in echoes:
+        if not mark_processed(echo.id):
+            continue
+        if not echo.to:
+            logger.warning("Eco sin destinatario ignorado (id: %s)", echo.id)
+            continue
+        logger.info("Mensaje del equipo desde la app (id: %s, tipo: %s)", echo.id, echo.type)
+        conversation = load_conversation(echo.to)
+        text = (echo.text or {}).get("body", "") if echo.type == "text" else ""
+        await handle_team_message(text, echo.to, conversation)
+        save_conversation(conversation)
 
 
 @app.post("/webhook", status_code=status.HTTP_200_OK)

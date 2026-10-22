@@ -19,6 +19,8 @@ class WhatsAppMessage(BaseModel):
 
     from_: str | None = Field(default=None, alias="from")
     from_user_id: str | None = None
+    # Solo en ecos de coexistencia: destinatario del mensaje que el equipo envió desde la app.
+    to: str | None = None
     id: str
     timestamp: str
     type: str
@@ -46,6 +48,8 @@ class WhatsAppValue(BaseModel):
     metadata: dict[str, Any] = {}
     contacts: list[WhatsAppContact] | None = None
     messages: list[WhatsAppMessage] | None = None
+    # Ecos de coexistencia (field "smb_message_echoes"): mensajes que el equipo envió desde la app.
+    message_echoes: list[WhatsAppMessage] | None = None
     statuses: list[dict[str, Any]] | None = None
     errors: list[dict[str, Any]] | None = None
 

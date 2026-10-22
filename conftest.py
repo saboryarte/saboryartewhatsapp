@@ -12,3 +12,9 @@ def state_db_aislada(tmp_path, monkeypatch):
     from app.config import settings
 
     monkeypatch.setattr(settings, "state_db_path", str(tmp_path / "conversaciones.db"))
+
+
+@pytest.fixture(autouse=True)
+def dentro_del_horario(monkeypatch):
+    """Por defecto las pruebas corren «dentro del horario de atención»; las de fuera de horario lo cambian."""
+    monkeypatch.setattr("app.router.is_open", lambda now: True)

@@ -209,11 +209,12 @@ class TestResumen:
         mocks["buttons"].reset_mock()
         mocks["text"].reset_mock()
 
-    def test_confirmar_no_dice_que_quedo_registrado(self, client, mocks, en_resumen):
+    def test_confirmar_pasa_el_pedido_al_equipo(self, client, mocks, en_resumen):
         elegir(client, "p8_confirmar", "button_reply")
-        texto = ultimo_texto(mocks)
-        assert "aún no quedó registrado" in texto
-        assert load_conversation(REMITENTE).paso == "P11"
+        assert ultimo_texto(mocks).startswith("¡Pedido recibido!")
+        conv = load_conversation(REMITENTE)
+        assert conv.paso == "P11" and conv.en_traspaso
+        assert conv.etiquetas == ["Producto", "Pendiente de pago"]
 
     def test_cambiar_algo_conserva_el_envio_y_vuelve_al_resumen(self, client, mocks, en_resumen):
         elegir(client, "p8_cambiar", "button_reply")

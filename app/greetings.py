@@ -52,6 +52,18 @@ def is_greeting(text: str) -> bool:
     return bool(normalized) and bool(_GREETING_RE.match(normalized))
 
 
+# Pedir una persona en cualquier momento («asesor», «quiero hablar con alguien»…). Ojo: «persona» sola no basta,
+# porque aparece en «mezcla personalizada» o «regalo para una persona».
+_HUMAN_REQUEST_RE = re.compile(
+    r"\basesor(a|es|as)?\b|\bhumano\b|\bagente\b|\bpersona real\b|\balguien del equipo\b"
+    r"|\bhablar con (alguien|una persona|un asesor|una asesora|una persona del equipo)\b"
+)
+
+
+def is_human_request(text: str) -> bool:
+    return bool(_HUMAN_REQUEST_RE.search(_normalize(text)))
+
+
 _MENU_REQUESTS = {"menu", "menu principal", "ver menu", "volver al menu", "el menu"}
 
 

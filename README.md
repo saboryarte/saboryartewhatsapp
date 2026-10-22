@@ -14,6 +14,7 @@ Agente de WhatsApp construido con **Python + FastAPI** que recibe mensajes via [
 - Deduplicación por `message.id`: un reintento de Meta no genera una segunda respuesta
 - Ruta de compra navegable con listas y botones: catálogo, ficha de cada mezcla, las más queridas, kits, recomendación por uso y dudas frecuentes
 - Toma de pedidos (P6 → P7 → P8): Claude extrae del texto las mezclas, cantidades y datos de envío; el código valida contra el catálogo y calcula subtotal, envío por ciudad y total. El pedido aún no se registra ni se pasa al equipo
+- Traspaso a una persona en modo coexistencia: "asesor", "Hablar con alguien" o "Confirmar pedido" silencian el bot y envían la ficha por correo al equipo, que responde desde la app de WhatsApp Business. El bot retoma con la frase de cierre o tras horas sin mensajes del equipo, y alerta si nadie responde a tiempo
 - Claude responde con la voz de Saboryarte y solo con la base de conocimiento pública (`docs/knowledge-base/saboryarte.md`)
 
 ---
@@ -58,6 +59,10 @@ cp .env.example .env
 | `ANTHROPIC_API_KEY` | ✅ | API Key de Anthropic para consultar a Claude |
 | `APP_SECRET` | ⬜ | App Secret para validar firmas de payload |
 | `STATE_DB_PATH` | ⬜ | Archivo SQLite del estado de conversaciones (por defecto `data/conversaciones.db`) |
+| `HANDOFF_EMAIL_TO` | ⬜ | Correo del equipo que recibe la ficha de traspaso y las alertas |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | ⬜ | Servidor SMTP para enviar esos correos (Gmail: `smtp.gmail.com`, 587, contraseña de aplicación) |
+| `HANDOFF_ALERT_MINUTES` | ⬜ | Minutos hábiles sin respuesta antes de alertar al equipo (por defecto 60) |
+| `HANDOFF_IDLE_HOURS` | ⬜ | Horas sin mensajes del equipo para que el bot retome solo (por defecto 12) |
 | `LOG_LEVEL` | ⬜ | Nivel de logging (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 
 > **Importante:** Nunca subas `.env` al repositorio. El archivo `.gitignore` ya lo excluye.
@@ -88,7 +93,7 @@ Copia la URL HTTPS que ngrok genera (ej. `https://xxxx.ngrok-free.app`) y úsala
    - **Callback URL:** `https://<tu-dominio>/webhook`
    - **Verify Token:** el valor de `VERIFY_TOKEN` en tu `.env`
 4. Haz clic en **Verify and Save**
-5. Suscríbete al campo **messages**
+5. Suscríbete al campo **messages** (y, con coexistencia, también a **smb_message_echoes**, para que el bot sepa cuándo responde una persona desde la app)
 
 ---
 
@@ -120,6 +125,8 @@ whatsapp-claude-agent/
 │   ├── router.py      # Decide qué responder según el estado y los pasos de los flujos
 │   ├── prompt.py      # System prompt de Claude: voz de marca + base de conocimiento pública
 │   ├── orders.py      # Cálculos del pedido: subtotal, tarifa de envío por ciudad y resumen (P8)
+│   ├── handoff.py     # Traspaso: horario, ficha, silencio, reactivación y alertas
+│   ├── notify.py      # Aviso al equipo por correo (SMTP)
 │   ├── state.py       # Estado de conversación y deduplicación (SQLite)
 │   ├── flows/
 │   │   ├── __init__.py    # Lectura de mensajes.json y catalogo.json (pasos, opciones, fichas)

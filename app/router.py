@@ -1,5 +1,7 @@
 """Decide qué responder a cada mensaje según el estado de la conversación y los pasos de mensajes.json."""
 import logging
+import time
+from datetime import datetime
 
 from .claude import ask_claude, extract_order, extract_shipping
 from .flows import (
@@ -15,9 +17,23 @@ from .flows import (
     recommendation,
     under_construction,
 )
-from .greetings import is_greeting, is_menu_request, pick_welcome
+from .greetings import is_greeting, is_human_request, is_menu_request, pick_welcome
+from .handoff import (
+    COLOMBIA,
+    MOTIVOS,
+    business_minutes_between,
+    end_handoff,
+    handoff_ficha,
+    is_closing_message,
+    is_open,
+    needs_alert,
+    register_team_message,
+    start_handoff,
+    team_went_idle,
+)
+from .notify import notify_team
 from .orders import ask_missing_shipping, missing_shipping_fields, order_summary
-from .state import Conversation
+from .state import Conversation, list_handoffs, save_conversation
 from .whatsapp import interactive_reply, send_buttons, send_list, send_text
 
 logger = logging.getLogger(__name__)
@@ -30,6 +46,16 @@ PASOS_DISPONIBLES = frozenset({
 _RESPUESTAS_DE_DUDA = frozenset({"P9B", "P9C", "O1"})
 # Pasos de otras rutas que se usan como respuesta dentro de la ruta actual: no cambian el flujo activo.
 _FLUJOS_DE_APOYO = frozenset({"entrada", "otras"})
+# Menú principal: G1 dentro del horario de atención, G2 (con aviso de horario) fuera.
+_MENUS = frozenset({MENU_PRINCIPAL, "G2"})
+
+
+def _now() -> datetime:
+    return datetime.now(COLOMBIA)
+
+
+def _menu_step() -> str:
+    return MENU_PRINCIPAL if is_open(_now()) else "G2"
 
 
 async def _show_step(sender: str, step_id: str, conversation: Conversation, body: str | None = None) -> str | None:
@@ -44,11 +70,12 @@ async def _show_step(sender: str, step_id: str, conversation: Conversation, body
         sent = await send_text(sender, text)
     if not sent:
         return None
-    if step_id == MENU_PRINCIPAL:
+    if step_id in _MENUS:
         conversation.reset_flow()
     elif flow_of(step_id) not in _FLUJOS_DE_APOYO:
         conversation.flujo_activo = flow_of(step_id)
     conversation.paso = step_id
+    conversation.add_step(step_id)
     return text
 
 
@@ -56,14 +83,36 @@ async def _reply_text(sender: str, text: str) -> str | None:
     return text if await send_text(sender, text) else None
 
 
+def _bot_is_silenced(conversation: Conversation) -> bool:
+    """True mientras una persona atiende. Si el equipo ya respondió y lleva tiempo sin escribir, el bot retoma."""
+    if not conversation.en_traspaso:
+        return False
+    if team_went_idle(conversation, time.time()):
+        logger.info("El equipo lleva tiempo sin escribir: el bot retoma la conversación")
+        end_handoff(conversation)
+        return False
+    logger.info("Conversación en traspaso: el bot no responde")
+    return True
+
+
 async def handle_text(body: str, sender: str, profile_name: str | None, conversation: Conversation) -> None:
-    if is_menu_request(body):
+    # «menú» es la salida del cliente: termina el traspaso aunque nadie del equipo haya respondido.
+    if conversation.en_traspaso and is_menu_request(body):
+        logger.info("El cliente pidió el menú: termina el traspaso")
+        end_handoff(conversation)
+    if _bot_is_silenced(conversation):
+        return
+    if is_human_request(body):
+        sent = await _handoff(sender, conversation, "solicitud")
+    elif is_menu_request(body):
         logger.info("Menú solicitado, se reinicia el flujo")
-        sent = await _show_step(sender, MENU_PRINCIPAL, conversation)
+        sent = await _show_step(sender, _menu_step(), conversation)
     # Un saludo a mitad de un flujo no lo reinicia: se responde en contexto.
     elif conversation.flujo_activo is None and is_greeting(body):
-        logger.info("Saludo detectado, se envía el menú con bienvenida aleatoria")
-        sent = await _show_step(sender, MENU_PRINCIPAL, conversation, body=pick_welcome(profile_name))
+        logger.info("Saludo detectado, se envía el menú")
+        menu = _menu_step()
+        welcome = pick_welcome(profile_name) if menu == MENU_PRINCIPAL else None
+        sent = await _show_step(sender, menu, conversation, body=welcome)
     elif conversation.paso == "P6":
         sent = await _take_order_items(body, sender, conversation)
     elif conversation.paso == "P7":
@@ -189,6 +238,8 @@ async def _show_summary(sender: str, conversation: Conversation) -> str | None:
 
 
 async def handle_choice(interactive: dict | None, sender: str, conversation: Conversation) -> None:
+    if _bot_is_silenced(conversation):
+        return
     reply = interactive_reply(interactive)
     if reply is None:
         logger.info("Mensaje interactivo sin respuesta de lista o botón ignorado")
@@ -197,7 +248,7 @@ async def handle_choice(interactive: dict | None, sender: str, conversation: Con
     if found is None:
         # Opción de una lista vieja que ya no existe: se vuelve a mostrar el menú.
         logger.info("Opción desconocida '%s', se reenvía el menú", reply["id"])
-        sent = await _show_step(sender, MENU_PRINCIPAL, conversation)
+        sent = await _show_step(sender, _menu_step(), conversation)
         if sent:
             conversation.add_turn(f"Elegí «{reply.get('title', '')}»", sent)
         return
@@ -209,7 +260,11 @@ async def handle_choice(interactive: dict | None, sender: str, conversation: Con
         conversation.datos["producto"] = option["producto"]
 
     parts: list[str | None] = []
-    if "recomienda" in option:
+    if destination == "T1":
+        parts.append(await _handoff(sender, conversation, "solicitud"))
+    elif destination == "P11":
+        parts.append(await _handoff(sender, conversation, "pedido"))
+    elif "recomienda" in option:
         parts.append(await _reply_text(sender, recommendation(option["recomienda"])))
         parts.append(await _show_step(sender, "P2", conversation))
     elif "tema_kb" in option:
@@ -237,3 +292,57 @@ async def handle_choice(interactive: dict | None, sender: str, conversation: Con
     sent = "\n\n".join(p for p in parts if p)
     if sent:
         conversation.add_turn(f"Elegí «{option['titulo']}»", sent)
+
+
+# ── Traspaso a una persona (coexistencia con la app de WhatsApp Business) ────
+
+async def _handoff(sender: str, conversation: Conversation, motivo: str) -> str | None:
+    """Avisa al cliente, silencia el bot y envía la ficha al equipo."""
+    open_now = is_open(_now())
+    if motivo == "pedido":
+        step = "P11" if open_now else "P11F"
+    else:
+        step = "T1" if open_now else "T2"
+    sent = await _show_step(sender, step, conversation)
+    if not sent:
+        return None
+    start_handoff(conversation, motivo)
+    logger.info("Traspaso iniciado (motivo: %s)", motivo)
+    await notify_team(
+        f"[Saboryarte] {MOTIVOS[motivo]} — {conversation.nombre or conversation.remitente}",
+        handoff_ficha(conversation),
+    )
+    return sent
+
+
+async def handle_team_message(text: str, customer: str, conversation: Conversation) -> None:
+    """Mensaje que alguien del equipo escribió desde la app (eco de coexistencia)."""
+    if is_closing_message(text):
+        if conversation.en_traspaso:
+            logger.info("El equipo cerró el traspaso: el bot retoma la conversación")
+            end_handoff(conversation)
+            await send_text(customer, get_step("T3")["texto"])
+        return
+    if conversation.en_traspaso:
+        register_team_message(conversation)
+    else:
+        # El equipo intervino por su cuenta: el bot se calla para no responder encima de la persona.
+        logger.info("El equipo escribió desde la app: se inicia el traspaso")
+        start_handoff(conversation, "equipo_intervino")
+
+
+async def check_unanswered_handoffs(now: datetime | None = None) -> None:
+    """Alerta al equipo por los traspasos que nadie ha respondido a tiempo (en horario de atención)."""
+    now = now or _now()
+    for conversation in list_handoffs():
+        if not needs_alert(conversation, now):
+            continue
+        started = datetime.fromtimestamp(conversation.traspaso["inicio"], tz=COLOMBIA)
+        minutes = int(business_minutes_between(started, now))
+        await notify_team(
+            f"[Saboryarte] ⏰ Sin respuesta hace {minutes} min — {conversation.nombre or conversation.remitente}",
+            handoff_ficha(conversation),
+        )
+        # Se marca aunque el correo falle, para no repetir la alerta cada minuto.
+        conversation.traspaso["alerta_enviada"] = True
+        save_conversation(conversation)

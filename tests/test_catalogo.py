@@ -120,9 +120,10 @@ class TestNavegacionCatalogo:
         assert "Sal de la vid" in recomendacion and "Mezcla tierra de fuego" in recomendacion
         assert len(mocks["list"].call_args.args[3]) == 6  # lista P2 para elegir
 
-    def test_persona_aun_en_construccion(self, client, mocks):
+    def test_hablar_con_alguien_inicia_traspaso(self, client, mocks):
         elegir(client, "menu_persona")
-        assert "persona" in mocks["text"].call_args.args[1]
+        assert mocks["text"].call_args.args[1].startswith("Te paso con Juanita")
+        assert load_conversation(REMITENTE).en_traspaso
 
 
 class TestDudas:

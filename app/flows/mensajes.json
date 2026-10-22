@@ -203,7 +203,12 @@
         {
           "id": "P11", "tipo": "traspaso",
           "texto": "¡Pedido recibido! 🙌 Una persona del equipo te escribe en menos de 1 hora con los datos de pago (transferencia o link de pago) y te confirma el despacho.",
-          "notas": "Etiquetas: Producto, Pendiente de pago. El bot no confirma pago ni despacho."
+          "notas": "Etiquetas: Producto, Pendiente de pago. El bot no confirma pago ni despacho. Dentro de horario; fuera de horario se envía P11F."
+        },
+        {
+          "id": "P11F", "tipo": "traspaso",
+          "texto": "¡Pedido recibido! 🙌 Como ahorita estamos fuera de horario (atendemos lunes a sábado de 8:00 a. m. a 6:00 p. m.), una persona del equipo te escribe apenas abramos con los datos de pago y te confirma el despacho.",
+          "notas": "Paso agregado en la adaptación: P11 fuera de horario. Etiquetas: Producto, Pendiente de pago."
         }
       ]
     },
@@ -446,7 +451,7 @@
       "pasos": [
         {
           "id": "O1", "tipo": "texto",
-          "texto": "¿Dónde las encuentras cerca de ti? Estos son los lugares donde nos consigues:\n\nMedellín:\n• Curua (La Candelaria)\n• Rikatas (La Candelaria)\n• Vida Simple (Laureles)\n• Saludpan (Laureles)\n• Arepa Paisa (Placita de Flórez)\n\nEnvigado:\n• Vida Simple (Distrito Avignon)\n\nOriente antioqueño:\n• Ecosanos Rionegro: sede principal (sector La Galería) y sede Gualanday\n• Ecosanos El Retiro\n• Lácteos Buenavista (La Unión)\n\nLas fechas de nuestras ferias las avisamos en Instagram @saboryarte.cocina.\n\nY si estás en otra ciudad, te las enviamos a todo Colombia 🚚",
+          "texto": "¿Dónde las encuentras cerca de ti? Estos son los lugares donde nos consigues:\n\nMedellín:\n• Curua (La Candelaria)\n• Rikatas (La Candelaria)\n• Vida Simple (Laureles)\n• Saludpan (Laureles)\n• Arepa Paisa (Placita de Flórez)\n\nEnvigado:\n• Vida Simple (Distrito Avignon)\n\nOriente antioqueño:\n• Ecosanos Rionegro: sede principal (sector La Galería) y sede Gualanday\n• Ecosanos El Retiro\n• Lácteos Buenavista (La Unión)\n\nLas fechas de nuestras ferias las avisamos en nuestro Instagram: https://www.instagram.com/saboryarte.cocina/\n\nY si estás en otra ciudad, te las enviamos a todo Colombia 🚚",
           "notas": "En el artefacto estaba marcado como lista sin opciones; se envía como texto. Pendiente: el punto 11 de la lista llegó vacío."
         },
         {
@@ -461,7 +466,7 @@
         },
         {
           "id": "O4", "tipo": "plantilla",
-          "texto": "¡Hola, [nombre]! 🌿 ¿Ya estrenaste tus mezclas? Nos encantaría saber cómo te fue. Si preparas algo rico, etiquétanos en Instagram @saboryarte.cocina y lo compartimos.",
+          "texto": "¡Hola, [nombre]! 🌿 ¿Ya estrenaste tus mezclas? Nos encantaría saber cómo te fue. Si preparas algo rico, etiquétanos en Instagram (@saboryarte.cocina) y lo compartimos: https://www.instagram.com/saboryarte.cocina/",
           "opciones": [
             {"id": "o4_encanto", "titulo": "Me encantaron", "notas": "Pedir permiso para compartir su comentario como testimonio."},
             {"id": "o4_problema", "titulo": "Tuve un problema", "va_a": "Q1"},
@@ -487,7 +492,7 @@
         {
           "id": "T3", "tipo": "texto",
           "texto": "¡Aquí sigo! Si necesitas algo más, escríbeme «menú» 🌿",
-          "notas": "Se envía cuando la persona cierra la conversación y el bot se reactiva."
+          "notas": "Se envía cuando la persona cierra la conversación y el bot se reactiva: el equipo envía desde la app la respuesta rápida con la frase «te dejo de nuevo con nuestro asistente» (app/handoff.py)."
         }
       ]
     }

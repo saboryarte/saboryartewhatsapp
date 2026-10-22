@@ -14,11 +14,14 @@ CONVERSATION_TTL_SECONDS = 24 * 3600
 PROCESSED_TTL_SECONDS = 7 * 24 * 3600
 # Máximo de mensajes (cliente + asistente) que se guardan como contexto para Claude.
 MAX_HISTORIAL = 20
+# Pasos recientes que se guardan para la ficha de traspaso.
+MAX_RUTA = 20
 
 
 @dataclass
 class Conversation:
     remitente: str
+    nombre: str | None = None
     flujo_activo: str | None = None
     paso: str | None = None
     datos: dict = field(default_factory=dict)
@@ -26,6 +29,9 @@ class Conversation:
     intentos_fallidos: int = 0
     en_traspaso: bool = False
     etiquetas: list[str] = field(default_factory=list)
+    # Datos del traspaso en curso: motivo, prioridad, inicio, respuestas del equipo, alerta enviada.
+    traspaso: dict | None = None
+    ruta: list[str] = field(default_factory=list)
     actualizado_en: float = 0.0
 
     def add_turn(self, user_text: str, assistant_text: str) -> None:
@@ -36,6 +42,9 @@ class Conversation:
             {"role": "user", "content": user_text},
             {"role": "assistant", "content": assistant_text},
         ][-MAX_HISTORIAL:]
+
+    def add_step(self, step_id: str) -> None:
+        self.ruta = [*self.ruta, step_id][-MAX_RUTA:]
 
     def reset_flow(self) -> None:
         self.flujo_activo = None
@@ -88,3 +97,14 @@ def save_conversation(conversation: Conversation) -> None:
             "ON CONFLICT(remitente) DO UPDATE SET estado = excluded.estado, actualizado_en = excluded.actualizado_en",
             (conversation.remitente, json.dumps(asdict(conversation), ensure_ascii=False), conversation.actualizado_en),
         )
+
+
+def list_handoffs() -> list[Conversation]:
+    """Conversaciones vigentes que están en traspaso (para la alerta de «nadie respondió»)."""
+    now = time.time()
+    with closing(_connect()) as conn:
+        rows = conn.execute(
+            "SELECT estado FROM conversaciones WHERE actualizado_en >= ?", (now - CONVERSATION_TTL_SECONDS,)
+        ).fetchall()
+    conversations = [Conversation(**json.loads(row[0])) for row in rows]
+    return [c for c in conversations if c.en_traspaso]

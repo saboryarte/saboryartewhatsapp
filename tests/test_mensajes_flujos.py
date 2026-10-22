@@ -93,3 +93,17 @@ def test_productos_referenciados_existen_en_catalogo():
             referenciados = [op["producto"]] if "producto" in op else op.get("recomienda", [])
             for producto in referenciados:
                 assert producto in ids_catalogo, f"{op['id']} → {producto}"
+
+
+INSTAGRAM_URL = "https://www.instagram.com/saboryarte.cocina/"
+
+
+@pytest.mark.parametrize("paso", [p for p in PASOS if "saboryarte.cocina" in p["texto"].lower() or "nuestro instagram" in p["texto"].lower()], ids=lambda p: p["id"])
+def test_instagram_de_saboryarte_lleva_enlace(paso):
+    assert INSTAGRAM_URL in paso["texto"]
+
+
+def test_prompt_y_base_de_conocimiento_llevan_enlace_de_instagram():
+    from app.prompt import system_prompt
+
+    assert system_prompt().count(INSTAGRAM_URL) >= 2  # instrucción + base de conocimiento

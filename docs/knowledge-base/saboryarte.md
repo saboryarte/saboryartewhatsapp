@@ -9,7 +9,7 @@
 
 - **Quiénes somos:** Luz María y Juanita José, mamá e hija, son las creadoras de Saboryarte. Hacen mezclas de sales y especias con ingredientes 100 % naturales, en su propia planta de producción.
 - **Lema:** el arte de crear, el arte de cocinar.
-- **Instagram:** @saboryarte.cocina. Ahí se anuncian las ferias.
+- **Instagram:** @saboryarte.cocina — https://www.instagram.com/saboryarte.cocina/. Ahí se anuncian las ferias.
 - **Horario de atención humana:** lunes a sábado, de 8:00 a. m. a 6:00 p. m. (hora de Colombia).
 
 ## Catálogo (precio al público)
