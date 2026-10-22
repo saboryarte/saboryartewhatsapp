@@ -67,10 +67,38 @@ class WhatsAppPayload(BaseModel):
 
 # ── Sending ───────────────────────────────────────────────────────────────────
 
-async def send_text(to: str, text: str) -> None:
+async def send_text(to: str, text: str) -> bool:
+    return await _send(to, {"type": "text", "text": {"body": text}})
+
+
+async def send_list(to: str, body: str, button: str, rows: list[dict[str, str]], section_title: str = "Opciones") -> bool:
+    """Envía un mensaje de lista. Cada fila lleva id, title y, opcionalmente, description."""
+    return await _send(to, {
+        "type": "interactive",
+        "interactive": {
+            "type": "list",
+            "body": {"text": body},
+            "action": {"button": button, "sections": [{"title": section_title, "rows": rows}]},
+        },
+    })
+
+
+def interactive_reply(interactive: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Extrae {id, title} de la respuesta a una lista o a un botón; None si no es una respuesta."""
+    if not interactive:
+        return None
+    reply_type = interactive.get("type")
+    if reply_type not in ("list_reply", "button_reply"):
+        return None
+    reply = interactive.get(reply_type) or {}
+    return reply if reply.get("id") else None
+
+
+async def _send(to: str, message: dict[str, Any]) -> bool:
+    """Envía un mensaje por Graph API. Devuelve True si Meta lo aceptó."""
     if not settings.whatsapp_token or not settings.whatsapp_phone_number_id:
-        logger.warning("send_text: WHATSAPP_TOKEN o WHATSAPP_PHONE_NUMBER_ID no configurados")
-        return
+        logger.warning("send: WHATSAPP_TOKEN o WHATSAPP_PHONE_NUMBER_ID no configurados")
+        return False
 
     async with httpx.AsyncClient() as client:
         response = await client.post(
@@ -79,16 +107,12 @@ async def send_text(to: str, text: str) -> None:
                 "Authorization": f"Bearer {settings.whatsapp_token}",
                 "Content-Type": "application/json",
             },
-            json={
-                "messaging_product": "whatsapp",
-                "to": to,
-                "type": "text",
-                "text": {"body": text},
-            },
+            json={"messaging_product": "whatsapp", "recipient_type": "individual", "to": to, **message},
         )
         try:
             response.raise_for_status()
-            logger.info("Mensaje enviado")
+            logger.info("Mensaje enviado (tipo: %s)", message["type"])
+            return True
         except HTTPStatusError as e:
             # Meta explica el motivo en error.message (p. ej. token vencido: code 190, subcode 463)
             try:
@@ -102,3 +126,4 @@ async def send_text(to: str, text: str) -> None:
                 error.get("code"),
                 error.get("error_subcode"),
             )
+            return False

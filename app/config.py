@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     app_secret: str = ""
     anthropic_api_key: str = ""
 
+    # Archivo SQLite con el estado de las conversaciones y los ids de mensajes ya procesados.
+    state_db_path: str = "data/conversaciones.db"
+
     log_level: str = "INFO"
 
 

@@ -9,7 +9,9 @@ Agente de WhatsApp construido con **Python + FastAPI** que recibe mensajes via [
 - Integración con **Claude Opus** via Anthropic SDK (pensamiento adaptativo)
 - Variables de entorno con validación via **pydantic-settings**
 - Pruebas con **pytest**
-- Bienvenida aleatoria: los saludos puros ("hola", "buenas tardes", "hola, ¿qué tal?") se responden con uno de varios mensajes amigables, personalizado con el nombre del perfil, sin consultar a Claude. Los mensajes se editan en `app/greetings.py`
+- Menú principal como lista de WhatsApp: los saludos puros ("hola", "buenas tardes") y la palabra "menú" reciben el menú G1 con 7 opciones. Con el saludo, el texto es una bienvenida aleatoria personalizada con el nombre del perfil (`app/greetings.py`)
+- Estado de conversación por remitente (SQLite, caduca a las 24 h): Claude recibe el historial reciente y se recuerda la opción elegida del menú
+- Deduplicación por `message.id`: un reintento de Meta no genera una segunda respuesta
 
 ---
 
@@ -52,6 +54,7 @@ cp .env.example .env
 | `WHATSAPP_PHONE_NUMBER_ID` | ✅ | ID del número de teléfono en Meta Developers |
 | `ANTHROPIC_API_KEY` | ✅ | API Key de Anthropic para consultar a Claude |
 | `APP_SECRET` | ⬜ | App Secret para validar firmas de payload |
+| `STATE_DB_PATH` | ⬜ | Archivo SQLite del estado de conversaciones (por defecto `data/conversaciones.db`) |
 | `LOG_LEVEL` | ⬜ | Nivel de logging (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 
 > **Importante:** Nunca subas `.env` al repositorio. El archivo `.gitignore` ya lo excluye.
@@ -110,8 +113,10 @@ whatsapp-claude-agent/
 │   ├── main.py        # Rutas FastAPI (GET y POST /webhook)
 │   ├── whatsapp.py    # Modelos Pydantic + envío de mensajes via Meta Graph API
 │   ├── claude.py      # Consulta a Claude via Anthropic SDK
-│   ├── greetings.py   # Detección de saludos y mensajes de bienvenida aleatorios
+│   ├── greetings.py   # Detección de saludos y de "menú", y mensajes de bienvenida aleatorios
+│   ├── state.py       # Estado de conversación y deduplicación (SQLite)
 │   ├── flows/
+│   │   ├── __init__.py    # Lectura de mensajes.json (pasos, opciones, filas de lista)
 │   │   └── mensajes.json  # Texto, botones y listas de cada paso de los flujos de Saboryarte
 │   └── config.py      # Configuración via variables de entorno
 ├── docs/

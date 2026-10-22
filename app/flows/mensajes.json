@@ -26,6 +26,7 @@
             {"id": "menu_regalo", "titulo": "🎁 Regalos corporativos", "descripcion": "Detalles para tu equipo o tus clientes", "va_a": "R1"},
             {"id": "menu_distribuir", "titulo": "🏪 Quiero distribuir", "descripcion": "Lleva Saboryarte a tu negocio", "va_a": "D1"},
             {"id": "menu_seguimiento", "titulo": "📦 Seguir mi pedido", "descripcion": "Consulta cómo va tu pedido", "va_a": "S1"},
+            {"id": "menu_proveedor", "titulo": "🤝 Soy proveedor", "descripcion": "Para quienes le venden a Saboryarte", "va_a": "V1"},
             {"id": "menu_persona", "titulo": "💬 Hablar con alguien", "descripcion": "Te atiende una persona del equipo", "va_a": "T1"}
           ],
           "notas": "Dentro de horario. La bienvenida aleatoria de app/greetings.py cumple este papel mientras no se envíen listas."
@@ -346,6 +347,56 @@
           "id": "D8", "tipo": "traspaso",
           "texto": "¡Gracias! Ya le paso tu información a Juanita, de nuestro equipo comercial. Te escribe en menos de 1 hora.\n\nMientras tanto te dejo nuestra propuesta comercial 📎",
           "notas": "Etiqueta: Distribuidor + Caliente, Tibio o Frío. El PDF de la propuesta trae precios de distribuidor: se envía solo al terminar la calificación. Las condiciones comerciales las explica la asesora (ver docs/knowledge-base/interno/distribuidores.md)."
+        }
+      ]
+    },
+    "proveedor": {
+      "flujo_proyecto": "Atención (proveedores) → traspaso",
+      "pasos": [
+        {"id": "V1", "tipo": "texto", "texto": "¡Gracias por escribirnos! 🤝 Cuéntame un poquito y te ayudo a llegar con la persona indicada."},
+        {
+          "id": "V2", "tipo": "botones",
+          "texto": "¿Ya trabajas con nosotras o quieres ofrecernos algo?",
+          "opciones": [
+            {"id": "v2_actual", "titulo": "Soy proveedor actual", "va_a": "V3"},
+            {"id": "v2_nuevo", "titulo": "Quiero ofrecer algo", "va_a": "V4"},
+            {"id": "v2_otra", "titulo": "Otra cosa", "va_a": "T1"}
+          ],
+          "notas": "«Otra cosa» pasa directo a una persona."
+        },
+        {
+          "id": "V3", "tipo": "libre",
+          "texto": "¡Qué bueno saludarte! ¿Sobre qué necesitas hablar: un pedido, una entrega, un pago o una factura? Cuéntame y le aviso a Juanita.",
+          "notas": "Sigue a V7. Si menciona pago o factura, etiquetas Proveedor y Pagos. Siempre atiende Juanita."
+        },
+        {
+          "id": "V4", "tipo": "lista",
+          "texto": "¡Qué gusto! ¿Qué nos ofreces?",
+          "boton_lista": "Ver opciones",
+          "opciones": [
+            {"id": "prov_insumos", "titulo": "Insumos y materia prima", "descripcion": "Insumos y materias primas", "va_a": "V5"},
+            {"id": "prov_envases", "titulo": "Envases, frascos y tapas", "va_a": "V5"},
+            {"id": "prov_empaques", "titulo": "Etiquetas y empaques", "descripcion": "Etiquetas, empaques y cajas", "va_a": "V5"},
+            {"id": "prov_cucharas", "titulo": "Cucharas y accesorios", "descripcion": "Cucharas y accesorios artesanales", "va_a": "V5"},
+            {"id": "prov_transporte", "titulo": "Transporte y logística", "va_a": "V5"},
+            {"id": "prov_otro", "titulo": "Otro producto o servicio", "va_a": "V5"}
+          ]
+        },
+        {"id": "V5", "tipo": "libre", "texto": "¿Cómo se llama tu negocio o emprendimiento y desde qué ciudad nos escribes?"},
+        {
+          "id": "V6", "tipo": "libre",
+          "texto": "Cuéntame en pocas palabras qué ofreces. Si tienes catálogo o lista de precios, puedes enviarlo por aquí o compartirme el enlace 📎",
+          "notas": "Sigue a V8. Acepta archivo, foto y enlace."
+        },
+        {
+          "id": "V7", "tipo": "traspaso",
+          "texto": "Gracias, ya le pasé tu mensaje a Juanita, de nuestro equipo. Te escribe en menos de 1 hora dentro de nuestro horario.",
+          "notas": "Etiqueta: Proveedor (+ Pagos si aplica). Para proveedores actuales."
+        },
+        {
+          "id": "V8", "tipo": "traspaso",
+          "texto": "¡Gracias por pensar en nosotras! Ya tengo tu información. Juanita la revisa con calma y, si encaja con lo que necesitamos, te escribe. Te respondemos durante el día.",
+          "notas": "Etiqueta: Proveedor nuevo. El bot no promete compras, precios ni reuniones."
         }
       ]
     },

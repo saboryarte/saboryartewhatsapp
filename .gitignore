@@ -3,6 +3,9 @@
 *.env.*
 !.env.example
 
+# Estado de conversaciones (contiene mensajes de clientes)
+data/
+
 # Python
 __pycache__/
 *.py[cod]

@@ -1,6 +1,6 @@
 # Flujos del asistente — Saboryarte
 
-**Origen:** artefacto «Chatbot WhatsApp Saboryarte — Flujos del chatbot» ([enlace](https://claude.ai/artifact/TKAMq9oZi66NigrytUpMeE)), adaptado a la arquitectura de `docs/guia-construccion-flujos.md`.
+**Origen:** artefacto «Chatbot WhatsApp Saboryarte — Flujos del chatbot» ([enlace](https://claude.ai/artifact/TKAMq9oZi66NigrytUpMeE)), adaptado a la arquitectura de `docs/guia-construccion-flujos.md`. Incluye la ruta de Proveedores (V1–V8), agregada al artefacto el 21 oct 2026.
 **Fecha:** 21 oct 2026
 
 | Archivo | Qué contiene |
@@ -24,6 +24,7 @@ Convención de colores en los diagramas: 🟩 paso del bot · 🟨 decisión o m
 | B · Mezcla personalizada | M1–M8 | **Ventas** (consultiva) | `ventas` + «mezcla» | `mezcla` | Siempre traspaso (M8) |
 | C · Regalo corporativo | R1–R7 | **Ventas** (corporativo) | `ventas` + «regalo/empresa» | `regalo` | Compra (<10) o traspaso (R7) |
 | Distribuidor | D1–D8 | **Ventas** (B2B) | `distribuir` | `distribuidor` | Traspaso calificado (D8) |
+| Proveedores | V1–V8 | **Atención** (proveedores) | `proveedor` | `proveedor` | Siempre traspaso a Juanita (V7, V8) |
 | Seguimiento de pedido | S1–S6 | **Pedidos** (estado) | `estado_pedido` | `seguimiento` | Estado o traspaso |
 | Queja o reclamo | Q1–Q2 | **Atención al cliente** | `atencion` | `queja` | Siempre traspaso |
 | Alianzas, prensa, ferias | O3 | Atención | `alianza` | `alianza` | Traspaso |
@@ -31,7 +32,7 @@ Convención de colores en los diagramas: 🟩 paso del bot · 🟨 decisión o m
 | Postventa | O4 | Atención (proactivo) | plantilla, 3 días después de la entrega | — | Queja, recompra o testimonio |
 | Traspaso | T1–T3 | Atención | `humano` o cualquier disparador del §4 | `en_traspaso` | Bot silenciado hasta que se cierre |
 
-Respecto a la guía general, esto agrega tres intenciones: `distribuir`, `alianza` y la variante «mezcla personalizada» dentro de `ventas`.
+Respecto a la guía general, esto agrega cuatro intenciones: `distribuir`, `proveedor`, `alianza` y la variante «mezcla personalizada» dentro de `ventas`.
 
 ---
 
@@ -51,7 +52,8 @@ flowchart TD
   E -->|3| R["Regalo corporativo"]
   E -->|4| DI["Quiero distribuir"]
   E -->|5| S["Seguimiento de pedido"]
-  E -->|6| H(["Persona del equipo"])
+  E -->|6| PV["Soy proveedor"]
+  E -->|7| H(["Persona del equipo"])
   E -->|Escribe libre| F{"¿Entiendo lo que pide?"}
   F -->|Sí, lo envío a su ruta| E
   F -->|La 1.ª vez no| G3["G3 Reformula y muestra el menú"]
@@ -60,7 +62,7 @@ flowchart TD
   classDef bot fill:#DDEFE3,stroke:#3F7D58,color:#14301F;
   classDef dec fill:#FFF1CC,stroke:#D9A21B,color:#4A3500;
   classDef hum fill:#FBE0DA,stroke:#C8402A,color:#5A1A10;
-  class A,C,C2,P,M,R,DI,S,G3 bot;
+  class A,C,C2,P,M,R,DI,S,PV,G3 bot;
   class B,E,F dec;
   class H hum;
 ```
@@ -182,6 +184,30 @@ flowchart TD
   class H1,H2,H3 hum;
 ```
 
+### Proveedores (Atención)
+
+Para quienes le venden a Saboryarte o quieren hacerlo: insumos, envases, etiquetas, cucharas, transporte u otros servicios. El bot no compra ni promete nada: recoge la información y la pasa a Juanita. Entra desde la opción «🤝 Soy proveedor» del menú.
+
+```mermaid
+flowchart TD
+  V1["V1 Bienvenida"] --> V2{"V2 ¿Proveedor actual o nuevo?"}
+  V2 -->|Soy proveedor actual| V3["V3 ¿Con quién y sobre qué?"]
+  V2 -->|Quiero ofrecer algo| V4{"V4 ¿Qué ofrece?"}
+  V2 -->|Otra cosa| H0(["Persona del equipo"])
+  V3 --> H1(["V7 Persona: pedido, entrega o pago"])
+  V4 --> V5["V5 Nombre del negocio y ciudad"]
+  V5 --> V6["V6 Qué ofrece y su catálogo"]
+  V6 --> H2(["V8 Traspaso: se revisa la propuesta"])
+  classDef bot fill:#DDEFE3,stroke:#3F7D58,color:#14301F;
+  classDef dec fill:#FFF1CC,stroke:#D9A21B,color:#4A3500;
+  classDef hum fill:#FBE0DA,stroke:#C8402A,color:#5A1A10;
+  class V1,V3,V5,V6 bot;
+  class V2,V4 dec;
+  class H0,H1,H2 hum;
+```
+
+V6 acepta archivos, fotos y enlaces (catálogo o lista de precios). Si un proveedor actual menciona pago o factura, la ficha lleva además la etiqueta Pagos.
+
 ### Seguimiento de pedido (Pedidos, estado)
 
 ```mermaid
@@ -248,7 +274,7 @@ Además de lo mínimo de la guía (`remitente`, `flujo_activo`, `paso`, `datos`,
 ```text
 intentos_fallidos   0 | 1, para la regla de dos fallos
 en_traspaso         bool, el bot se silencia mientras sea true
-etiquetas           Producto, Mezcla, Corporativo, Distribuidor, Caliente/Tibio/Frío, Urgente, Pendiente de pago, Alianzas
+etiquetas           Producto, Mezcla, Corporativo, Distribuidor, Proveedor, Pagos, Caliente/Tibio/Frío, Urgente, Pendiente de pago, Alianzas
 aviso_datos_visto   bool, para enviar G0 solo una vez por cliente (y guardar la aceptación)
 ```
 
@@ -260,7 +286,7 @@ aviso_datos_visto   bool, para enviar G0 solo una vez por cliente (y guardar la 
 |---|---|---|---|
 | Pide una persona | Traspaso inmediato | Normal | — |
 | No entiende dos veces seguidas | Pide una frase de resumen (G4) y pasa | Normal | — |
-| Termina mezcla, regalo o distribuidor | Entrega la ficha completa (M8, R7, D8) | Según etiqueta | Mezcla / Corporativo / Distribuidor + calificación |
+| Termina mezcla, regalo, distribuidor o proveedor | Entrega la ficha completa (M8, R7, D8, V7, V8) | Según etiqueta | Mezcla / Corporativo / Distribuidor + calificación / Proveedor |
 | Pedido armado | Pasa para confirmar pago y despacho (P11) | Normal | Producto, Pendiente de pago |
 | Queja o reclamo | Empatía; usa «usted» si es grave (Q2) | Alta / urgente | Urgente |
 | Alergias, salud o temas médicos | No opina sobre salud y pasa | Alta | — |
@@ -350,6 +376,10 @@ Esto va al *system prompt* y es el criterio para evaluar las respuestas de Claud
 | D2 | Quiero empezar a revender | Empezar a revender (+ descripción) |
 | D3 | Productos que ya tienen | Productos actuales |
 | O4 | Quiero pedir de nuevo | Pedir de nuevo |
+| V2 | Quiero ofrecerles algo | Quiero ofrecer algo |
+| V4 | Insumos y materias primas | Insumos y materia prima (+ descripción) |
+| V4 | Etiquetas, empaques y cajas | Etiquetas y empaques (+ descripción) |
+| V4 | Cucharas y accesorios artesanales | Cucharas y accesorios (+ descripción) |
 
 **Otros cambios**
 - **Pasos explícitos nuevos:** P2F (ficha de producto con sus 3 botones), P9S («¿Te sirvió?») y G4 (segundo fallo de comprensión). En el artefacto estaban descritos dentro de notas.
@@ -366,11 +396,11 @@ Ordenado según las fases de la guía.
 
 | # | Qué | Para qué rutas | Estado hoy |
 |---|---|---|---|
-| 1 | **Estado de conversación** por remitente (§3) | Todas | No existe: cada mensaje llega solo a Claude. |
-| 2 | **Deduplicación** por `message.id` | Todas (evita pedidos duplicados) | No existe. |
-| 3 | **Enviar listas y botones** (`interactive`) a partir de `mensajes.json` | Todas | Solo se envía texto. |
-| 4 | **Recibir respuestas** `interactive` (`button_reply`, `list_reply`) y enrutar por `id` de opción | Todas | Se ignoran. |
-| 5 | **Router** con las reglas transversales y el horario | Todas | Solo existe la detección de saludos. |
+| 1 | **Estado de conversación** por remitente (§3) | Todas | ✅ Fase 1: SQLite (`app/state.py`), caduca a las 24 h; Claude recibe los últimos 20 mensajes. |
+| 2 | **Deduplicación** por `message.id` | Todas (evita pedidos duplicados) | ✅ Fase 1. |
+| 3 | **Enviar listas y botones** (`interactive`) a partir de `mensajes.json` | Todas | 🟡 Listas sí (menú G1). Botones pendientes. |
+| 4 | **Recibir respuestas** `interactive` (`button_reply`, `list_reply`) y enrutar por `id` de opción | Todas | 🟡 Se leen y se guarda la ruta elegida del menú G1. Las rutas responden «en construcción». |
+| 5 | **Router** con las reglas transversales y el horario | Todas | 🟡 Saludo → menú, «menú» reinicia, un saludo a mitad de flujo no reinicia. Faltan el horario, «asesor», salud y los dos fallos seguidos. |
 | 6 | ***System prompt*** con voz de marca + `knowledge-base/saboryarte.md` | Consultas, Ventas | Claude no recibe contexto del negocio. |
 | 7 | **Cálculo de totales** (catálogo + tarifa por ciudad) para P8 | Compra | No existe. |
 | 8 | **Traspaso real:** dónde llega la ficha, cómo responde el equipo y cómo se reactiva el bot | Todas | No existe. Decisión pendiente (ver abajo). |
@@ -395,6 +425,7 @@ Ordenado según las fases de la guía.
 - [ ] Punto 11 de la lista de puntos de venta (llegó vacío).
 - [ ] Persona responsable de cartera y facturación, y de alianzas.
 - [ ] Archivos: fotos por producto, presentación de regalos y propuesta comercial vigente.
+- [ ] Corregir en el artefacto la regla de traspaso: dice «tocar la opción 6», pero ahora la 6 es «Soy proveedor» y hablar con una persona es la 7. En el código no afecta, porque las opciones se reconocen por su id.
 - [ ] Recetas de Instagram para «Cómo usar mis mezclas», si se quieren agregar.
 
 ---

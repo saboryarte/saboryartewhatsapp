@@ -52,6 +52,14 @@ def is_greeting(text: str) -> bool:
     return bool(normalized) and bool(_GREETING_RE.match(normalized))
 
 
+_MENU_REQUESTS = {"menu", "menu principal", "ver menu", "volver al menu", "el menu"}
+
+
+def is_menu_request(text: str) -> bool:
+    """True si el cliente pide el menú («menú», «volver al menú»…)."""
+    return _normalize(text) in _MENU_REQUESTS
+
+
 def _first_name(profile_name: str | None) -> str | None:
     if not profile_name:
         return None

@@ -6,8 +6,17 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 
 from .claude import ask_claude
 from .config import settings
-from .greetings import is_greeting, pick_welcome
-from .whatsapp import WhatsAppContact, WhatsAppPayload, send_text
+from .flows import EN_CONSTRUCCION, MENU_PRINCIPAL, find_option, flow_of, get_step, list_rows
+from .greetings import is_greeting, is_menu_request, pick_welcome
+from .state import Conversation, load_conversation, mark_processed, save_conversation
+from .whatsapp import (
+    WhatsAppContact,
+    WhatsAppMessage,
+    WhatsAppPayload,
+    interactive_reply,
+    send_list,
+    send_text,
+)
 
 logging.basicConfig(level=settings.log_level)
 logger = logging.getLogger(__name__)
@@ -56,6 +65,60 @@ def _profile_name(contacts: list[WhatsAppContact] | None, sender: str) -> str | 
     return contact.profile.name if contact and contact.profile else None
 
 
+def _resolve_sender(message: WhatsAppMessage, contacts: list[WhatsAppContact] | None) -> str | None:
+    # Sender resolution: phone (legacy) → from_user_id (BSUID) → contact.user_id
+    sender = message.from_ or message.from_user_id
+    if not sender and contacts:
+        sender = next((c.user_id for c in contacts if c.user_id), None)
+    return sender
+
+
+async def _send_menu(sender: str, conversation: Conversation, body: str, user_text: str) -> None:
+    """Envía el menú principal (G1) como lista de WhatsApp con el texto indicado."""
+    menu = get_step(MENU_PRINCIPAL)
+    if await send_list(sender, body, menu["boton_lista"], list_rows(MENU_PRINCIPAL)):
+        conversation.add_turn(user_text, body)
+
+
+async def _handle_text(body: str, sender: str, profile_name: str | None, conversation: Conversation) -> None:
+    if is_menu_request(body):
+        logger.info("Menú solicitado, se reinicia el flujo")
+        conversation.reset_flow()
+        await _send_menu(sender, conversation, get_step(MENU_PRINCIPAL)["texto"], body)
+        return
+    # Un saludo a mitad de un flujo no lo reinicia: se responde en contexto.
+    if conversation.flujo_activo is None and is_greeting(body):
+        logger.info("Saludo detectado, se envía el menú con bienvenida aleatoria")
+        await _send_menu(sender, conversation, pick_welcome(profile_name), body)
+        return
+    reply = await ask_claude(body, conversation.historial)
+    if not reply:
+        logger.warning("Respuesta de Claude vacía, no se envía mensaje")
+        return
+    if await send_text(sender, reply):
+        conversation.add_turn(body, reply)
+
+
+async def _handle_menu_choice(interactive: dict | None, sender: str, conversation: Conversation) -> None:
+    reply = interactive_reply(interactive)
+    if reply is None:
+        logger.info("Mensaje interactivo sin respuesta de lista o botón ignorado")
+        return
+    option = find_option(MENU_PRINCIPAL, reply["id"])
+    if option is None:
+        # Opción de un menú viejo o de un paso aún no construido: se vuelve a mostrar el menú.
+        logger.info("Opción desconocida '%s', se reenvía el menú", reply["id"])
+        await _send_menu(sender, conversation, get_step(MENU_PRINCIPAL)["texto"], f"Elegí «{reply.get('title', '')}»")
+        return
+    conversation.reset_flow()
+    conversation.flujo_activo = flow_of(option["va_a"])
+    conversation.paso = option["va_a"]
+    logger.info("Opción de menú elegida: %s → %s", option["id"], conversation.paso)
+    text = EN_CONSTRUCCION.format(opcion=option["titulo"])
+    if await send_text(sender, text):
+        conversation.add_turn(f"Elegí «{option['titulo']}» en el menú", text)
+
+
 async def _process_payload(payload: WhatsAppPayload) -> None:
     for entry in payload.entry:
         for change in entry.changes:
@@ -65,30 +128,29 @@ async def _process_payload(payload: WhatsAppPayload) -> None:
             value = change.value
 
             for message in value.messages or []:
-                if message.type == "text" and message.text:
-                    # Sender resolution: phone (legacy) → from_user_id (BSUID) → contact.user_id
-                    sender = message.from_ or message.from_user_id
-                    if not sender and value.contacts:
-                        sender = next((c.user_id for c in value.contacts if c.user_id), None)
-                    if not sender:
-                        logger.warning("Mensaje de texto ignorado — remitente ausente (id: %s)", message.id)
-                        continue
-                    body = message.text.get("body", "")
+                if not mark_processed(message.id):
+                    logger.info("Mensaje duplicado ignorado (id: %s)", message.id)
+                    continue
+                if message.type not in ("text", "interactive"):
+                    logger.info("Mensaje tipo '%s' ignorado (id: %s)", message.type, message.id)
+                    continue
+                sender = _resolve_sender(message, value.contacts)
+                if not sender:
+                    logger.warning("Mensaje ignorado — remitente ausente (id: %s)", message.id)
+                    continue
+                if message.type == "text":
+                    body = (message.text or {}).get("body", "")
                     if not body:
-                        logger.debug("Evento de texto sin cuerpo ignorado (id: %s, keys: %s)", message.id, list(message.text.keys()))
+                        logger.debug("Evento de texto sin cuerpo ignorado (id: %s, keys: %s)", message.id, list((message.text or {}).keys()))
                         continue
                     logger.info("Mensaje de texto recibido (id: %s)", message.id)
-                    if is_greeting(body):
-                        logger.info("Saludo detectado, se envía bienvenida aleatoria (id: %s)", message.id)
-                        await send_text(sender, pick_welcome(_profile_name(value.contacts, sender)))
-                        continue
-                    reply = await ask_claude(body)
-                    if reply:
-                        await send_text(sender, reply)
-                    else:
-                        logger.warning("Respuesta de Claude vacía, no se envía mensaje (id: %s)", message.id)
+                    conversation = load_conversation(sender)
+                    await _handle_text(body, sender, _profile_name(value.contacts, sender), conversation)
                 else:
-                    logger.info("Mensaje tipo '%s' ignorado (id: %s)", message.type, message.id)
+                    logger.info("Respuesta interactiva recibida (id: %s)", message.id)
+                    conversation = load_conversation(sender)
+                    await _handle_menu_choice(message.interactive, sender, conversation)
+                save_conversation(conversation)
 
             for status_update in value.statuses or []:
                 logger.info(

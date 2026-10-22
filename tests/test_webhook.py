@@ -19,6 +19,7 @@ def set_env(monkeypatch):
 def mock_externos(monkeypatch):
     monkeypatch.setattr("app.main.ask_claude", AsyncMock(return_value="respuesta de Claude"))
     monkeypatch.setattr("app.main.send_text", AsyncMock(return_value=None))
+    monkeypatch.setattr("app.main.send_list", AsyncMock(return_value=None))
 
 
 @pytest.fixture
@@ -271,7 +272,7 @@ class TestReceiveWebhook:
         }
         resp = client.post("/webhook", json=payload)
         assert resp.status_code == 200
-        ask_mock.assert_called_once_with("¿Cuál es el horario?")
+        ask_mock.assert_called_once_with("¿Cuál es el horario?", [])
 
     def test_campo_distinto_de_messages_ignorado(self, client, monkeypatch):
         """Cambios con field != 'messages' deben ignorarse y devolver 200."""
@@ -314,7 +315,7 @@ class TestReceiveWebhook:
         monkeypatch.setattr("app.main.send_text", send_mock)
         resp = client.post("/webhook", json=BSUID_PAYLOAD)
         assert resp.status_code == 200
-        ask_mock.assert_called_once_with("Hola desde BSUID")
+        ask_mock.assert_called_once_with("Hola desde BSUID", [])
         send_mock.assert_called_once_with("bsuid_111222333", "respuesta bsuid")
 
     def test_bsuid_envia_al_from_user_id_no_al_contact(self, client, monkeypatch):
@@ -423,7 +424,7 @@ class TestReceiveWebhook:
         }
         resp = client.post("/webhook", json=payload)
         assert resp.status_code == 200
-        ask_mock.assert_called_once_with("necesito ayuda")
+        ask_mock.assert_called_once_with("necesito ayuda", [])
         send_mock.assert_called_once_with("521234567890", "ok")
 
     def test_regresion_status_read_devuelve_200(self, client, monkeypatch):
@@ -470,7 +471,7 @@ class TestReceiveWebhook:
         monkeypatch.setattr("app.main.send_text", send_mock)
         resp = client.post("/webhook", json=TEXT_PAYLOAD)
         assert resp.status_code == 200
-        ask_mock.assert_called_once_with("Hola mundo")
+        ask_mock.assert_called_once_with("Hola mundo", [])
         send_mock.assert_not_called()
 
 
@@ -527,30 +528,35 @@ class TestSaludos:
         sin_nombre = {m.format(nombre="") for m in WELCOME_MESSAGES}
         assert pick_welcome("🌸✨") in sin_nombre
 
-    def test_saludo_envia_bienvenida_sin_invocar_claude(self, client, monkeypatch):
+    def test_saludo_envia_menu_con_bienvenida_sin_invocar_claude(self, client, monkeypatch):
         ask_mock = AsyncMock(return_value="x")
-        send_mock = AsyncMock(return_value=None)
+        list_mock = AsyncMock(return_value=True)
         monkeypatch.setattr("app.main.ask_claude", ask_mock)
-        monkeypatch.setattr("app.main.send_text", send_mock)
+        monkeypatch.setattr("app.main.send_list", list_mock)
         resp = client.post("/webhook", json=_payload_texto("¡Hola! 😊"))
         assert resp.status_code == 200
         ask_mock.assert_not_called()
-        send_mock.assert_called_once()
-        destinatario, texto = send_mock.call_args.args
+        list_mock.assert_called_once()
+        destinatario, cuerpo, boton, filas = list_mock.call_args.args
         assert destinatario == "521234567890"
-        assert "Ana" in texto
+        assert "Ana" in cuerpo
+        assert boton == "Ver opciones"
+        assert [f["id"] for f in filas] == [
+            "menu_comprar", "menu_mezcla", "menu_regalo", "menu_distribuir",
+            "menu_seguimiento", "menu_proveedor", "menu_persona",
+        ]
 
-    def test_saludo_sin_profile_envia_bienvenida(self, client, monkeypatch):
-        send_mock = AsyncMock(return_value=None)
-        monkeypatch.setattr("app.main.send_text", send_mock)
+    def test_saludo_sin_profile_envia_menu(self, client, monkeypatch):
+        list_mock = AsyncMock(return_value=True)
+        monkeypatch.setattr("app.main.send_list", list_mock)
         resp = client.post("/webhook", json=_payload_texto("buenas", nombre=None))
         assert resp.status_code == 200
-        _, texto = send_mock.call_args.args
-        assert texto in {m.format(nombre="") for m in WELCOME_MESSAGES}
+        cuerpo = list_mock.call_args.args[1]
+        assert cuerpo in {m.format(nombre="") for m in WELCOME_MESSAGES}
 
     def test_saludo_con_intencion_va_a_claude(self, client, monkeypatch):
         ask_mock = AsyncMock(return_value="respuesta")
         monkeypatch.setattr("app.main.ask_claude", ask_mock)
         resp = client.post("/webhook", json=_payload_texto("Hola, ¿tienen envíos a Bogotá?"))
         assert resp.status_code == 200
-        ask_mock.assert_called_once_with("Hola, ¿tienen envíos a Bogotá?")
+        ask_mock.assert_called_once_with("Hola, ¿tienen envíos a Bogotá?", [])
