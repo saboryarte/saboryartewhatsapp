@@ -19,7 +19,7 @@ Convención de colores en los diagramas: 🟩 paso del bot · 🟨 decisión o m
 | Ruta del artefacto | Pasos | Flujo del proyecto | Intención que la activa | `flujo_activo` | Termina en |
 |---|---|---|---|---|---|
 | Saludo y menú | G0–G4 | Entrada | `saludo` | — | Menú o traspaso |
-| A · Comprar producto | P1–P11 | **Ventas + Pedidos** | `ventas`, `pedido_nuevo` | `compra` | Traspaso para pago y despacho (P11) |
+| A · Comprar producto | P1–P12 | **Ventas + Pedidos** | `ventas`, `pedido_nuevo` | `compra` | Link de pago de Bold (P11L) y aviso de pago (P12); sin Bold, traspaso para pago y despacho (P11) |
 | Dudas frecuentes | P9, P9B, P9C, P9S, O1 | **Consultas** | `consulta` | `compra` (sub-paso) | Respuesta o traspaso |
 | B · Mezcla personalizada | M1–M8 | **Ventas** (consultiva) | `ventas` + «mezcla» | `mezcla` | Siempre traspaso (M8) |
 | C · Regalo corporativo | R1–R7 | **Ventas** (corporativo) | `ventas` + «regalo/empresa» | `regalo` | Compra (<10) o traspaso (R7) |
@@ -95,7 +95,10 @@ flowchart TD
   P7 --> P8["P8 Resumen del pedido"]
   P8 --> C{"¿Confirma?"}
   C -->|Cambiar algo| P6
-  C -->|Confirmar| H1(["P11 Persona confirma pago y despacho"])
+  C -->|Confirmar| L["P11L Link de pago de Bold"]
+  L --> B{"Aviso de Bold"}
+  B -->|Pago aprobado| H1(["P12 Aviso al cliente + equipo despacha"])
+  B -->|Rechazado| L2["P12R Reintentar con el mismo link"]
   P9 --> W{"P9S ¿Se resolvió la duda?"}
   W -->|Sí| V
   W -->|No, o es tema de salud o alergias| H2(["Persona del equipo"])
@@ -107,7 +110,7 @@ flowchart TD
   class DI,H1,H2 hum;
 ```
 
-**Encaje con la guía:** P6–P8 son la etapa «capturar y confirmar». P11 es «registrar»: mientras no exista integración con el sistema de pedidos, el registro lo hace una persona y el bot no confirma ni pago ni despacho. El subtotal, el envío y el total de P8 los calcula el código con el catálogo; Claude no hace cuentas de precios.
+**Encaje con la guía:** P6–P8 son la etapa «capturar y confirmar». Al confirmar, el código guarda el pedido (`app/pedidos.py`) y envía un link de pago de Bold (P11L). El pago lo confirma el webhook de Bold, no el bot: con la firma verificada y consultando que el link figure como pagado por el total del pedido. Sin Bold configurado, o si Bold falla, P11 pasa a una persona como antes. El subtotal, el envío y el total de P8 los calcula el código con el catálogo; Claude no hace cuentas de precios.
 
 ### B · Mezcla personalizada (Ventas consultiva)
 
@@ -322,15 +325,15 @@ El equipo atiende desde la **app de WhatsApp Business**, en el mismo número del
 | Momento | Qué pasa | Implementado en |
 |---|---|---|
 | El cliente pide una persona («asesor», «Hablar con alguien», «No» en «¿Te sirvió?») | T1 (o T2 fuera de horario), bot en silencio, correo con la ficha | `app/router.py` → `_handoff` |
-| El cliente confirma el pedido (P8) | P11 (o P11F fuera de horario), etiquetas Producto y Pendiente de pago, correo con la ficha y el total | `app/router.py` → `_handoff` |
+| El cliente confirma el pedido (P8) | Con Bold: P11L con el link de pago, sin traspaso; el equipo recibe la ficha cuando el pago se confirma. Sin Bold o si falla: P11 (o P11F fuera de horario), etiquetas Producto y Pendiente de pago, correo con la ficha y el total | `app/router.py` → `_confirm_order` |
 | Alguien del equipo escribe desde la app | Meta envía el eco (`smb_message_echoes`); el bot registra la respuesta o, si no había traspaso, se silencia para no hablar encima de la persona | `handle_team_message` |
-| El equipo termina | Envía la respuesta rápida con la frase **«Te dejo de nuevo con nuestro asistente»**; el bot envía T3 y vuelve a responder | `CLOSING_PHRASE` en `app/handoff.py` |
+| El equipo termina | Envía la respuesta rápida con la frase **«Te dejo de nuevo con Chatsabor»** (también se acepta «…con nuestro asistente»); el bot envía T3 y vuelve a responder | `CLOSING_PHRASES` en `app/handoff.py` |
 | El cliente escribe «menú» | Termina el traspaso y vuelve el menú (salida del cliente, aunque nadie haya respondido) | `handle_text` |
 | El equipo olvidó cerrar | Si ya respondió y lleva 12 h sin escribir (`HANDOFF_IDLE_HOURS`), el bot retoma con el siguiente mensaje del cliente | `team_went_idle` |
 | Nadie responde | Tras 60 minutos de horario de atención, correo de alerta con la ficha (una sola vez) | `check_unanswered_handoffs`, revisado cada minuto |
 
 **Respuesta rápida sugerida para la app** (Herramientas para la empresa → Respuestas rápidas, atajo `/bot`):
-> ¡Fue un gusto ayudarte! Te dejo de nuevo con nuestro asistente virtual 🌿 Si necesitas algo más, escríbeme «menú».
+> ¡Fue un gusto ayudarte! Te dejo de nuevo con Chatsabor 🌿 Si necesitas algo más, escríbeme «menú».
 
 Pendientes del traspaso: los disparadores por tema (salud o alergias, quejas, cliente molesto, facturación, descuentos, alianzas) y los dos fallos de comprensión seguidos. `_handoff` ya está listo para recibirlos con su motivo y prioridad.
 
@@ -399,11 +402,13 @@ Esto va al *system prompt* y es el criterio para evaluar las respuestas de Claud
 | V4 | Cucharas y accesorios artesanales | Cucharas y accesorios (+ descripción) |
 
 **Otros cambios**
-- **Pasos explícitos nuevos:** P2F (ficha de producto con sus 3 botones), P9S («¿Te sirvió?»), P9O («Otra duda») y G4 (segundo fallo de comprensión). En el artefacto estaban descritos dentro de notas.
+- **Pasos explícitos nuevos:** P2F (ficha de producto con sus 3 botones), P9S («¿Te sirvió?»), P9O («Otra duda»), G4 (segundo fallo de comprensión) y P4C (elegir las mezclas del kit con una lista, una por una y sin repetir, con ingredientes y usos en cada fila: no se asume que el cliente conoce los nombres; el kit de 6 las trae todas).
+- **Kit con casillas (WhatsApp Flow):** con `WHATSAPP_KIT_FLOW_ID` configurado, los kits de 2 a 5 abren un formulario dentro de WhatsApp (P4F, `app/flows/kit_flow.json`) con las 6 mezclas en casillas, y WhatsApp exige marcar exactamente las del kit. Sin el Flow, o si su envío falla, se eligen de una en una con la lista P4C. El Flow se crea y publica con `python -m app.whatsapp_flows`; publicado ya no se edita (los cambios van en una versión nueva).
+- **Pedido sin escribir nombres:** P6 pasó de texto libre a una lista de productos con precio (del catálogo) e ingredientes o usos; P6Q pregunta la cantidad con botones 1 / 2 / 3 (o un número escrito) y P6M muestra el pedido parcial con «Agregar otra mezcla» / «Continuar». La ficha, las más queridas y el kit mini van directo a la cantidad. El texto libre («2 de oro y 1 chilemon») sigue funcionando y se suma a lo elegido. En el artefacto estaban descritos dentro de notas.
 - **O1** estaba marcado como lista sin opciones; pasa a texto.
 - **Precios de distribuidor** salieron de la tabla pública y de la nota de D8, y se movieron a `interno/distribuidores.md`.
 - **Calificación de distribuidores:** la tabla se convirtió en una regla determinista, y cada opción de D2 trae `canal_objetivo`.
-- **Bienvenida aleatoria** (`app/greetings.py`): ahora usa la voz de Saboryarte (🌿 🧂 ✨, «por acá», asistente virtual de Saboryarte). Hace de G1 mientras no se envíen listas.
+- **Bienvenida aleatoria** (`app/greetings.py`): ahora usa la voz de Saboryarte (🌿 🧂 ✨, «por acá»). El bot se presenta como **Chatsabor**, nunca como «asistente virtual» (decisión del 28 oct 2026; también en G1 y en el prompt de Claude). Hace de G1 mientras no se envíen listas.
 
 ---
 

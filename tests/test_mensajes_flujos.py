@@ -9,7 +9,7 @@ MENSAJES = json.loads((ROOT / "app/flows/mensajes.json").read_text(encoding="utf
 PASOS = [paso for flujo in MENSAJES["flujos"].values() for paso in flujo["pasos"]]
 POR_ID = {paso["id"]: paso for paso in PASOS}
 
-TIPOS = {"texto", "botones", "lista", "libre", "traspaso", "plantilla"}
+TIPOS = {"texto", "botones", "lista", "libre", "traspaso", "plantilla", "formulario"}
 
 # Límites de mensajes interactivos de WhatsApp Cloud API
 MAX_BOTONES, MAX_TITULO_BOTON = 3, 20
@@ -91,6 +91,7 @@ def test_productos_referenciados_existen_en_catalogo():
     for paso in PASOS:
         for op in paso.get("opciones", []):
             referenciados = [op["producto"]] if "producto" in op else op.get("recomienda", [])
+            referenciados += [op["mezcla"]] if "mezcla" in op else []
             for producto in referenciados:
                 assert producto in ids_catalogo, f"{op['id']} → {producto}"
 
@@ -107,3 +108,18 @@ def test_prompt_y_base_de_conocimiento_llevan_enlace_de_instagram():
     from app.prompt import system_prompt
 
     assert system_prompt().count(INSTAGRAM_URL) >= 2  # instrucción + base de conocimiento
+
+
+
+def test_formulario_del_kit_dentro_de_limites():
+    """Botón del Flow: 30 caracteres o menos y sin emojis; opciones del CheckboxGroup: título ≤30, descripción ≤300."""
+    paso = POR_ID["P4F"]
+    assert len(paso["boton_formulario"]) <= 30 and paso["boton_formulario"].isascii()
+    for op in POR_ID["P4C"]["opciones"]:
+        assert len(op["titulo"]) <= 30 and len(op["descripcion"]) <= 300
+    flow = json.loads((ROOT / "app/flows/kit_flow.json").read_text(encoding="utf-8"))
+    pantalla = flow["screens"][0]
+    assert pantalla["id"] == "KIT" and pantalla["terminal"] is True
+    casillas = pantalla["layout"]["children"][0]["children"][0]
+    assert casillas["type"] == "CheckboxGroup"
+    assert casillas["min-selected-items"] == casillas["max-selected-items"] == "${data.cantidad}"

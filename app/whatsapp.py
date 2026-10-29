@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Any
 
@@ -98,6 +99,39 @@ async def send_buttons(to: str, body: str, buttons: list[dict[str, str]]) -> boo
             "action": {"buttons": [{"type": "reply", "reply": b} for b in buttons]},
         },
     })
+
+
+async def send_flow(to: str, body: str, cta: str, flow_id: str, flow_token: str, screen: str, data: dict, mode: str) -> bool:
+    """Envía un WhatsApp Flow (formulario dentro del chat) que abre en «screen» con los datos iniciales «data»."""
+    return await _send(to, {
+        "type": "interactive",
+        "interactive": {
+            "type": "flow",
+            "body": {"text": body},
+            "action": {
+                "name": "flow",
+                "parameters": {
+                    "flow_message_version": "3",
+                    "flow_token": flow_token,
+                    "flow_id": flow_id,
+                    "flow_cta": cta,
+                    "flow_action": "navigate",
+                    "flow_action_payload": {"screen": screen, "data": data},
+                    "mode": mode,
+                },
+            },
+        },
+    })
+
+
+def flow_response(interactive: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Datos que devolvió un Flow al completarse (interactive «nfm_reply»), o None si no es una respuesta de Flow."""
+    if not interactive or interactive.get("type") != "nfm_reply":
+        return None
+    try:
+        return json.loads((interactive.get("nfm_reply") or {}).get("response_json") or "")
+    except ValueError:
+        return None
 
 
 def interactive_reply(interactive: dict[str, Any] | None) -> dict[str, Any] | None:

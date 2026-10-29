@@ -32,6 +32,9 @@ class Conversation:
     # Datos del traspaso en curso: motivo, prioridad, inicio, respuestas del equipo, alerta enviada.
     traspaso: dict | None = None
     ruta: list[str] = field(default_factory=list)
+    # Lo último que se le mostró al cliente para responder: paso, tipo (lista, botones, formulario, texto…), texto,
+    # botón de la lista y filas/botones. Sirve para volver a mostrar las opciones y reconocer lo que escribe.
+    opciones: dict | None = None
     actualizado_en: float = 0.0
 
     def add_turn(self, user_text: str, assistant_text: str) -> None:

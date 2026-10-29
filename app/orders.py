@@ -77,3 +77,29 @@ def order_summary(items: list[dict[str, Any]], shipping: dict[str, str]) -> str:
         "_Una persona del equipo confirma el valor final del envío._\n\n"
         "¿Todo bien?"
     )
+
+
+_NUMEROS = {"un": 1, "una": 1, "uno": 1, "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7,
+            "ocho": 8, "nueve": 9, "diez": 10, "doce": 12, "quince": 15, "veinte": 20}
+
+
+def parse_quantity(text: str) -> int | None:
+    """Cantidad escrita sola («4», «cuatro», «5 unidades»). None si el mensaje dice otra cosa."""
+    match = re.fullmatch(r"(\w+)(?: (?:unidades?|und|u|frascos?))?", _normalize(text).strip(" .!"))
+    if not match:
+        return None
+    word = match.group(1)
+    quantity = int(word) if word.isdigit() else _NUMEROS.get(word)
+    return quantity if quantity and 1 <= quantity <= 100 else None
+
+
+def merge_items(base: list[dict], new: list[dict]) -> list[dict]:
+    """Suma cantidades del mismo producto; los kits armados se agregan aparte."""
+    merged = [dict(item) for item in base]
+    for item in new:
+        same = next((m for m in merged if "producto" in item and m.get("producto") == item["producto"]), None)
+        if same:
+            same["cantidad"] += item["cantidad"]
+        else:
+            merged.append(dict(item))
+    return merged

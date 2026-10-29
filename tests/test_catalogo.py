@@ -91,9 +91,11 @@ class TestNavegacionCatalogo:
     def test_agregar_al_pedido_inicia_el_pedido(self, client, mocks):
         elegir(client, "prod_sal_de_oro")
         elegir(client, "p2f_agregar", "button_reply")
-        assert "*Sal de oro*" in mocks["text"].call_args.args[1]
+        _, cuerpo, botones = mocks["buttons"].call_args.args
+        assert "*Sal de oro*" in cuerpo and "$26.000 c/u" in cuerpo
+        assert [b["title"] for b in botones] == ["1", "2", "3"]
         conv = load_conversation(REMITENTE)
-        assert conv.paso == "P6" and conv.datos["producto"] == "sal_de_oro"
+        assert conv.paso == "P6Q" and conv.datos["producto_pendiente"] == "sal_de_oro"
 
     def test_volver_al_menu_reinicia(self, client, mocks):
         elegir(client, "prod_sal_de_oro")

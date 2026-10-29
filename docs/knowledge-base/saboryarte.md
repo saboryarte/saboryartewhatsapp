@@ -64,8 +64,10 @@ La tarifa puede variar por peso y destino. **Una persona confirma el valor final
 
 ## Pagos
 
-- Transferencia bancaria o link de pago.
-- Los datos de pago los envía una persona del equipo cuando confirma el pedido. El bot no comparte datos bancarios ni pide datos de tarjeta.
+- Link de pago de Bold: tarjeta de crédito o débito, PSE, Botón Bancolombia o Nequi. Llega por WhatsApp al confirmar el pedido en el paso a paso y vence en 24 horas.
+- Cuando el pago se confirma, el cliente recibe un aviso y una persona del equipo coordina el despacho.
+- Si algo falla con el link, una persona del equipo envía los datos de pago (también transferencia bancaria).
+- El bot no comparte datos bancarios ni pide datos de tarjeta por chat.
 
 ## Cambios y productos dañados
 

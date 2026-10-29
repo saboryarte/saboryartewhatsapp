@@ -13,8 +13,10 @@ Agente de WhatsApp construido con **Python + FastAPI** que recibe mensajes via [
 - Estado de conversación por remitente (SQLite, caduca a las 24 h): Claude recibe el historial reciente y se recuerda la opción elegida del menú
 - Deduplicación por `message.id`: un reintento de Meta no genera una segunda respuesta
 - Ruta de compra navegable con listas y botones: catálogo, ficha de cada mezcla, las más queridas, kits, recomendación por uso y dudas frecuentes
+- Pedido sin escribir nombres: lista de productos con precio, cantidad con botones y pedido parcial («Agregar otra mezcla» / «Continuar»); los kits armados se arman eligiendo las mezclas de una lista. Escribir el pedido también funciona
 - Toma de pedidos (P6 → P7 → P8): Claude extrae del texto las mezclas, cantidades y datos de envío; el código valida contra el catálogo y calcula subtotal, envío por ciudad y total. El pedido aún no se registra ni se pasa al equipo
 - Traspaso a una persona en modo coexistencia: "asesor", "Hablar con alguien" o "Confirmar pedido" silencian el bot y envían la ficha por correo al equipo, que responde desde la app de WhatsApp Business. El bot retoma con la frase de cierre o tras horas sin mensajes del equipo, y alerta si nadie responde a tiempo
+- Pago con Bold: al confirmar el pedido se guarda en SQLite y el cliente recibe un link de pago (tarjeta, PSE, Botón Bancolombia, Nequi) por el total con la tarifa estándar de envío. El webhook `POST /webhooks/bold` verifica la firma, confirma con Bold que el link quedó pagado y por el monto correcto, avisa al cliente y envía al equipo la ficha para despachar
 - Claude responde con la voz de Saboryarte y solo con la base de conocimiento pública (`docs/knowledge-base/saboryarte.md`)
 
 ---
@@ -63,6 +65,13 @@ cp .env.example .env
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | ⬜ | Servidor SMTP para enviar esos correos (Gmail: `smtp.gmail.com`, 587, contraseña de aplicación) |
 | `HANDOFF_ALERT_MINUTES` | ⬜ | Minutos hábiles sin respuesta antes de alertar al equipo (por defecto 60) |
 | `HANDOFF_IDLE_HOURS` | ⬜ | Horas sin mensajes del equipo para que el bot retome solo (por defecto 12) |
+| `BOLD_API_KEY` | ⬜ | Llave de identidad de Bold: con ella se crean los links de pago. Sin ella, «Confirmar pedido» pasa a una persona |
+| `BOLD_SECRET_KEY` | ⬜ | Llave secreta de Bold: verifica la firma de los avisos de pago (obligatoria en producción) |
+| `BOLD_SANDBOX` | ⬜ | `true` solo con las llaves de pruebas de Bold |
+| `BOLD_LINK_HOURS` | ⬜ | Vigencia del link de pago en horas (por defecto 24) |
+| `BOLD_RETURN_URL` | ⬜ | A dónde lleva «Volver a la tienda» tras pagar; idealmente `https://wa.me/<número del bot>` |
+| `WHATSAPP_KIT_FLOW_ID` | ⬜ | WhatsApp Flow para elegir las mezclas del kit con casillas (se crea con `python -m app.whatsapp_flows crear <WABA_ID>`). Sin él, se eligen de una en una con listas |
+| `WHATSAPP_FLOWS_MODE` | ⬜ | `draft` mientras se prueba el Flow; `published` después de publicarlo |
 | `LOG_LEVEL` | ⬜ | Nivel de logging (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 
 > **Importante:** Nunca subas `.env` al repositorio. El archivo `.gitignore` ya lo excluye.
@@ -148,6 +157,8 @@ whatsapp-claude-agent/
 │   ├── orders.py      # Cálculos del pedido: subtotal, tarifa de envío por ciudad y resumen (P8)
 │   ├── handoff.py     # Traspaso: horario, ficha, silencio, reactivación y alertas
 │   ├── notify.py      # Aviso al equipo por correo (SMTP)
+│   ├── bold.py        # Bold: links de pago y firma de los avisos del webhook
+│   ├── pedidos.py     # Pedidos confirmados y su estado de pago (SQLite)
 │   ├── state.py       # Estado de conversación y deduplicación (SQLite)
 │   ├── usage.py       # Registro y reporte del costo real (tokens de Claude y mensajes enviados)
 │   ├── flows/

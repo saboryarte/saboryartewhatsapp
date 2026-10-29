@@ -11,7 +11,7 @@ MENU_PRINCIPAL = "G1"
 
 # Respuestas temporales para los pasos que aún no están construidos.
 EN_CONSTRUCCION = (
-    "¡Listo! Elegiste «{opcion}» 🌿 Esa parte del asistente todavía está en construcción.\n\n"
+    "¡Listo! Elegiste «{opcion}» 🌿 Esa parte de Chatsabor todavía está en construcción.\n\n"
     "Mientras tanto, cuéntame en un mensaje qué necesitas y con gusto te ayudo."
 )
 _EN_CONSTRUCCION_POR_PASO = {
@@ -100,6 +100,11 @@ def orderable_products() -> list[dict[str, Any]]:
 def mix_ids() -> set[str]:
     """Ids de las 6 mezclas (las que pueden ir en un kit armado)."""
     return {p["id"] for p in _catalogo()["productos"]}
+
+
+def ordered_mix_ids() -> list[str]:
+    """Las 6 mezclas en el orden del catálogo (el kit de 6 las trae todas)."""
+    return [p["id"] for p in _catalogo()["productos"]]
 
 
 def kit_price(size: int) -> int | None:

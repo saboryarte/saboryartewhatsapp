@@ -32,9 +32,9 @@
     {
       "id": "FAQ-005", "critico": true,
       "mensaje": "¿Cómo puedo pagar?",
-      "debe": "Decir que se paga por transferencia bancaria o link de pago, y que los datos de pago los envía una persona del equipo al confirmar el pedido.",
+      "debe": "Decir que al confirmar el pedido en el paso a paso llega un link de pago de Bold (tarjeta, PSE, Botón Bancolombia o Nequi) que vence en 24 horas.",
       "no_debe": "Inventar un número de cuenta, banco o enlace de pago, ni pedir datos de tarjeta.",
-      "incluir": ["transferencia"],
+      "incluir": ["link"],
       "excluir_regex": ["\\b\\d{8,}\\b"]
     },
     {

@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 from contextlib import asynccontextmanager
 
@@ -6,8 +7,9 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request, sta
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+from .bold import valid_signature
 from .config import settings
-from .router import check_unanswered_handoffs, handle_choice, handle_team_message, handle_text
+from .router import check_unanswered_handoffs, handle_bold_event, handle_choice, handle_team_message, handle_text
 from .state import load_conversation, mark_processed, save_conversation
 from .usage import remitente_actual
 from .whatsapp import WhatsAppContact, WhatsAppMessage, WhatsAppPayload
@@ -157,4 +159,19 @@ async def receive_webhook(payload: WhatsAppPayload, background_tasks: Background
     if payload.object != "whatsapp_business_account":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Objeto no reconocido")
     background_tasks.add_task(_process_payload, payload)
+    return {"status": "ok"}
+
+
+@app.post("/webhooks/bold", status_code=status.HTTP_200_OK)
+async def receive_bold_webhook(request: Request, background_tasks: BackgroundTasks) -> dict:
+    """Avisos de pago de Bold. Bold espera un 200 en menos de 2 s: se verifica la firma y se procesa en segundo plano."""
+    body = await request.body()
+    if not valid_signature(body, request.headers.get("x-bold-signature")):
+        logger.warning("Bold: aviso con firma inválida rechazado")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Firma inválida")
+    try:
+        event = json.loads(body)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="JSON inválido")
+    background_tasks.add_task(handle_bold_event, event)
     return {"status": "ok"}

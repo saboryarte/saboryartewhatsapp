@@ -24,6 +24,22 @@ class Settings(BaseSettings):
     # Horas desde el último mensaje del equipo tras las cuales el bot vuelve a responder solo.
     handoff_idle_hours: int = 12
 
+    # Bold: links de pago. Llave de identidad (crea links) y llave secreta (verifica los avisos del webhook).
+    bold_api_key: str = ""
+    bold_secret_key: str = ""
+    # true solo con las llaves de pruebas: Bold firma los avisos de prueba con una llave vacía.
+    bold_sandbox: bool = False
+    # Vigencia del link de pago (24 h, como la ventana para escribirle al cliente sin plantilla).
+    bold_link_hours: int = 24
+    # A dónde lleva el botón «Volver a la tienda» del comprobante de Bold (https). Lo ideal: el chat de WhatsApp,
+    # https://wa.me/<número del bot sin + ni espacios>.
+    bold_return_url: str = ""
+
+    # WhatsApp Flow del kit armado (casillas para elegir las mezclas). Sin ID se usa la lista de una en una.
+    whatsapp_kit_flow_id: str = ""
+    # «draft» mientras se prueba (solo la versión borrador); «published» después de publicarlo.
+    whatsapp_flows_mode: str = "draft"
+
     log_level: str = "INFO"
 
 

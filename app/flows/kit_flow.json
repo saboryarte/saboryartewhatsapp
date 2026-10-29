@@ -1,0 +1,71 @@
+{
+  "version": "6.3",
+  "screens": [
+    {
+      "id": "KIT",
+      "title": "Arma tu kit",
+      "terminal": true,
+      "success": true,
+      "data": {
+        "cantidad": {
+          "type": "number",
+          "__example__": 3
+        },
+        "titulo": {
+          "type": "string",
+          "__example__": "Elige 3 mezclas"
+        },
+        "ayuda": {
+          "type": "string",
+          "__example__": "Marca exactamente 3. Cada una viene en 100 g (tierra de fuego en 60 g)."
+        },
+        "mezclas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "title": {"type": "string"},
+              "description": {"type": "string"}
+            }
+          },
+          "__example__": [
+            {"id": "sal_de_oro", "title": "Sal de oro", "description": "Ajo negro, tomillo y cúrcuma · va con todo"},
+            {"id": "sal_de_sol", "title": "Sal de sol", "description": "Jengibre, romero y albahaca · pollo y pescado"}
+          ]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "kit",
+            "children": [
+              {
+                "type": "CheckboxGroup",
+                "name": "mezclas",
+                "label": "${data.titulo}",
+                "description": "${data.ayuda}",
+                "data-source": "${data.mezclas}",
+                "min-selected-items": "${data.cantidad}",
+                "max-selected-items": "${data.cantidad}",
+                "required": true
+              },
+              {
+                "type": "Footer",
+                "label": "Listo",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "mezclas": "${form.mezclas}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

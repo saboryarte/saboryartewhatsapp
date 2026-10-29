@@ -312,17 +312,18 @@ class TestReceiveWebhook:
         ask_mock = AsyncMock(return_value="respuesta bsuid")
         send_mock = AsyncMock(return_value=None)
         monkeypatch.setattr("app.router.ask_claude", ask_mock)
-        monkeypatch.setattr("app.router.send_text", send_mock)
+        monkeypatch.setattr("app.router.send_list", send_mock)  # primer mensaje: respuesta + menú
         resp = client.post("/webhook", json=BSUID_PAYLOAD)
         assert resp.status_code == 200
         ask_mock.assert_called_once_with("Hola desde BSUID", [])
-        send_mock.assert_called_once_with("bsuid_111222333", "respuesta bsuid")
+        send_mock.assert_called_once()
+        assert send_mock.call_args.args[:2] == ("bsuid_111222333", "respuesta bsuid")
 
     def test_bsuid_envia_al_from_user_id_no_al_contact(self, client, monkeypatch):
         """send_text debe usar message.from_user_id, no contact.user_id, cuando ambos están presentes."""
         send_mock = AsyncMock(return_value=None)
         monkeypatch.setattr("app.router.ask_claude", AsyncMock(return_value="ok"))
-        monkeypatch.setattr("app.router.send_text", send_mock)
+        monkeypatch.setattr("app.router.send_list", send_mock)  # primer mensaje: respuesta + menú
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "e1", "changes": [{"field": "messages", "value": {
@@ -334,13 +335,14 @@ class TestReceiveWebhook:
         }
         resp = client.post("/webhook", json=payload)
         assert resp.status_code == 200
-        send_mock.assert_called_once_with("msg_bsuid_111", "ok")
+        send_mock.assert_called_once()
+        assert send_mock.call_args.args[:2] == ("msg_bsuid_111", "ok")
 
     def test_ambos_identificadores_prefiere_phone(self, client, monkeypatch):
         """Cuando from (teléfono) y from_user_id (BSUID) están presentes, se usa from."""
         send_mock = AsyncMock(return_value=None)
         monkeypatch.setattr("app.router.ask_claude", AsyncMock(return_value="ok"))
-        monkeypatch.setattr("app.router.send_text", send_mock)
+        monkeypatch.setattr("app.router.send_list", send_mock)  # primer mensaje: respuesta + menú
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "e1", "changes": [{"field": "messages", "value": {
@@ -359,13 +361,14 @@ class TestReceiveWebhook:
         }
         resp = client.post("/webhook", json=payload)
         assert resp.status_code == 200
-        send_mock.assert_called_once_with("5212345", "ok")
+        send_mock.assert_called_once()
+        assert send_mock.call_args.args[:2] == ("5212345", "ok")
 
     def test_fallback_a_contact_user_id(self, client, monkeypatch):
         """Sin from ni from_user_id, debe usar contact.user_id como remitente."""
         send_mock = AsyncMock(return_value=None)
         monkeypatch.setattr("app.router.ask_claude", AsyncMock(return_value="ok"))
-        monkeypatch.setattr("app.router.send_text", send_mock)
+        monkeypatch.setattr("app.router.send_list", send_mock)  # primer mensaje: respuesta + menú
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "e1", "changes": [{"field": "messages", "value": {
@@ -377,7 +380,8 @@ class TestReceiveWebhook:
         }
         resp = client.post("/webhook", json=payload)
         assert resp.status_code == 200
-        send_mock.assert_called_once_with("contact_bsuid_555", "ok")
+        send_mock.assert_called_once()
+        assert send_mock.call_args.args[:2] == ("contact_bsuid_555", "ok")
 
     def test_sin_ningun_remitente_no_invoca_claude(self, client, monkeypatch):
         """Sin from, from_user_id ni contact.user_id, el mensaje debe descartarse."""
@@ -400,10 +404,11 @@ class TestReceiveWebhook:
         """Payload legacy debe enviar la respuesta al número de teléfono del campo from."""
         send_mock = AsyncMock(return_value=None)
         monkeypatch.setattr("app.router.ask_claude", AsyncMock(return_value="ok"))
-        monkeypatch.setattr("app.router.send_text", send_mock)
+        monkeypatch.setattr("app.router.send_list", send_mock)  # primer mensaje: respuesta + menú
         resp = client.post("/webhook", json=TEXT_PAYLOAD)
         assert resp.status_code == 200
-        send_mock.assert_called_once_with("521234567890", "ok")
+        send_mock.assert_called_once()
+        assert send_mock.call_args.args[:2] == ("521234567890", "ok")
 
     # ── Regresión: contacts[].profile opcional ────────────────────────────────
 
@@ -412,7 +417,7 @@ class TestReceiveWebhook:
         ask_mock = AsyncMock(return_value="ok")
         send_mock = AsyncMock(return_value=None)
         monkeypatch.setattr("app.router.ask_claude", ask_mock)
-        monkeypatch.setattr("app.router.send_text", send_mock)
+        monkeypatch.setattr("app.router.send_list", send_mock)  # primer mensaje: respuesta + menú
         payload = {
             "object": "whatsapp_business_account",
             "entry": [{"id": "e1", "changes": [{"field": "messages", "value": {
@@ -425,7 +430,8 @@ class TestReceiveWebhook:
         resp = client.post("/webhook", json=payload)
         assert resp.status_code == 200
         ask_mock.assert_called_once_with("necesito ayuda", [])
-        send_mock.assert_called_once_with("521234567890", "ok")
+        send_mock.assert_called_once()
+        assert send_mock.call_args.args[:2] == ("521234567890", "ok")
 
     def test_regresion_status_read_devuelve_200(self, client, monkeypatch):
         """Regresión: status update 'read' debe devolver 200 sin invocar Claude."""
@@ -499,6 +505,7 @@ class TestSaludos:
     @pytest.mark.parametrize("texto", [
         "Hola", "hola!", "Holaaa 👋", "ola", "Buenas", "Buenos días", "buenas tardes!!",
         "Hola, buenas noches", "hola que tal", "Hola, ¿cómo estás?", "Hey", "qué más", "Saludos",
+        "Hello helloooo!", "heyyy", "Holaaaa", "hiii", "alooo",
     ])
     def test_detecta_saludos(self, texto):
         assert is_greeting(texto)

@@ -18,7 +18,7 @@
         },
         {
           "id": "G1", "tipo": "lista",
-          "texto": "¡Hola! 🌿 Qué alegría tenerte por acá. Soy el asistente virtual de Saboryarte.\n\nCuéntame, ¿en qué te puedo ayudar hoy?",
+          "texto": "¡Hola! 🌿 Qué alegría tenerte por acá. Soy Chatsabor, de Saboryarte.\n\nCuéntame, ¿en qué te puedo ayudar hoy?",
           "boton_lista": "Ver opciones",
           "opciones": [
             {"id": "menu_comprar", "titulo": "🧂 Comprar mezclas", "descripcion": "Catálogo, kits y pedidos", "va_a": "P1"},
@@ -44,6 +44,15 @@
           "boton_lista": "Ver opciones",
           "opciones_de": "G1",
           "notas": "Primer fallo de comprensión. En el segundo fallo seguido se envía G4 y se activa el traspaso."
+        },
+        {
+          "id": "G5", "tipo": "botones",
+          "texto": "[respuesta]",
+          "opciones": [
+            {"id": "atajo_menu", "titulo": "Ver menú", "va_a": "G1"},
+            {"id": "atajo_persona", "titulo": "Hablar con alguien", "va_a": "T1"}
+          ],
+          "notas": "Paso agregado: cuando Chatsabor responde una pregunta fuera de un paso guiado, la respuesta llega con estos botones para que el cliente nunca quede sin opciones."
         },
         {
           "id": "G4", "tipo": "traspaso",
@@ -116,13 +125,33 @@
           "texto": "¡Arma tu kit a tu gusto! 🎁 Cada kit trae mezclas de 100 g y una cuchara artesanal.\n¿Cuántas mezclas quieres?",
           "boton_lista": "Ver kits",
           "opciones": [
-            {"id": "kit_2", "titulo": "2 mezclas · $48.000", "va_a": "P6", "kit": 2},
-            {"id": "kit_3", "titulo": "3 mezclas · $70.000", "va_a": "P6", "kit": 3},
-            {"id": "kit_4", "titulo": "4 mezclas · $88.000", "va_a": "P6", "kit": 4},
-            {"id": "kit_5", "titulo": "5 mezclas · $110.000", "va_a": "P6", "kit": 5},
-            {"id": "kit_6", "titulo": "6 mezclas · $133.000", "va_a": "P6", "kit": 6}
+            {"id": "kit_2", "titulo": "2 mezclas · $48.000", "va_a": "P4C", "kit": 2},
+            {"id": "kit_3", "titulo": "3 mezclas · $70.000", "va_a": "P4C", "kit": 3},
+            {"id": "kit_4", "titulo": "4 mezclas · $88.000", "va_a": "P4C", "kit": 4},
+            {"id": "kit_5", "titulo": "5 mezclas · $110.000", "va_a": "P4C", "kit": 5},
+            {"id": "kit_6", "titulo": "6 mezclas · $133.000", "va_a": "P4C", "kit": 6}
           ],
-          "notas": "Después pregunta cuáles mezclas quiere (texto libre) y sigue al pedido. La mezcla tierra de fuego viene en 60 g."
+          "notas": "Lleva a P4C para elegir las mezclas con una lista. El kit de 6 trae todas: no hay nada que elegir. La mezcla tierra de fuego viene en 60 g."
+        },
+        {
+          "id": "P4C", "tipo": "lista",
+          "texto": "Elige la mezcla [n] de [tamaño] para tu kit 🎁",
+          "boton_lista": "Ver mezclas",
+          "opciones": [
+            {"id": "kitmix_sal_de_oro", "titulo": "Sal de oro", "descripcion": "Ajo negro, tomillo y cúrcuma · va con todo", "mezcla": "sal_de_oro"},
+            {"id": "kitmix_sal_de_sol", "titulo": "Sal de sol", "descripcion": "Jengibre, romero y albahaca · pollo y pescado", "mezcla": "sal_de_sol"},
+            {"id": "kitmix_sal_de_luna_rosa", "titulo": "Sal de luna rosa", "descripcion": "Sal rosa, ajo y ajonjolí negro · suave", "mezcla": "sal_de_luna_rosa"},
+            {"id": "kitmix_sal_de_la_vid", "titulo": "Sal de la vid", "descripcion": "Horneada en vino tinto · parrilla y pastas", "mezcla": "sal_de_la_vid"},
+            {"id": "kitmix_sal_chilemon", "titulo": "Sal chilemon", "descripcion": "Limón y chiles · frutas y michelar", "mezcla": "sal_chilemon"},
+            {"id": "kitmix_tierra_de_fuego", "titulo": "Mezcla tierra de fuego", "descripcion": "Paprika ahumada · papas y costillas (60 g)", "mezcla": "tierra_de_fuego"}
+          ],
+          "notas": "Paso agregado: el cliente elige las mezclas del kit una por una, sin necesidad de conocer los nombres. Las ya elegidas no se repiten en la lista. Si prefiere escribirlas, también se acepta."
+        },
+        {
+          "id": "P4F", "tipo": "formulario",
+          "texto": "¡Arma tu kit de [tamaño] mezclas! 🎁 Toca «Elegir mezclas» y marca las [tamaño] que más te gusten.",
+          "boton_formulario": "Elegir mezclas",
+          "notas": "WhatsApp Flow (app/flows/kit_flow.json): casillas con las mezclas de P4C; WhatsApp exige marcar exactamente [tamaño]. Se usa si WHATSAPP_KIT_FLOW_ID está configurado; si no, o si el envío falla, se usa P4C (de una en una)."
         },
         {
           "id": "P5", "tipo": "lista",
@@ -138,9 +167,38 @@
           "notas": "Se responde con las mezclas recomendadas (ids de app/flows/catalogo.json) y luego la lista P2. Recomendaciones sugeridas: ajustar con el equipo."
         },
         {
-          "id": "P6", "tipo": "libre",
-          "texto": "¡Listo! Armemos tu pedido 🙌\n¿Qué mezclas quieres y cuántas unidades de cada una?",
-          "notas": "Si el cliente menciona que quiere distribuir o revender, responder «¡Qué bueno! Para eso tenemos una ruta especial. ¿Te cuento cómo distribuir Saboryarte?» y pasar a D1. El granel es solo para distribuidores: a un consumidor final se le ofrecen las presentaciones de 100 g o los kits. La mezcla tierra de fuego no se vende a granel."
+          "id": "P6", "tipo": "lista",
+          "texto": "¡Listo! Armemos tu pedido 🙌 Toca «Ver productos» y elige una mezcla.\nSi prefieres, escríbeme lo que quieres (por ejemplo: «2 de oro y 1 chilemon»).",
+          "boton_lista": "Ver productos",
+          "opciones": [
+            {"id": "pedir_sal_de_oro", "titulo": "Sal de oro", "descripcion": "Ajo negro, tomillo y cúrcuma · va con todo", "agregar": "sal_de_oro"},
+            {"id": "pedir_sal_de_sol", "titulo": "Sal de sol", "descripcion": "Jengibre, romero y albahaca · pollo y pescado", "agregar": "sal_de_sol"},
+            {"id": "pedir_sal_de_luna_rosa", "titulo": "Sal de luna rosa", "descripcion": "Sal rosa, ajo y ajonjolí negro · suave", "agregar": "sal_de_luna_rosa"},
+            {"id": "pedir_sal_de_la_vid", "titulo": "Sal de la vid", "descripcion": "Horneada en vino tinto · parrilla y pastas", "agregar": "sal_de_la_vid"},
+            {"id": "pedir_sal_chilemon", "titulo": "Sal chilemon", "descripcion": "Limón y chiles · frutas y michelar", "agregar": "sal_chilemon"},
+            {"id": "pedir_tierra_de_fuego", "titulo": "Mezcla tierra de fuego", "descripcion": "Paprika ahumada · papas y costillas (60 g)", "agregar": "tierra_de_fuego"},
+            {"id": "pedir_kit_mini", "titulo": "Kit mini", "descripcion": "Las 6 mezclas en miniatura + cuchara", "agregar": "kit_mini"}
+          ],
+          "notas": "El precio de cada fila se antepone a la descripción desde app/flows/catalogo.json. Al elegir un producto se pregunta la cantidad (P6Q). También se acepta texto libre («2 de oro y 1 chilemon»). Si el cliente menciona que quiere distribuir o revender, responder «¡Qué bueno! Para eso tenemos una ruta especial. ¿Te cuento cómo distribuir Saboryarte?» y pasar a D1. El granel es solo para distribuidores: a un consumidor final se le ofrecen las presentaciones de 100 g o los kits. La mezcla tierra de fuego no se vende a granel."
+        },
+        {
+          "id": "P6Q", "tipo": "botones",
+          "texto": "¿Cuántas unidades de [producto] quieres? ([precio] c/u)\nSi quieres más de 3, escríbeme el número 🙌",
+          "opciones": [
+            {"id": "cantidad_1", "titulo": "1", "cantidad": 1},
+            {"id": "cantidad_2", "titulo": "2", "cantidad": 2},
+            {"id": "cantidad_3", "titulo": "3", "cantidad": 3}
+          ],
+          "notas": "Paso agregado: cantidad del producto elegido en P6, en la ficha (P2F), en las más queridas (P3) o el kit mini (P4)."
+        },
+        {
+          "id": "P6M", "tipo": "botones",
+          "texto": "Tu pedido va así:\n[carrito]\n\n¿Quieres agregar algo más?",
+          "opciones": [
+            {"id": "carrito_agregar", "titulo": "Agregar otra mezcla", "va_a": "P6"},
+            {"id": "carrito_listo", "titulo": "Continuar", "va_a": "P7"}
+          ],
+          "notas": "Paso agregado: el pedido parcial. «Continuar» pasa a los datos de envío (P7) o, si ya se conocen, al resumen (P8)."
         },
         {
           "id": "P7", "tipo": "libre",
@@ -155,7 +213,7 @@
             {"id": "p8_cambiar", "titulo": "Cambiar algo", "va_a": "P6"},
             {"id": "p8_persona", "titulo": "Hablar con alguien", "va_a": "T1"}
           ],
-          "notas": "El subtotal y el total los calcula el código con el catálogo y la tarifa de envío, no Claude."
+          "notas": "El subtotal y el total los calcula el código con el catálogo y la tarifa de envío, no Claude. «Confirmar pedido» crea el link de pago de Bold (P11L) o, sin Bold, pasa a una persona (P11)."
         },
         {
           "id": "P9", "tipo": "lista",
@@ -209,6 +267,21 @@
           "id": "P11F", "tipo": "traspaso",
           "texto": "¡Pedido recibido! 🙌 Como ahorita estamos fuera de horario (atendemos lunes a sábado de 8:00 a. m. a 6:00 p. m.), una persona del equipo te escribe apenas abramos con los datos de pago y te confirma el despacho.",
           "notas": "Paso agregado en la adaptación: P11 fuera de horario. Etiquetas: Producto, Pendiente de pago."
+        },
+        {
+          "id": "P11L", "tipo": "texto",
+          "texto": "¡Pedido recibido! 🙌 Tu pedido [referencia] por [total] está listo para el pago. Puedes pagar con tarjeta, PSE, Botón Bancolombia o Nequi aquí:\n[link de pago]\n\nEl link vence en 24 horas. Apenas se confirme el pago te escribimos para coordinar el despacho 🌿",
+          "notas": "Con Bold configurado reemplaza a P11/P11F: el código crea el link (app/bold.py) por el total con la tarifa estándar de envío. Si Bold falla, se usa P11/P11F (una persona envía los datos de pago)."
+        },
+        {
+          "id": "P12", "tipo": "texto",
+          "texto": "¡Recibimos tu pago! 🎉 Tu pedido [referencia] por [total] quedó confirmado. Una persona del equipo te escribe para coordinar el despacho 🌿",
+          "notas": "Lo envía el webhook de Bold (SALE_APPROVED) después de confirmar con Bold que el link quedó pagado. El equipo recibe la ficha por correo."
+        },
+        {
+          "id": "P12R", "tipo": "texto",
+          "texto": "Uy, tu pago no se pudo completar 🙈 Puedes intentarlo de nuevo con el mismo link:\n[link de pago]\n\nSi necesitas ayuda, escribe «asesor».",
+          "notas": "Lo envía el webhook de Bold (SALE_REJECTED). El link sigue activo después de un pago fallido."
         }
       ]
     },
@@ -492,7 +565,7 @@
         {
           "id": "T3", "tipo": "texto",
           "texto": "¡Aquí sigo! Si necesitas algo más, escríbeme «menú» 🌿",
-          "notas": "Se envía cuando la persona cierra la conversación y el bot se reactiva: el equipo envía desde la app la respuesta rápida con la frase «te dejo de nuevo con nuestro asistente» (app/handoff.py)."
+          "notas": "Se envía cuando la persona cierra la conversación y el bot se reactiva: el equipo envía desde la app la respuesta rápida con la frase «te dejo de nuevo con Chatsabor» (app/handoff.py)."
         }
       ]
     }

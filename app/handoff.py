@@ -19,12 +19,14 @@ _DIAS_HABILES = range(0, 6)
 _APERTURA, _CIERRE = 8, 18
 
 # El equipo la guarda como respuesta rápida en la app: la ve el cliente y le indica al bot que retome.
-CLOSING_PHRASE = "te dejo de nuevo con nuestro asistente"
+# Se acepta también la frase anterior («…con nuestro asistente») por si quedó guardada así.
+CLOSING_PHRASES = ("te dejo de nuevo con chatsabor", "te dejo de nuevo con nuestro asistente")
 
 MOTIVOS = {
     "solicitud": "Pidió hablar con una persona",
     "pedido": "Pedido armado: confirmar pago y despacho",
     "equipo_intervino": "El equipo escribió desde la app",
+    "no_entiende": "Chatsabor no entendió dos mensajes seguidos",
 }
 _ETIQUETAS = {"pedido": ["Producto", "Pendiente de pago"]}
 
@@ -55,7 +57,7 @@ def business_minutes_between(start: datetime, end: datetime) -> float:
 
 
 def is_closing_message(text: str) -> bool:
-    return CLOSING_PHRASE in _normalize(text)
+    return any(phrase in _normalize(text) for phrase in CLOSING_PHRASES)
 
 
 def start_handoff(conversation: Conversation, motivo: str) -> None:
