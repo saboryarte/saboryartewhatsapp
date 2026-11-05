@@ -3,11 +3,12 @@
 La conversación activa (paso, carrito, contexto de Claude) sigue reiniciándose a las 24 h (state.py). Lo que vive
 más tiempo está aquí, con retención fija (Ley 1581 de 2012: guardar solo lo necesario y por un tiempo definido):
 
-- chat:           todos los mensajes (cliente, Chatsabor y equipo) ........ 60 días
+- chat:           todos los mensajes (cliente, Especia y equipo) ........ 60 días
 - clientes:       nombre, último envío y último pedido, para reconocer al cliente que vuelve
                   ........ 60 días sin actividad, o 1 año desde su último pedido pagado
 - chats_pedidos:  chat completo + ficha de cada pedido pagado ............. 1 año
-                  También se escribe como texto en data/pedidos/ para copiarlo a Google Drive (scripts/respaldo.sh).
+                  También se escribe como texto en data/pedidos/ para copiarlo a Google Drive (app/respaldo.py).
+- data/pedidos/Comprobantes y data/pedidos/Exportes (transferencias y Excel diario) ... 1 año
 
 Contiene datos personales de clientes: data/ no va al repo.
 """
@@ -32,7 +33,7 @@ PEDIDO_TTL_SECONDS = 365 * DIA
 # Una pausa de más de 24 h separa una conversación de la siguiente (como la ventana de WhatsApp).
 _PAUSA_ENTRE_CONVERSACIONES = DIA
 
-CLIENTE, CHATSABOR, EQUIPO = "cliente", "chatsabor", "equipo"
+CLIENTE, ESPECIA, EQUIPO = "cliente", "especia", "equipo"
 
 
 def _connect() -> sqlite3.Connection:
@@ -76,7 +77,7 @@ def record(remitente: str, quien: str, texto: str) -> None:
 
 
 def outgoing_text(message: dict) -> str:
-    """Texto legible de un mensaje que envía Chatsabor (texto, lista, botones o formulario)."""
+    """Texto legible de un mensaje que envía Especia (texto, lista, botones o formulario)."""
     if message.get("type") == "text":
         return message["text"]["body"]
     interactive = message.get("interactive") or {}
@@ -180,7 +181,7 @@ def save_order_chat(pedido_id: int, referencia: str, remitente: str, nombre: str
     lines = [ficha, "", "─" * 40, "Conversación (hora de Colombia)", "─" * 40]
     for quien, texto, creado_en in last_session(remitente, now):
         hora = datetime.fromtimestamp(creado_en, tz=COLOMBIA).strftime("%Y-%m-%d %H:%M")
-        etiqueta = {"cliente": nombre or "Cliente", "chatsabor": "Chatsabor", "equipo": "Equipo"}.get(quien, quien)
+        etiqueta = {"cliente": nombre or "Cliente", "especia": "Especia", "chatsabor": "Especia", "equipo": "Equipo"}.get(quien, quien)
         lines.append(f"[{hora}] {etiqueta}: {texto}")
     text = "\n".join(lines)
     fecha = datetime.fromtimestamp(now, tz=COLOMBIA).strftime("%Y-%m-%d")
@@ -202,6 +203,17 @@ def save_order_chat(pedido_id: int, referencia: str, remitente: str, nombre: str
 
 # ── Retención ─────────────────────────────────────────────────────────────────
 
+def purge_old_files(folder: Path, ttl_seconds: float, now: float | None = None) -> int:
+    """Borra los archivos de «folder» más viejos que el plazo (comprobantes y exportes: 1 año)."""
+    if not folder.exists():
+        return 0
+    limit = (now or time.time()) - ttl_seconds
+    old = [p for p in folder.iterdir() if p.is_file() and p.stat().st_mtime < limit]
+    for path in old:
+        path.unlink()
+    return len(old)
+
+
 def purge(now: float | None = None) -> dict[str, int]:
     """Borra lo que ya cumplió su plazo. Se ejecuta una vez al día desde main.py."""
     now = now or time.time()
@@ -218,6 +230,8 @@ def purge(now: float | None = None) -> dict[str, int]:
     for (archivo,) in viejos:
         if archivo:
             Path(archivo).unlink(missing_ok=True)
+    for folder in ("Comprobantes", "Exportes"):
+        purge_old_files(pedidos_dir() / folder, PEDIDO_TTL_SECONDS, now)
     if chat or clientes or pedidos:
         logger.info("Retención: %d mensajes, %d clientes y %d chats de pedidos borrados", chat, clientes, pedidos)
     return {"chat": chat, "clientes": clientes, "chats_pedidos": pedidos}

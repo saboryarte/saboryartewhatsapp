@@ -13,7 +13,7 @@ MENU_PRINCIPAL = "G1"
 
 # Respuestas temporales para los pasos que aún no están construidos.
 EN_CONSTRUCCION = (
-    "¡Listo! Elegiste «{opcion}» 🌿 Esa parte de Chatsabor todavía está en construcción.\n\n"
+    "¡Listo! Elegiste «{opcion}» 🌿 Esa parte de Especia todavía está en construcción.\n\n"
     "Mientras tanto, cuéntame en un mensaje qué necesitas y con gusto te ayudo."
 )
 _EN_CONSTRUCCION_POR_PASO = {

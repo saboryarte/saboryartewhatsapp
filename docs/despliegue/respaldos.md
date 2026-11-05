@@ -1,14 +1,16 @@
-# Historial y copias de seguridad de Chatsabor (servidor de Hostinger)
+# Historial y copias de seguridad de Especia (servidor de Hostinger)
 
 ## Qué se guarda y cuánto tiempo
 
 | Qué | Dónde | Cuánto dura | Para qué |
 |---|---|---|---|
-| Conversación activa (paso del menú, carrito, últimos 20 mensajes para Claude) | `conversaciones` | 24 h sin actividad | Que Chatsabor siga el hilo. Después de 24 h empieza de cero, para no arrastrar un pedido viejo. |
-| Archivo de chats (todo lo que escriben el cliente, Chatsabor y el equipo) | `chat` | **60 días** | Revisar conversaciones y atender reclamos. |
+| Conversación activa (paso del menú, carrito, últimos 20 mensajes para Claude) | `conversaciones` | 24 h sin actividad | Que Especia siga el hilo. Después de 24 h empieza de cero, para no arrastrar un pedido viejo. |
+| Archivo de chats (todo lo que escriben el cliente, Especia y el equipo) | `chat` | **60 días** | Revisar conversaciones y atender reclamos. |
 | Memoria del cliente (nombre, últimos datos de envío, último pedido) | `clientes` | 60 días sin escribir, o **1 año** desde su último pago | Ofrecerle «¿a los mismos datos de la vez pasada?» y que Claude sepa que ya compró. |
 | Chat completo + ficha de cada pedido **pagado** | `chats_pedidos` y `data/pedidos/*.txt` | **1 año** | Reclamos, cambios y contabilidad. |
 | Pedidos (productos, total, dirección, pago) | `pedidos` | Sin vencer | Registro de ventas (ver «Pendiente» abajo). |
+| Comprobantes de transferencia (foto o PDF) | `data/pedidos/Comprobantes/` | **1 año** | Soporte del pago. También van adjuntos en el correo al equipo. |
+| Exporte diario de pedidos (Excel) | `data/pedidos/Exportes/` | **1 año** | Lo envía `app/exporte.py` por correo a las 7:00 p. m. |
 
 El borrado de lo vencido lo hace el bot solo, una vez al día (`app/archivo.py`).
 
@@ -19,8 +21,8 @@ Hay dos niveles, para no depender de un solo proveedor:
 1. **Copia diaria a Google Drive** (`app/respaldo.py`, a las 3:00 a. m.):
    - La base de datos completa, **cifrada**, en `Saboryarte/Respaldos`. Se guardan **60 días**. En el servidor
      quedan solo las de los últimos 7.
-   - Un `.txt` legible por cada pedido pagado (ficha + chat) en `Saboryarte/Pedidos`, compartida solo con el
-     equipo. Se guarda **1 año**. Se lee desde el celular con la app de Drive.
+   - Un `.txt` legible por cada pedido pagado (ficha + chat), los comprobantes de transferencia y el Excel
+     diario, en `Saboryarte/Pedidos`, compartida solo con el equipo. Se guarda **1 año**. Se lee desde el celular con la app de Drive.
    - Antes de subirla, cada copia se abre y se verifica. Si algo falla, llega un correo al equipo.
 2. **Copia semanal de Hostinger** de todo el servidor: en hPanel → VPS → **Copias de seguridad**, confirma que
    estén activas. Sirven si se daña el servidor completo.
@@ -79,8 +81,17 @@ crontab -e
 Agrega esta línea (ajusta la ruta a donde quedó el proyecto):
 
 ```
-0 3 * * * cd /opt/chatsabor && .venv/bin/python -m app.respaldo diario >> data/respaldo.log 2>&1
+0 3 * * * cd /opt/especia && .venv/bin/python -m app.respaldo diario >> data/respaldo.log 2>&1
 ```
+
+Y esta otra para el exporte diario de pedidos (Excel por correo y en Drive):
+
+```
+0 19 * * * cd /opt/chatsabor && .venv/bin/python -m app.exporte diario >> data/exporte.log 2>&1
+```
+
+> La hora del cron es la del servidor. Si el VPS no está en hora de Colombia, cámbiala con
+> `sudo timedatectl set-timezone America/Bogota`. Las fechas del Excel siempre se calculan en hora de Colombia.
 
 ### 6. Probar
 

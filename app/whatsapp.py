@@ -7,7 +7,7 @@ from httpx import HTTPStatusError
 from pydantic import BaseModel, ConfigDict, Field
 
 from .config import settings
-from .archivo import CHATSABOR, outgoing_text, record
+from .archivo import ESPECIA, outgoing_text, record
 from .usage import record_whatsapp
 
 logger = logging.getLogger(__name__)
@@ -146,6 +146,34 @@ def interactive_reply(interactive: dict[str, Any] | None) -> dict[str, Any] | No
     return reply if reply.get("id") else None
 
 
+# Límite para comprobantes: una foto o un PDF de un banco pesa mucho menos.
+MAX_MEDIA_BYTES = 10 * 1024 * 1024
+
+
+async def download_media(media_id: str) -> tuple[bytes, str] | None:
+    """Descarga una foto o un documento que envió el cliente. Devuelve (contenido, tipo MIME) o None si falla.
+
+    Meta entrega primero una URL temporal (vence en minutos) y luego el archivo, ambos con el token del bot.
+    """
+    headers = {"Authorization": f"Bearer {settings.whatsapp_token}"}
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            info = await client.get(f"{_GRAPH_API_URL}/{media_id}", headers=headers)
+            info.raise_for_status()
+            data = info.json()
+            if int(data.get("file_size") or 0) > MAX_MEDIA_BYTES:
+                logger.warning("Archivo del cliente demasiado grande (%s bytes)", data.get("file_size"))
+                return None
+            response = await client.get(data["url"], headers=headers)
+            response.raise_for_status()
+    except (httpx.HTTPError, KeyError, ValueError) as e:
+        logger.error("No se pudo descargar el archivo del cliente (%s)", type(e).__name__)
+        return None
+    if len(response.content) > MAX_MEDIA_BYTES:
+        return None
+    return response.content, (data.get("mime_type") or "").split(";")[0].strip()
+
+
 async def _send(to: str, message: dict[str, Any]) -> bool:
     """Envía un mensaje por Graph API. Devuelve True si Meta lo aceptó."""
     if not settings.whatsapp_token or not settings.whatsapp_phone_number_id:
@@ -165,7 +193,7 @@ async def _send(to: str, message: dict[str, Any]) -> bool:
             response.raise_for_status()
             logger.info("Mensaje enviado (tipo: %s)", message["type"])
             record_whatsapp(to, message["type"])
-            record(to, CHATSABOR, outgoing_text(message))
+            record(to, ESPECIA, outgoing_text(message))
             return True
         except HTTPStatusError as e:
             # Meta explica el motivo en error.message (p. ej. token vencido: code 190, subcode 463)

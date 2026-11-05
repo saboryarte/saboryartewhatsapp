@@ -117,7 +117,7 @@ class TestFlujoDePedido:
         escribir(client, "Laura Gómez, Cra 43 # 10-20, Envigado, 3001112233")
         _, resumen, botones = mocks["buttons"].call_args.args
         assert "*Total: $90.000*" in resumen
-        assert [b["id"] for b in botones] == ["p8_confirmar", "p8_cambiar", "p8_persona"]
+        assert [b["id"] for b in botones] == ["p8_confirmar", "p8_transferencia", "p8_cambiar"]
         conv = load_conversation(REMITENTE)
         assert conv.paso == "P8"
         assert conv.datos["pedido"] == [{"producto": "sal_de_oro", "cantidad": 2}, {"producto": "sal_chilemon", "cantidad": 1}]

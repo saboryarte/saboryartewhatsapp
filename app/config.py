@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     # https://wa.me/<número del bot sin + ni espacios>.
     bold_return_url: str = ""
 
+    # Transferencias: dirección pública del bot (https, sin / al final) y llave para firmar los botones
+    # «Confirmar pago» / «No llegó» del correo del comprobante. Sin ellas el correo llega sin botones.
+    public_base_url: str = ""
+    transfer_link_secret: str = ""
+
     # WhatsApp Flow del kit armado (casillas para elegir las mezclas). Sin ID se usa la lista de una en una.
     whatsapp_kit_flow_id: str = ""
     # «draft» mientras se prueba (solo la versión borrador); «published» después de publicarlo.

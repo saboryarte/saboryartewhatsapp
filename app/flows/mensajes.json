@@ -18,7 +18,7 @@
         },
         {
           "id": "G1", "tipo": "lista",
-          "texto": "¡Hola! 🌿 Qué alegría tenerte por acá. Soy Chatsabor, de Saboryarte.\n\nCuéntame, ¿en qué te puedo ayudar hoy?",
+          "texto": "¡Hola! 🌿 Qué alegría tenerte por acá. Soy Especia, de Saboryarte.\n\nCuéntame, ¿en qué te puedo ayudar hoy?",
           "boton_lista": "Ver opciones",
           "opciones": [
             {"id": "menu_comprar", "titulo": "🧂 Comprar mezclas", "descripcion": "Catálogo, kits y pedidos", "va_a": "P1"},
@@ -52,7 +52,7 @@
             {"id": "atajo_menu", "titulo": "Ver menú", "va_a": "G1"},
             {"id": "atajo_persona", "titulo": "Hablar con alguien", "va_a": "T1"}
           ],
-          "notas": "Paso agregado: cuando Chatsabor responde una pregunta fuera de un paso guiado, la respuesta llega con estos botones para que el cliente nunca quede sin opciones."
+          "notas": "Paso agregado: cuando Especia responde una pregunta fuera de un paso guiado, la respuesta llega con estos botones para que el cliente nunca quede sin opciones."
         },
         {
           "id": "G4", "tipo": "traspaso",
@@ -218,11 +218,11 @@
           "id": "P8", "tipo": "botones",
           "texto": "Este es tu pedido:\n[resumen de productos y cantidades]\nSubtotal: [valor]\nEnvío: [según tu ciudad]\nTotal: [valor]\n\n¿Todo bien?",
           "opciones": [
-            {"id": "p8_confirmar", "titulo": "Confirmar pedido", "va_a": "P11"},
-            {"id": "p8_cambiar", "titulo": "Cambiar algo", "va_a": "P6"},
-            {"id": "p8_persona", "titulo": "Hablar con alguien", "va_a": "T1"}
+            {"id": "p8_confirmar", "titulo": "Pagar con Bold", "va_a": "P11"},
+            {"id": "p8_transferencia", "titulo": "Transferencia", "va_a": "P11T"},
+            {"id": "p8_cambiar", "titulo": "Cambiar algo", "va_a": "P6"}
           ],
-          "notas": "El subtotal y el total los calcula el código con el catálogo y la tarifa de envío, no Claude. «Confirmar pedido» crea el link de pago de Bold (P11L) o, sin Bold, pasa a una persona (P11)."
+          "notas": "El subtotal y el total los calcula el código con el catálogo y la tarifa de envío, no Claude. El cliente elige cómo pagar en el mismo resumen: «Pagar con Bold» crea el link (P11L) o, sin Bold, pasa a una persona (P11); «Transferencia» registra el pedido y da los datos de la cuenta (P11T). Para hablar con alguien escribe «asesor»."
         },
         {
           "id": "P9", "tipo": "lista",
@@ -279,13 +279,38 @@
         },
         {
           "id": "P11L", "tipo": "texto",
-          "texto": "¡Pedido recibido! 🙌 Tu pedido [referencia] por [total] está listo para el pago. Puedes pagar con tarjeta, PSE, Botón Bancolombia o Nequi aquí:\n[link de pago]\n\nEl link vence en 24 horas. Apenas se confirme el pago te escribimos para coordinar el despacho 🌿",
+          "texto": "¡Pedido recibido! 🙌 Tu pedido *[referencia]* por *[total]* está listo para el pago. Puedes pagar con tarjeta, PSE, Botón Bancolombia o Nequi aquí:\n[link de pago]\n\nEl link vence en 24 horas. Apenas se confirme el pago te escribimos para coordinar el despacho 🌿",
           "notas": "Con Bold configurado reemplaza a P11/P11F: el código crea el link (app/bold.py) por el total con la tarifa estándar de envío. Si Bold falla, se usa P11/P11F (una persona envía los datos de pago)."
+        },
+        {
+          "id": "P11T", "tipo": "texto",
+          "texto": "¡Pedido recibido! 🙌 Tu pedido es el *[referencia]*.\n\nTransfiere *[total]* a esta cuenta:\n• Bancolombia · Cuenta de ahorros\n• N.º *693 00005720*\n• A nombre de Saboryarte\n\nCuando hagas la transferencia, envíame por aquí la *foto o el PDF del comprobante* 📎 y el equipo la verifica 🌿",
+          "notas": "El cliente eligió «Transferencia» en el resumen (P8). El pedido queda «esperando comprobante». Los datos de la cuenta viven solo aquí: Claude no los dicta. Si cambian, se cambian en este texto."
+        },
+        {
+          "id": "P11C", "tipo": "texto",
+          "texto": "¡Recibimos tu comprobante! 🙌 El equipo verifica la transferencia del pedido *[referencia]* y te confirmamos por aquí apenas la veamos 💛",
+          "notas": "Respuesta al recibir una foto o PDF de un cliente con un pedido por transferencia. El comprobante se guarda con el pedido y le llega al equipo por correo con los botones «Confirmar pago» y «No llegó» (app/transferencias.py)."
+        },
+        {
+          "id": "P11X", "tipo": "texto",
+          "texto": "Todavía no vemos la transferencia del pedido *[referencia]* por *[total]* 🙈 ¿Puedes revisar el comprobante y enviármelo de nuevo por aquí? Si necesitas ayuda, escribe «asesor».",
+          "notas": "El equipo tocó «No llegó» en el correo del comprobante. El pedido vuelve a «esperando comprobante»."
+        },
+        {
+          "id": "P11A", "tipo": "texto",
+          "texto": "¡Gracias por el archivo! 📎 Por acá solo puedo recibir el comprobante de un pedido por transferencia, y no veo ninguno pendiente a tu nombre. Si necesitas que alguien lo revise, escribe «asesor».",
+          "notas": "El cliente envió una foto o un documento sin tener un pedido por transferencia esperando comprobante."
+        },
+        {
+          "id": "P11P", "tipo": "texto",
+          "texto": "Uy, ese archivo no lo puedo abrir 🙈 Envíame el comprobante como *foto* o como *PDF*, porfa.",
+          "notas": "El cliente envió un documento que no es imagen ni PDF, o que pesa más de 10 MB."
         },
         {
           "id": "P12", "tipo": "texto",
           "texto": "¡Recibimos tu pago! 🎉 Tu pedido [referencia] por [total] quedó confirmado. Una persona del equipo te escribe para coordinar el despacho 🌿",
-          "notas": "Lo envía el webhook de Bold (SALE_APPROVED) después de confirmar con Bold que el link quedó pagado. El equipo recibe la ficha por correo."
+          "notas": "Lo envía el webhook de Bold (SALE_APPROVED) después de confirmar con Bold que el link quedó pagado, o el botón «Confirmar pago» del correo de una transferencia. El equipo recibe la ficha por correo."
         },
         {
           "id": "P12R", "tipo": "texto",
@@ -574,7 +599,7 @@
         {
           "id": "T3", "tipo": "texto",
           "texto": "¡Aquí sigo! Si necesitas algo más, escríbeme «menú» 🌿",
-          "notas": "Se envía cuando la persona cierra la conversación y el bot se reactiva: el equipo envía desde la app la respuesta rápida con la frase «te dejo de nuevo con Chatsabor» (app/handoff.py)."
+          "notas": "Se envía cuando la persona cierra la conversación y el bot se reactiva: el equipo envía desde la app la respuesta rápida con la frase «te dejo de nuevo con Especia» (app/handoff.py)."
         }
       ]
     }

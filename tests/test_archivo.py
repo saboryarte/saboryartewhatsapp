@@ -30,7 +30,7 @@ class TestArchivoDeChats:
         chat = _chat()
         assert ("cliente", "hola") in chat and ("cliente", "[Tocó] menu_comprar") in chat
 
-    def test_texto_legible_de_lo_que_envia_chatsabor(self):
+    def test_texto_legible_de_lo_que_envia_especia(self):
         lista = {"type": "interactive", "interactive": {"type": "list", "body": {"text": "Elige"}, "action": {
             "button": "Ver mezclas", "sections": [{"title": "x", "rows": [{"id": "a", "title": "Sal de oro"}, {"id": "b", "title": "Sal de sol"}]}]}}}
         botones = {"type": "interactive", "interactive": {"type": "button", "body": {"text": "¿Todo bien?"}, "action": {
@@ -91,7 +91,7 @@ class TestChatDelPedidoPagado:
         archivos = list(archivo.pedidos_dir().glob("*SAB-00001*.txt"))
         assert len(archivos) == 1 and "Laura" in archivos[0].name
         texto = archivos[0].read_text(encoding="utf-8")
-        assert "Pedido SAB-00001 · estado: pagado" in texto
+        assert "Pedido SAB-00001 · estado: Pagado" in texto
         assert "Laura: 2 de oro" in texto and "Laura: [Tocó] p8_confirmar" in texto
 
     def test_un_pago_rechazado_no_guarda_el_chat(self, client, mocks, bold_pruebas):

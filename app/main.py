@@ -1,19 +1,27 @@
 import asyncio
+import html
 import json
 import logging
 import time
 from contextlib import asynccontextmanager
+from urllib.parse import parse_qs
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request, status
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 
-from . import archivo, precios
+from . import archivo, precios, transferencias
 from .bold import valid_signature
 from .config import settings
 from .notify import notify_team
 from .precios import current_prices
-from .router import check_unanswered_handoffs, handle_bold_event, handle_choice, handle_team_message, handle_text
+from .flows import format_price
+from .orders import describe_item
+from .pedidos import get_order
+from .router import (
+    check_unanswered_handoffs, handle_bold_event, handle_choice, handle_media, handle_team_message, handle_text,
+    resolve_transfer,
+)
 from .state import load_conversation, mark_processed, save_conversation
 from .usage import remitente_actual
 from .whatsapp import WhatsAppContact, WhatsAppMessage, WhatsAppPayload, flow_response, interactive_reply
@@ -47,6 +55,10 @@ async def _alert_loop() -> None:
             last_purge = time.time()
 
 
+# Fotos y documentos: se aceptan como comprobante de una transferencia.
+_MEDIA_TYPES = ("image", "document")
+
+
 def _incoming_text(message: WhatsAppMessage) -> str:
     """Texto legible de lo que envió el cliente, para el archivo de chats."""
     if message.type == "text":
@@ -54,6 +66,10 @@ def _incoming_text(message: WhatsAppMessage) -> str:
     response = flow_response(message.interactive)
     if response is not None:
         return f"[Formulario] {json.dumps(response, ensure_ascii=False)}"
+    if message.type in _MEDIA_TYPES:
+        media = getattr(message, message.type) or {}
+        name = media.get("filename") or media.get("caption") or ""
+        return f"[{'Foto' if message.type == 'image' else 'Documento'}{': ' + name if name else ''}]"
     reply = interactive_reply(message.interactive)
     return f"[Tocó] {reply.get('title', reply['id'])}" if reply else "[Mensaje interactivo]"
 
@@ -65,7 +81,7 @@ async def _check_prices() -> None:
         await notify_team(
             "[Saboryarte] ⚠️ Error en precios.yaml",
             f"El archivo contenido/precios.yaml tiene un error: {precios.load_error}.\n\n"
-            "Chatsabor sigue cobrando con los últimos precios correctos. Corrige el archivo en GitHub y avísale "
+            "Especia sigue cobrando con los últimos precios correctos. Corrige el archivo en GitHub y avísale "
             "a quien administra el bot para que lo reinicie.",
         )
 
@@ -145,7 +161,7 @@ async def _process_payload(payload: WhatsAppPayload) -> None:
                 if not mark_processed(message.id):
                     logger.info("Mensaje duplicado ignorado (id: %s)", message.id)
                     continue
-                if message.type not in ("text", "interactive"):
+                if message.type not in ("text", "interactive", *_MEDIA_TYPES):
                     logger.info("Mensaje tipo '%s' ignorado (id: %s)", message.type, message.id)
                     continue
                 sender = _resolve_sender(message, value.contacts)
@@ -167,6 +183,9 @@ async def _process_payload(payload: WhatsAppPayload) -> None:
                     if message.type == "text":
                         logger.info("Mensaje de texto recibido (id: %s)", message.id)
                         await handle_text(body, sender, conversation.nombre, conversation)
+                    elif message.type in _MEDIA_TYPES:
+                        logger.info("Archivo recibido (id: %s, tipo: %s)", message.id, message.type)
+                        await handle_media(message.type, getattr(message, message.type) or {}, sender, conversation)
                     else:
                         logger.info("Respuesta interactiva recibida (id: %s)", message.id)
                         await handle_choice(message.interactive, sender, conversation)
@@ -219,3 +238,54 @@ async def receive_bold_webhook(request: Request, background_tasks: BackgroundTas
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="JSON inválido")
     background_tasks.add_task(handle_bold_event, event)
     return {"status": "ok"}
+
+
+# ── Transferencias: botones «Confirmar pago» / «No llegó» del correo del comprobante ──
+
+def _page(title: str, body: str, status_code: int = 200) -> HTMLResponse:
+    return HTMLResponse(status_code=status_code, content=(
+        '<!doctype html><html lang="es"><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1"><title>Saboryarte</title>'
+        '<style>body{font:16px/1.5 system-ui,sans-serif;max-width:32rem;margin:2rem auto;padding:0 1rem;color:#222}'
+        'button{font:600 17px system-ui;padding:.8rem 1.4rem;border:0;border-radius:8px;color:#fff;cursor:pointer}'
+        '.ok{background:#5B7F3A}.no{background:#9A3B2E}pre{white-space:pre-wrap;background:#f5f2ea;padding:1rem;'
+        f'border-radius:8px}}</style></head><body><h1 style="font-size:1.3rem">{html.escape(title)}</h1>{body}</body></html>'
+    ))
+
+
+def _checked_order(order_id: int, accion: str, token: str):
+    order = get_order(order_id)
+    if order is None or not transferencias.valid_token(order_id, accion, token):
+        return None
+    return order
+
+
+@app.get("/transferencias/{order_id}/{accion}", response_class=HTMLResponse)
+async def transfer_page(order_id: int, accion: str, t: str = "") -> HTMLResponse:
+    """Primer toque desde el correo: muestra el pedido y pide confirmar (abrir el enlace no cambia nada)."""
+    order = _checked_order(order_id, accion, t)
+    if order is None:
+        return _page("Enlace no válido", "<p>Este enlace no es válido. Usa el botón del correo del comprobante.</p>", 403)
+    resumen = "\n".join([*(describe_item(i) for i in order.items), f"Total: {format_price(order.total)}",
+                         f"Cliente: {order.nombre or 'sin nombre'} · WhatsApp {order.remitente}"])
+    confirmar = accion == transferencias.CONFIRMAR
+    pregunta = ("¿Ya verificaste en Bancolombia que llegó la transferencia por " + format_price(order.total) + "?"
+                if confirmar else "¿Le pedimos al cliente que revise y envíe el comprobante otra vez?")
+    boton = "Sí, confirmar el pago" if confirmar else "Sí, avisarle que no llegó"
+    return _page(f"Pedido {order.referencia}", (
+        f"<pre>{html.escape(resumen)}</pre><p>{html.escape(pregunta)}</p>"
+        f'<form method="post"><input type="hidden" name="t" value="{html.escape(t)}">'
+        f'<button class="{"ok" if confirmar else "no"}">{boton}</button></form>'
+    ))
+
+
+@app.post("/transferencias/{order_id}/{accion}", response_class=HTMLResponse)
+async def transfer_action(order_id: int, accion: str, request: Request) -> HTMLResponse:
+    # Formulario simple (application/x-www-form-urlencoded): se lee a mano para no depender de python-multipart.
+    t = (parse_qs((await request.body()).decode("utf-8", "replace")).get("t") or [""])[0]
+    order = _checked_order(order_id, accion, t)
+    if order is None:
+        return _page("Enlace no válido", "<p>Este enlace no es válido. Usa el botón del correo del comprobante.</p>", 403)
+    logger.info("Transferencia del pedido %s: el equipo eligió «%s»", order.referencia, accion)
+    result = await resolve_transfer(order, accion)
+    return _page(f"Pedido {order.referencia}", f"<p>{html.escape(result)}</p>")

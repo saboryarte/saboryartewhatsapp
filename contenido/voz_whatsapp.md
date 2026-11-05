@@ -1,7 +1,7 @@
-# Voz de Chatsabor en WhatsApp
+# Voz de Especia en WhatsApp
 
 > Sale del manual de tono aprobado (`voz_de_marca.md`), solo con lo que aplica a un chat de WhatsApp.
-> Chatsabor lee este texto en cada respuesta: escríbelo como indicaciones cortas, una por línea.
+> Especia lee este texto en cada respuesta: escríbelo como indicaciones cortas, una por línea.
 > No pongas aquí precios ni nombres de otras marcas.
 
 ## Cómo suena

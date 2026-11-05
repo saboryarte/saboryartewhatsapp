@@ -83,7 +83,8 @@ class TestDeteccion:
         assert not is_human_request(texto)
 
     def test_frase_de_cierre(self):
-        assert is_closing_message("¡Fue un gusto ayudarte! Te dejo de nuevo con Chatsabor 🌿")
+        assert is_closing_message("¡Fue un gusto ayudarte! Te dejo de nuevo con Especia 🌿")
+        assert is_closing_message("Te dejo de nuevo con Chatsabor")  # la frase anterior sigue sirviendo
         assert is_closing_message("¡Fue un gusto ayudarte! Te dejo de nuevo con nuestro asistente virtual 🌿")  # frase anterior
         assert not is_closing_message("Hola Laura, ya reviso tu pedido")
 
@@ -180,7 +181,7 @@ class TestEcosDelEquipo:
 
     def test_frase_de_cierre_reactiva_el_bot(self, client, mocks):
         escribir(client, "asesor")
-        equipo_escribe(client, "¡Fue un gusto ayudarte! Te dejo de nuevo con Chatsabor 🌿")
+        equipo_escribe(client, "¡Fue un gusto ayudarte! Te dejo de nuevo con Especia 🌿")
         assert mocks["text"].call_args.args[1].startswith("¡Aquí sigo!")
         conv = load_conversation(REMITENTE)
         assert not conv.en_traspaso and conv.flujo_activo is None

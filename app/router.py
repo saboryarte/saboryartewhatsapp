@@ -51,19 +51,25 @@ from .config import settings
 from .prompt import DESTINOS
 from .pedidos import (
     ANULADO,
+    ESPERANDO_COMPROBANTE,
+    ESTADOS,
     PAGADO,
     PENDIENTE,
+    POR_VERIFICAR,
     REVISAR,
+    TRANSFERENCIA,
     Pedido,
     create_order,
     find_by_link,
     find_by_reference,
     get_order,
     order_ficha,
+    pending_transfer,
     update_order,
 )
+from . import transferencias
 from .state import Conversation, list_handoffs, mark_processed, save_conversation
-from .whatsapp import flow_response, interactive_reply, send_buttons, send_flow, send_list, send_text
+from .whatsapp import download_media, flow_response, interactive_reply, send_buttons, send_flow, send_list, send_text
 
 logger = logging.getLogger(__name__)
 
@@ -318,7 +324,7 @@ async def _answer_and_resume(body: str, sender: str, conversation: Conversation)
         logger.warning("Respuesta de Claude vacía: se retoma el paso")
         return await _resume(sender, conversation, "¿Me lo repites, por favor? 🌿")
     if reply.strip().upper().startswith(_NO_ENTIENDO):
-        logger.info("Chatsabor no entendió el mensaje (intento %d)", conversation.intentos_fallidos + 1)
+        logger.info("Especia no entendió el mensaje (intento %d)", conversation.intentos_fallidos + 1)
         return await _not_understood(sender, conversation)
     if await _navigate(reply, sender, conversation):
         return None  # handle_choice ya respondió y guardó el turno
@@ -630,6 +636,8 @@ async def handle_choice(interactive: dict | None, sender: str, conversation: Con
         parts.append(await _handoff(sender, conversation, "solicitud"))
     elif destination == "P11":
         parts.append(await _confirm_order(sender, conversation))
+    elif destination == "P11T":
+        parts.append(await _confirm_transfer(sender, conversation))
     elif "recomienda" in option:
         parts.append(await _reply_text(sender, recommendation(option["recomienda"])))
         parts.append(await _show_step(sender, "P2", conversation))
@@ -678,6 +686,7 @@ async def _confirm_order(sender: str, conversation: Conversation) -> str | None:
     previous = get_order(conversation.datos["pedido_id"]) if conversation.datos.get("pedido_id") else None
     if previous and previous.estado == PENDIENTE and previous.link_url:
         return await _show_step(sender, "P11L", conversation, body=_fill(get_step("P11L")["texto"], previous))
+    _cancel_unpaid_transfer(previous)
 
     items, envio = conversation.datos.get("pedido"), conversation.datos.get("envio", {})
     if not items or missing_shipping_fields(envio):
@@ -702,6 +711,107 @@ async def _confirm_order(sender: str, conversation: Conversation) -> str | None:
     if "Pendiente de pago" not in conversation.etiquetas:
         conversation.etiquetas.append("Pendiente de pago")
     return await _show_step(sender, "P11L", conversation, body=_fill(get_step("P11L")["texto"], order))
+
+
+def _cancel_unpaid_transfer(order: Pedido | None) -> None:
+    """El cliente cambió de medio de pago antes de enviar el comprobante: ese pedido no se cobra."""
+    if order and order.medio_pago == TRANSFERENCIA and order.estado == ESPERANDO_COMPROBANTE:
+        order.estado = ANULADO
+        update_order(order)
+
+
+async def _confirm_transfer(sender: str, conversation: Conversation) -> str | None:
+    """«Transferencia» en el resumen: registra el pedido y da los datos de la cuenta (P11T)."""
+    previous = get_order(conversation.datos["pedido_id"]) if conversation.datos.get("pedido_id") else None
+    if previous and previous.medio_pago == TRANSFERENCIA and previous.estado in (ESPERANDO_COMPROBANTE, POR_VERIFICAR):
+        return await _show_step(sender, "P11T", conversation, body=_fill(get_step("P11T")["texto"], previous))
+    items, envio = conversation.datos.get("pedido"), conversation.datos.get("envio", {})
+    if not items or missing_shipping_fields(envio):
+        return await _handoff(sender, conversation, "pedido")
+    # Si había un link de Bold sin pagar para este mismo pedido, queda anulado: se paga por transferencia.
+    if previous and previous.estado == PENDIENTE:
+        previous.estado = ANULADO
+        update_order(previous)
+    order = create_order(sender, conversation.nombre, items, envio, subtotal(items), shipping_cost(envio["ciudad"]),
+                         medio_pago=TRANSFERENCIA)
+    logger.info("Pedido %s por transferencia: se espera el comprobante", order.referencia)
+    conversation.datos["pedido_id"] = order.id
+    archivo.remember_order(
+        sender, conversation.nombre, envio, order.referencia,
+        "; ".join(describe_item(item).lstrip("• ") for item in items),
+    )
+    if "Pendiente de pago" not in conversation.etiquetas:
+        conversation.etiquetas.append("Pendiente de pago")
+    return await _show_step(sender, "P11T", conversation, body=_fill(get_step("P11T")["texto"], order))
+
+
+async def handle_media(kind: str, media: dict, sender: str, conversation: Conversation) -> None:
+    """Foto o documento del cliente: si tiene un pedido por transferencia pendiente, es el comprobante."""
+    if _bot_is_silenced(conversation):
+        return
+    order = pending_transfer(sender)
+    if order is None:
+        sent = await _reply_text(sender, get_step("P11A")["texto"])
+        if sent:
+            conversation.add_turn("[Envié un archivo]", sent)
+        return
+    mime = (media.get("mime_type") or "").split(";")[0].strip()
+    downloaded = await download_media(media["id"]) if mime in transferencias.TIPOS_COMPROBANTE else None
+    if downloaded is None or downloaded[1] not in transferencias.TIPOS_COMPROBANTE:
+        await _reply_text(sender, get_step("P11P")["texto"])
+        return
+    path = transferencias.save_receipt(order.referencia, *downloaded)
+    order.estado = POR_VERIFICAR
+    order.comprobante = str(path)
+    update_order(order)
+    logger.info("Comprobante recibido para el pedido %s", order.referencia)
+    sent = await _reply_text(sender, _fill(get_step("P11C")["texto"], order))
+    if sent:
+        conversation.add_turn("[Envié el comprobante de la transferencia]", sent)
+    buttons = transferencias.team_buttons(order.id)
+    instrucciones = (
+        "Revisa en Bancolombia que la transferencia llegó por el total y toca un botón: Especia le avisa al cliente."
+        if buttons else
+        "Revisa en Bancolombia que la transferencia llegó por el total. Para confirmarla en el bot: "
+        f"python -m app.transferencias confirmar {order.referencia} (faltan PUBLIC_BASE_URL y TRANSFER_LINK_SECRET "
+        "para tener botones en este correo)."
+    )
+    await notify_team(
+        f"[Saboryarte] 🧾 Verificar transferencia — pedido {order.referencia} por {format_price(order.total)}",
+        order_ficha(order, instrucciones), attachments=[path], buttons=buttons,
+    )
+
+
+async def resolve_transfer(order: Pedido, accion: str) -> str:
+    """Acción del equipo desde el correo. Devuelve el mensaje para la página de confirmación."""
+    if order.medio_pago != TRANSFERENCIA:
+        return f"El pedido {order.referencia} no es por transferencia."
+    if order.estado == PAGADO:
+        return f"El pago del pedido {order.referencia} ya estaba confirmado. No se hizo nada más."
+    if order.estado not in (ESPERANDO_COMPROBANTE, POR_VERIFICAR):
+        return f"El pedido {order.referencia} en estado «{ESTADOS.get(order.estado, order.estado)}»: no se puede cambiar desde aquí."
+    if accion == transferencias.RECHAZAR:
+        order.estado = ESPERANDO_COMPROBANTE
+        update_order(order)
+        sent = await send_text(order.remitente, _fill(get_step("P11X")["texto"], order))
+        aviso = "Le pedimos al cliente que revise y envíe el comprobante otra vez."
+        return aviso if sent else (
+            f"{aviso} Pero WhatsApp no dejó enviarle el mensaje (pasaron más de 24 h desde su último mensaje): "
+            "escríbele desde la app de WhatsApp Business.")
+    order.estado = PAGADO
+    order.pagado_en = time.time()
+    update_order(order)
+    sent = await send_text(order.remitente, _fill(get_step("P12")["texto"], order))
+    archivo.remember_payment(order.remitente, order.referencia)
+    archivo.save_order_chat(order.id, order.referencia, order.remitente, order.nombre, order_ficha(order))
+    await notify_team(
+        f"[Saboryarte] 💰 Pedido pagado {order.referencia} — {order.nombre or order.remitente}: despachar",
+        order_ficha(order, "Pago por transferencia confirmado por el equipo."),
+    )
+    aviso = f"Listo: el pedido {order.referencia} quedó pagado."
+    return f"{aviso} Le avisamos al cliente por WhatsApp." if sent else (
+        f"{aviso} WhatsApp no dejó avisarle al cliente (pasaron más de 24 h desde su último mensaje): "
+        "escríbele desde la app de WhatsApp Business.")
 
 
 async def handle_bold_event(event: dict) -> None:

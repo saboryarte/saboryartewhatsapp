@@ -7,7 +7,7 @@
 |---|---|
 | `app/flows/mensajes.json` | Texto exacto de cada paso (G1, P1, M1…), sus botones u opciones de lista y a qué paso lleva cada opción. Está ajustado a los límites de WhatsApp y lo valida `tests/test_mensajes_flujos.py`. |
 | `contenido/base_de_conocimiento.md` | Lo que el bot puede decirle a cualquier cliente: catálogo, envíos, pagos y puntos de venta. Los precios salen de `contenido/precios.yaml`. |
-| `contenido/voz_whatsapp.md` | Voz de Chatsabor en WhatsApp, sacada del manual aprobado (`contenido/voz_de_marca.md`). |
+| `contenido/voz_whatsapp.md` | Voz de Especia en WhatsApp, sacada del manual aprobado (`contenido/voz_de_marca.md`). |
 | `docs/knowledge-base/interno/distribuidores.md` | Precios de distribuidor, condiciones y reglas de calificación. **No se carga en el prompt.** |
 | Este documento | Mapa de rutas, diagramas, reglas transversales, traspaso a una persona y lo que falta construir. |
 
@@ -20,7 +20,7 @@ Convención de colores en los diagramas: 🟩 paso del bot · 🟨 decisión o m
 | Ruta del artefacto | Pasos | Flujo del proyecto | Intención que la activa | `flujo_activo` | Termina en |
 |---|---|---|---|---|---|
 | Saludo y menú | G0–G4 | Entrada | `saludo` | — | Menú o traspaso |
-| A · Comprar producto | P1–P12 | **Ventas + Pedidos** | `ventas`, `pedido_nuevo` | `compra` | Link de pago de Bold (P11L) y aviso de pago (P12); sin Bold, traspaso para pago y despacho (P11) |
+| A · Comprar producto | P1–P12 | **Ventas + Pedidos** | `ventas`, `pedido_nuevo` | `compra` | El cliente elige en el resumen: link de Bold (P11L) o transferencia con comprobante (P11T → P11C, verificada por el equipo); aviso de pago (P12). Sin Bold, traspaso para pago y despacho (P11) |
 | Dudas frecuentes | P9, P9B, P9C, P9S, O1 | **Consultas** | `consulta` | `compra` (sub-paso) | Respuesta o traspaso |
 | B · Mezcla personalizada | M1–M8 | **Ventas** (consultiva) | `ventas` + «mezcla» | `mezcla` | Siempre traspaso (M8) |
 | C · Regalo corporativo | R1–R7 | **Ventas** (corporativo) | `ventas` + «regalo/empresa» | `regalo` | Compra (<10) o traspaso (R7) |
@@ -94,9 +94,14 @@ flowchart TD
   Z -->|Sí| DI(["Pasa a la ruta de distribuidor"])
   Z -->|No| P7["P7 Ciudad y datos de envío"]
   P7 --> P8["P8 Resumen del pedido"]
-  P8 --> C{"¿Confirma?"}
+  P8 --> C{"¿Cómo paga?"}
   C -->|Cambiar algo| P6
-  C -->|Confirmar| L["P11L Link de pago de Bold"]
+  C -->|Transferencia| T["P11T Datos de la cuenta"]
+  T --> TC["P11C Comprobante recibido"]
+  TC --> TE{"Equipo verifica (botón del correo)"}
+  TE -->|Confirmar pago| H1
+  TE -->|No llegó| TX["P11X Reenviar comprobante"]
+  C -->|Pagar con Bold| L["P11L Link de pago de Bold"]
   L --> B{"Aviso de Bold"}
   B -->|Pago aprobado| H1(["P12 Aviso al cliente + equipo despacha"])
   B -->|Rechazado| L2["P12R Reintentar con el mismo link"]
@@ -328,13 +333,13 @@ El equipo atiende desde la **app de WhatsApp Business**, en el mismo número del
 | El cliente pide una persona («asesor», «Hablar con alguien», «No» en «¿Te sirvió?») | T1 (o T2 fuera de horario), bot en silencio, correo con la ficha | `app/router.py` → `_handoff` |
 | El cliente confirma el pedido (P8) | Con Bold: P11L con el link de pago, sin traspaso; el equipo recibe la ficha cuando el pago se confirma. Sin Bold o si falla: P11 (o P11F fuera de horario), etiquetas Producto y Pendiente de pago, correo con la ficha y el total | `app/router.py` → `_confirm_order` |
 | Alguien del equipo escribe desde la app | Meta envía el eco (`smb_message_echoes`); el bot registra la respuesta o, si no había traspaso, se silencia para no hablar encima de la persona | `handle_team_message` |
-| El equipo termina | Envía la respuesta rápida con la frase **«Te dejo de nuevo con Chatsabor»** (también se acepta «…con nuestro asistente»); el bot envía T3 y vuelve a responder | `CLOSING_PHRASES` en `app/handoff.py` |
+| El equipo termina | Envía la respuesta rápida con la frase **«Te dejo de nuevo con Especia»** (también se acepta «…con nuestro asistente»); el bot envía T3 y vuelve a responder | `CLOSING_PHRASES` en `app/handoff.py` |
 | El cliente escribe «menú» | Termina el traspaso y vuelve el menú (salida del cliente, aunque nadie haya respondido) | `handle_text` |
 | El equipo olvidó cerrar | Si ya respondió y lleva 12 h sin escribir (`HANDOFF_IDLE_HOURS`), el bot retoma con el siguiente mensaje del cliente | `team_went_idle` |
 | Nadie responde | Tras 60 minutos de horario de atención, correo de alerta con la ficha (una sola vez) | `check_unanswered_handoffs`, revisado cada minuto |
 
 **Respuesta rápida sugerida para la app** (Herramientas para la empresa → Respuestas rápidas, atajo `/bot`):
-> ¡Fue un gusto ayudarte! Te dejo de nuevo con Chatsabor 🌿 Si necesitas algo más, escríbeme «menú».
+> ¡Fue un gusto ayudarte! Te dejo de nuevo con Especia 🌿 Si necesitas algo más, escríbeme «menú».
 
 Pendientes del traspaso: los disparadores por tema (salud o alergias, quejas, cliente molesto, facturación, descuentos, alianzas) y los dos fallos de comprensión seguidos. `_handoff` ya está listo para recibirlos con su motivo y prioridad.
 
@@ -385,7 +390,7 @@ Esto va al *system prompt* y es el criterio para evaluar las respuestas de Claud
 | P4 | Regalo para mi empresa | Regalo empresarial |
 | P5 | Carnes, parrilla y costillas | Carnes y parrilla (+ descripción) |
 | P5 | Verduras, arroces y ensaladas | Verduras y arroces (+ descripción) |
-| P8, S5 | Hablar con una persona | Hablar con alguien |
+| S5 | Hablar con una persona | Hablar con alguien |
 | P9 | Ingredientes y presentaciones | Ingredientes (+ descripción) |
 | M2 | Para mi negocio o marca | Mi negocio o marca |
 | R2 | Con una mezcla personalizada | Mezcla personalizada |
@@ -409,7 +414,7 @@ Esto va al *system prompt* y es el criterio para evaluar las respuestas de Claud
 - **O1** estaba marcado como lista sin opciones; pasa a texto.
 - **Precios de distribuidor** salieron de la tabla pública y de la nota de D8, y se movieron a `interno/distribuidores.md`.
 - **Calificación de distribuidores:** la tabla se convirtió en una regla determinista, y cada opción de D2 trae `canal_objetivo`.
-- **Bienvenida aleatoria** (`app/greetings.py`): ahora usa la voz de Saboryarte (🌿 🧂 ✨, «por acá»). El bot se presenta como **Chatsabor**, nunca como «asistente virtual» (decisión del 28 oct 2026; también en G1 y en el prompt de Claude). Hace de G1 mientras no se envíen listas.
+- **Bienvenida aleatoria** (`app/greetings.py`): ahora usa la voz de Saboryarte (🌿 🧂 ✨, «por acá»). El bot se presenta como **Especia**, nunca como «asistente virtual» (decisión del 28 oct 2026; también en G1 y en el prompt de Claude). Hace de G1 mientras no se envíen listas.
 
 ---
 

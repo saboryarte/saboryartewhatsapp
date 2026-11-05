@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Chatsabor: bot de WhatsApp de Saboryarte (FastAPI + WhatsApp Cloud API + Claude + Bold). Código, comentarios y
+Especia: bot de WhatsApp de Saboryarte (FastAPI + WhatsApp Cloud API + Claude + Bold). Código, comentarios y
 mensajes en español. Ver README.md para la arquitectura.
 
 - Pruebas: `.venv/bin/python -m pytest -q` (deben pasar todas antes de cualquier commit).
@@ -29,4 +29,4 @@ puede no ser técnica: explícale todo en lenguaje sencillo, sin términos de pr
    despliegue. Dile que los precios nuevos empiezan a cobrarse cuando el bot se reinicie con esa versión.
 
 Los precios solo viven en `contenido/precios.yaml`: de ahí salen el cobro en Bold, el resumen del pedido y lo que
-Chatsabor responde. No escribas precios en `contenido/base_de_conocimiento.md` ni en el código.
+Especia responde. No escribas precios en `contenido/base_de_conocimiento.md` ni en el código.

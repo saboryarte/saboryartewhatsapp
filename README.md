@@ -146,11 +146,11 @@ Muestra el costo de Claude y los mensajes enviados por conversación (una pausa 
 
 Precios y voz de marca viven fuera del código, en la carpeta `contenido/`, para que se puedan cambiar desde github.com sin tocar programación:
 
-| Archivo | Qué es | ¿Lo lee Chatsabor? |
+| Archivo | Qué es | ¿Lo lee Especia? |
 |---|---|---|
-| `precios.yaml` | Precios al público, kits armados y tarifas de envío. **Única fuente de precios**: de aquí salen el cobro en Bold, los resúmenes del pedido y lo que Chatsabor responde. | Sí |
-| `base_de_conocimiento.md` | Lo que Chatsabor sabe: marca, catálogo, envíos, pagos, puntos de venta. Las tablas de precios se generan desde `precios.yaml` (marcas `{{tabla_…}}`). | Sí |
-| `voz_whatsapp.md` | Cómo habla Chatsabor en WhatsApp, sacado del manual aprobado. | Sí |
+| `precios.yaml` | Precios al público, kits armados y tarifas de envío. **Única fuente de precios**: de aquí salen el cobro en Bold, los resúmenes del pedido y lo que Especia responde. | Sí |
+| `base_de_conocimiento.md` | Lo que Especia sabe: marca, catálogo, envíos, pagos, puntos de venta. Las tablas de precios se generan desde `precios.yaml` (marcas `{{tabla_…}}`). | Sí |
+| `voz_whatsapp.md` | Cómo habla Especia en WhatsApp, sacado del manual aprobado. | Sí |
 | `voz_de_marca.md` | Manual de tono completo, tal como lo aprobó la marca (sobre todo para Instagram). | No: nombra otras cuentas y trae reglas de redes |
 
 **Cómo cambiar un precio (la dueña):** con una hoja de cálculo, sin editar archivos de código:
@@ -161,7 +161,13 @@ Precios y voz de marca viven fuera del código, en la carpeta `contenido/`, para
 
 Los precios nuevos se cobran cuando el bot se reinicia con esa versión. También se puede editar `contenido/precios.yaml` directamente en github.com.
 
-**Si el archivo queda mal escrito** (un precio con puntos, una mezcla borrada, un nombre cambiado), Chatsabor no cobra con datos dudosos: sigue con los últimos precios válidos (copia en `data/precios_validos.json`) y envía un correo al equipo con el error. Sin ninguna copia válida, el bot no arranca.
+**Si el archivo queda mal escrito** (un precio con puntos, una mezcla borrada, un nombre cambiado), Especia no cobra con datos dudosos: sigue con los últimos precios válidos (copia en `data/precios_validos.json`) y envía un correo al equipo con el error. Sin ninguna copia válida, el bot no arranca.
+
+## Pagos y registro de pedidos
+
+En el resumen del pedido el cliente elige **«Pagar con Bold»** (link de tarjeta, PSE, Botón Bancolombia o Nequi; el webhook de Bold confirma el pago) o **«Transferencia»** (Especia da los datos de la cuenta de Bancolombia y pide el comprobante). El comprobante (foto o PDF) se guarda con el pedido y le llega al equipo por correo con los botones **«Confirmar pago»** y **«No llegó»**: al confirmar, Especia le avisa al cliente. Los botones necesitan `PUBLIC_BASE_URL` y `TRANSFER_LINK_SECRET`; sin ellos se confirma con `python -m app.transferencias confirmar SAB-00003`.
+
+Los pedidos quedan en la tabla `pedidos` de `data/conversaciones.db` (en el servidor). Cada día a las 7:00 p. m. `python -m app.exporte diario` envía al equipo un Excel con los pedidos del día y el acumulado del mes, y lo deja en la carpeta de pedidos de Google Drive.
 
 ## Historial y copias de seguridad
 
@@ -182,6 +188,8 @@ whatsapp-claude-agent/
 │   ├── precios.py     # Precios de contenido/precios.yaml, validados (con respaldo de los últimos válidos)
 │   ├── archivo.py     # Archivo de chats (60 días), memoria del cliente y chat de cada pedido pagado (1 año)
 │   ├── respaldo.py    # Copia de seguridad diaria a Google Drive con rclone
+│   ├── transferencias.py # Pago por transferencia: comprobantes y botones del equipo
+│   ├── exporte.py     # Excel diario de pedidos (correo y Drive)
 │   ├── hoja_precios.py # Hoja de precios para la dueña: exportar e importar con validación
 │   ├── orders.py      # Cálculos del pedido: subtotal, tarifa de envío por ciudad y resumen (P8)
 │   ├── handoff.py     # Traspaso: horario, ficha, silencio, reactivación y alertas

@@ -6,21 +6,21 @@ import unicodedata
 # en cada saludo; hacen de G1 mientras el bot no envíe el menú como lista de WhatsApp.
 # "{nombre}" se reemplaza por ", <Nombre>" si conocemos el nombre del perfil, o por "" si no.
 WELCOME_MESSAGES: tuple[str, ...] = (
-    "¡Hola{nombre}! 🌿 Qué alegría tenerte por acá. Soy Chatsabor, de Saboryarte.\n\n"
+    "¡Hola{nombre}! 🌿 Qué alegría tenerte por acá. Soy Especia, de Saboryarte.\n\n"
     "Cuéntame, ¿en qué te puedo ayudar hoy?",
-    "¡Hola{nombre}! 🧂 Qué gusto que nos escribas. Soy Chatsabor y te ayudo "
+    "¡Hola{nombre}! 🧂 Qué gusto que nos escribas. Soy Especia y te ayudo "
     "con nuestras mezclas, tus pedidos o lo que necesites.\n\n¿Qué te trae por acá?",
-    "¡Qué más{nombre}! 🌿 Por acá Chatsabor, listo para ayudarte a encontrar tu sabor.\n\n"
+    "¡Qué más{nombre}! 🌿 Por acá Especia, lista para ayudarte a encontrar tu sabor.\n\n"
     "¿En qué te ayudo hoy?",
     "¡Hola{nombre}! ✨ Qué rico tenerte por acá. Te puedo mostrar nuestras mezclas y kits, ayudarte "
     "con un pedido o con un regalo.\n\n¿Por dónde empezamos?",
-    "¡Hola{nombre}! 🌿 Gracias por escribirle a Saboryarte. Soy Chatsabor y con mucho gusto te acompaño.\n\n"
+    "¡Hola{nombre}! 🌿 Gracias por escribirle a Saboryarte. Soy Especia y con mucho gusto te acompaño.\n\n"
     "Cuéntame, ¿qué estás buscando hoy?",
-    "¡Holaaa{nombre}! 🧂 Qué bueno verte por acá. Soy Chatsabor, de Saboryarte: te ayudo con "
+    "¡Holaaa{nombre}! 🧂 Qué bueno verte por acá. Soy Especia, de Saboryarte: te ayudo con "
     "nuestras mezclas, pedidos, regalos y más.\n\n¿Qué se te antoja hoy?",
-    "¡Hola{nombre}! 🌿 Qué alegría saludarte. Aquí Chatsabor, con toda la energía "
+    "¡Hola{nombre}! 🌿 Qué alegría saludarte. Aquí Especia, con toda la energía "
     "para darle más sabor a tu cocina.\n\n¿En qué te ayudo?",
-    "¡Hola{nombre}! ✨ Bienvenida la buena sazón a esta conversación. Soy Chatsabor, de Saboryarte.\n\n"
+    "¡Hola{nombre}! ✨ Bienvenida la buena sazón a esta conversación. Soy Especia, de Saboryarte.\n\n"
     "¿Quieres conocer nuestras mezclas, hacer un pedido o resolver una duda?",
 )
 

@@ -5,9 +5,9 @@
 #   - Escríbelo sin puntos, comas ni signo $. Ejemplo: 26000 (no $26.000).
 #   - No cambies los nombres de la izquierda ni borres líneas.
 #
-# Chatsabor usa estos precios para responder Y para cobrar con Bold.
-# Si algo queda mal escrito, Chatsabor sigue con los últimos precios correctos y avisa al equipo por correo.
-# Las líneas que empiezan con # son notas: Chatsabor no las lee.
+# Especia usa estos precios para responder Y para cobrar con Bold.
+# Si algo queda mal escrito, Especia sigue con los últimos precios correctos y avisa al equipo por correo.
+# Las líneas que empiezan con # son notas: Especia no las lee.
 
 mezclas:
   sal_de_oro: 26000         # Sal de oro, 100 g

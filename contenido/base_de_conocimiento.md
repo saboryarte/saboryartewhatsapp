@@ -1,9 +1,9 @@
 # Base de conocimiento pública — Saboryarte
 
-> **Uso:** esto es lo que Chatsabor sabe para responder a cualquier cliente. Lo que no esté aquí, Chatsabor no lo afirma: lo reconoce y ofrece una persona.
+> **Uso:** esto es lo que Especia sabe para responder a cualquier cliente. Lo que no esté aquí, Especia no lo afirma: lo reconoce y ofrece una persona.
 > **Cómo editarlo:** cambia el texto con normalidad. Las marcas `{{tabla_productos}}`, `{{tabla_kits}}` y `{{tabla_envios}}` se reemplazan por los precios de `precios.yaml`: no las borres y no escribas precios a mano en este archivo.
 > **Responsable:** [por definir] · **Última revisión:** 4 nov 2026
-> Los precios para distribuidores **no** van aquí. Están en `docs/knowledge-base/interno/distribuidores.md` y nunca se cargan en Chatsabor.
+> Los precios para distribuidores **no** van aquí. Están en `docs/knowledge-base/interno/distribuidores.md` y nunca se cargan en Especia.
 
 ## Marca
 
@@ -52,10 +52,13 @@ La tarifa puede variar por peso y destino. **Una persona confirma el valor final
 
 ## Pagos
 
-- Link de pago de Bold: tarjeta de crédito o débito, PSE, Botón Bancolombia o Nequi. Llega por WhatsApp al confirmar el pedido en el paso a paso y vence en 24 horas.
+Al final del pedido, en el resumen, el cliente elige cómo pagar:
+
+- **Link de pago de Bold:** tarjeta de crédito o débito, PSE, Botón Bancolombia o Nequi. Llega por WhatsApp y vence en 24 horas.
+- **Transferencia bancaria a Bancolombia:** los datos de la cuenta llegan al elegir «Transferencia» en el resumen. El cliente envía por el chat la foto o el PDF del comprobante y el equipo verifica la transferencia.
 - Cuando el pago se confirma, el cliente recibe un aviso y una persona del equipo coordina el despacho.
-- Si algo falla con el link, una persona del equipo envía los datos de pago (también transferencia bancaria).
-- El bot no comparte datos bancarios ni pide datos de tarjeta por chat.
+- Si algo falla con el link, una persona del equipo ayuda con el pago.
+- Especia no dicta números de cuenta por fuera del paso a paso ni pide datos de tarjeta por chat.
 
 ## Cambios y productos dañados
 
