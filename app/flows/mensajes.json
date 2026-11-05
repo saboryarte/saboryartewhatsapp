@@ -92,7 +92,7 @@
         },
         {
           "id": "P2F", "tipo": "botones",
-          "texto": "[ficha del producto: descripción, presentación y precio al público según docs/knowledge-base/saboryarte.md]",
+          "texto": "[ficha del producto: descripción, presentación y precio al público según contenido/base_de_conocimiento.md]",
           "opciones": [
             {"id": "p2f_agregar", "titulo": "Agregar al pedido", "va_a": "P6"},
             {"id": "p2f_otra", "titulo": "Ver otra mezcla", "va_a": "P2"},
@@ -203,7 +203,7 @@
         {
           "id": "P7", "tipo": "libre",
           "texto": "Perfecto. ¿A qué ciudad te lo enviamos? Enviamos a todo Colombia 🇨🇴\n\nPara el envío necesito tu nombre completo, dirección y un teléfono de contacto.",
-          "notas": "Solo envío, no hay recogida en persona. La tarifa sale de docs/knowledge-base/saboryarte.md según la ciudad; una persona confirma el valor final."
+          "notas": "Solo envío, no hay recogida en persona. La tarifa sale de contenido/base_de_conocimiento.md según la ciudad; una persona confirma el valor final."
         },
         {
           "id": "P8", "tipo": "botones",

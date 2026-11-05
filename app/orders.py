@@ -7,11 +7,9 @@ import unicodedata
 from typing import Any
 
 from .flows import format_price, get_product, kit_price
+from .precios import current_prices
 
-# Tarifas de envío estándar (docs/knowledge-base/saboryarte.md). Una persona confirma el valor final.
-_TARIFA_MEDELLIN = 9_000
-_TARIFA_AREA_METROPOLITANA = 12_000
-_TARIFA_NACIONAL = 18_000
+# Las tarifas de envío estándar están en contenido/precios.yaml. Una persona confirma el valor final.
 _AREA_METROPOLITANA = ("bello", "envigado", "itagui", "sabaneta", "la estrella")
 
 REQUIRED_SHIPPING_FIELDS = ("nombre", "direccion", "ciudad", "telefono")
@@ -28,11 +26,12 @@ def _mentions(city: str, name: str) -> bool:
 
 
 def shipping_cost(city: str) -> int:
+    envios = current_prices()["envios"]
     if _mentions(city, "medellin"):
-        return _TARIFA_MEDELLIN
+        return envios["medellin"]
     if any(_mentions(city, name) for name in _AREA_METROPOLITANA):
-        return _TARIFA_AREA_METROPOLITANA
-    return _TARIFA_NACIONAL
+        return envios["area_metropolitana"]
+    return envios["resto_del_pais"]
 
 
 def item_total(item: dict[str, Any]) -> int:

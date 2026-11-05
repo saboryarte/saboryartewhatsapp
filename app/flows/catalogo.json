@@ -1,34 +1,33 @@
 {
-  "nota": "Catálogo con precio al público, el mismo de docs/knowledge-base/saboryarte.md. Los precios de distribuidor nunca van aquí.",
+  "nota": "Nombres y descripciones del catálogo. Los precios están en contenido/precios.yaml (los edita la dueña). Los precios de distribuidor nunca van aquí.",
   "productos": [
     {
-      "id": "sal_de_oro", "nombre": "Sal de oro", "presentacion": "100 g", "precio": 26000,
+      "id": "sal_de_oro", "nombre": "Sal de oro", "presentacion": "100 g",
       "descripcion": "Sal marina con ajo negro, tomillo, pimienta y cúrcuma. Va con cualquier tipo de cocción."
     },
     {
-      "id": "sal_de_sol", "nombre": "Sal de sol", "presentacion": "100 g", "precio": 26000,
+      "id": "sal_de_sol", "nombre": "Sal de sol", "presentacion": "100 g",
       "descripcion": "Sal marina con cúrcuma, pimienta, jengibre, ajo, romero, orégano y albahaca. Especial para pollo y pescado, y para saltear vegetales y arroces."
     },
     {
-      "id": "sal_de_luna_rosa", "nombre": "Sal de luna rosa", "presentacion": "100 g", "precio": 26000,
+      "id": "sal_de_luna_rosa", "nombre": "Sal de luna rosa", "presentacion": "100 g",
       "descripcion": "Sal rosa del Himalaya con ajo, ajonjolí negro, pimienta y perejil. Suave y balanceada, para cualquier tipo de cocción."
     },
     {
-      "id": "sal_de_la_vid", "nombre": "Sal de la vid", "presentacion": "100 g", "precio": 26000,
+      "id": "sal_de_la_vid", "nombre": "Sal de la vid", "presentacion": "100 g",
       "descripcion": "Sal marina horneada en vino tinto con doce finas hierbas. Especial para la parrilla, ensaladas y pastas."
     },
     {
-      "id": "sal_chilemon", "nombre": "Sal chilemon", "presentacion": "100 g", "precio": 26000,
+      "id": "sal_chilemon", "nombre": "Sal chilemon", "presentacion": "100 g",
       "descripcion": "Sal marina con limón deshidratado, chiles picantes y dulces y paprika. Ideal para frutas, ensaladas, pescados y para michelar."
     },
     {
-      "id": "tierra_de_fuego", "nombre": "Mezcla tierra de fuego", "presentacion": "60 g", "precio": 26000,
+      "id": "tierra_de_fuego", "nombre": "Mezcla tierra de fuego", "presentacion": "60 g",
       "descripcion": "Paprika ahumada con ajo, pimienta, cúrcuma, tomillo y perejil. Le da un toque ahumado a las papas, las costillas y lo que quieras."
     }
   ],
   "kit_mini": {
-    "id": "kit_mini", "nombre": "Kit mini", "presentacion": "Kit", "precio": 60000,
+    "id": "kit_mini", "nombre": "Kit mini", "presentacion": "Kit",
     "descripcion": "Las 6 mezclas en miniatura (unos 40 g de cada sal y unos 25 g de tierra de fuego), una cuchara artesanal y un mini manual de uso."
-  },
-  "kits_armados": {"2": 48000, "3": 70000, "4": 88000, "5": 110000, "6": 133000}
+  }
 }

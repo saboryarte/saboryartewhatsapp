@@ -1,9 +1,9 @@
 # Base de conocimiento pública — Saboryarte
 
-> **Uso:** este es el contenido que el asistente puede usar para responder a cualquier cliente. Todo lo que no esté aquí, el bot no lo afirma: lo reconoce y escala.
-> **Fuente:** artefacto «Chatbot WhatsApp Saboryarte — Flujos del chatbot».
-> **Responsable:** [por definir] · **Última revisión:** 21 oct 2026
-> Los precios para distribuidores **no** van aquí. Están en `interno/distribuidores.md` y nunca se cargan en el prompt.
+> **Uso:** esto es lo que Chatsabor sabe para responder a cualquier cliente. Lo que no esté aquí, Chatsabor no lo afirma: lo reconoce y ofrece una persona.
+> **Cómo editarlo:** cambia el texto con normalidad. Las marcas `{{tabla_productos}}`, `{{tabla_kits}}` y `{{tabla_envios}}` se reemplazan por los precios de `precios.yaml`: no las borres y no escribas precios a mano en este archivo.
+> **Responsable:** [por definir] · **Última revisión:** 4 nov 2026
+> Los precios para distribuidores **no** van aquí. Están en `docs/knowledge-base/interno/distribuidores.md` y nunca se cargan en Chatsabor.
 
 ## Marca
 
@@ -16,21 +16,11 @@
 
 Todas las presentaciones incluyen una cuchara tallada artesanalmente.
 
-| Producto | Descripción | Presentación | Precio |
-|---|---|---|---|
-| Sal de oro | Sal marina con ajo negro, tomillo, pimienta y cúrcuma. Va con cualquier tipo de cocción. | 100 g | $26.000 |
-| Sal de sol | Sal marina con cúrcuma, pimienta, jengibre, ajo, romero, orégano y albahaca. Especial para pollo y pescado, y para saltear vegetales y arroces. | 100 g | $26.000 |
-| Sal de luna rosa | Sal rosa del Himalaya con ajo, ajonjolí negro, pimienta y perejil. Suave y balanceada, para cualquier tipo de cocción. | 100 g | $26.000 |
-| Sal de la vid | Sal marina horneada en vino tinto con doce finas hierbas. Especial para la parrilla, ensaladas y pastas. | 100 g | $26.000 |
-| Sal chilemon | Sal marina con limón deshidratado, chiles picantes y dulces y paprika. Ideal para frutas, ensaladas, pescados y para michelar. | 100 g | $26.000 |
-| Mezcla tierra de fuego | Paprika ahumada con ajo, pimienta, cúrcuma, tomillo y perejil. Le da un toque ahumado a las papas, las costillas y lo que quieras. | 60 g | $26.000 |
-| Kit mini | Las 6 mezclas en miniatura (unos 40 g de cada sal y unos 25 g de tierra de fuego), una cuchara artesanal y un mini manual de uso. | Kit | $60.000 |
+{{tabla_productos}}
 
 **Kits armados:** de 2 a 6 mezclas de 100 g a elección (la tierra de fuego va en 60 g), con una cuchara artesanal.
 
-| Mezclas | 2 | 3 | 4 | 5 | 6 |
-|---|---|---|---|---|---|
-| Precio | $48.000 | $70.000 | $88.000 | $110.000 | $133.000 |
+{{tabla_kits}}
 
 **Granel:** no se vende al público. Si un cliente final lo pide, se le explica que el granel es para distribuidores y se le ofrecen las presentaciones de 100 g o los kits.
 
@@ -54,11 +44,9 @@ Se usan como la sal de siempre, ajustando la cantidad al gusto.
 - Solo se hacen envíos; no hay recogida en persona. Se envía a todo Colombia.
 - Datos necesarios: nombre completo, dirección, ciudad y teléfono de contacto.
 
-| Destino | Tarifa estándar | Tiempo de entrega |
-|---|---|---|
-| Medellín | $9.000 | 1 a 2 días hábiles |
-| Bello, Envigado, Itagüí, Sabaneta y La Estrella | $12.000 | 1 a 2 días hábiles |
-| Resto del país | $18.000 | 2 a 4 días hábiles; puede tardar más en lugares remotos |
+{{tabla_envios}}
+
+**Tiempo de entrega:** Medellín y área metropolitana, 1 a 2 días hábiles. Resto del país, 2 a 4 días hábiles; puede tardar más en lugares remotos.
 
 La tarifa puede variar por peso y destino. **Una persona confirma el valor final del envío.**
 

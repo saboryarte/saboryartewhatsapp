@@ -7,8 +7,11 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request, sta
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+from . import precios
 from .bold import valid_signature
 from .config import settings
+from .notify import notify_team
+from .precios import current_prices
 from .router import check_unanswered_handoffs, handle_bold_event, handle_choice, handle_team_message, handle_text
 from .state import load_conversation, mark_processed, save_conversation
 from .usage import remitente_actual
@@ -30,8 +33,21 @@ async def _alert_loop() -> None:
             logger.exception("Error revisando traspasos sin respuesta")
 
 
+async def _check_prices() -> None:
+    """Carga los precios al arrancar: si precios.yaml tiene un error, se avisa al equipo de inmediato."""
+    current_prices()
+    if precios.load_error:
+        await notify_team(
+            "[Saboryarte] ⚠️ Error en precios.yaml",
+            f"El archivo contenido/precios.yaml tiene un error: {precios.load_error}.\n\n"
+            "Chatsabor sigue cobrando con los últimos precios correctos. Corrige el archivo en GitHub y avísale "
+            "a quien administra el bot para que lo reinicie.",
+        )
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    await _check_prices()
     task = asyncio.create_task(_alert_loop())
     yield
     task.cancel()

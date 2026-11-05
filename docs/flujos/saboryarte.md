@@ -6,7 +6,8 @@
 | Archivo | Qué contiene |
 |---|---|
 | `app/flows/mensajes.json` | Texto exacto de cada paso (G1, P1, M1…), sus botones u opciones de lista y a qué paso lleva cada opción. Está ajustado a los límites de WhatsApp y lo valida `tests/test_mensajes_flujos.py`. |
-| `docs/knowledge-base/saboryarte.md` | Lo que el bot puede decirle a cualquier cliente: catálogo con precio al público, envíos, pagos y puntos de venta. |
+| `contenido/base_de_conocimiento.md` | Lo que el bot puede decirle a cualquier cliente: catálogo, envíos, pagos y puntos de venta. Los precios salen de `contenido/precios.yaml`. |
+| `contenido/voz_whatsapp.md` | Voz de Chatsabor en WhatsApp, sacada del manual aprobado (`contenido/voz_de_marca.md`). |
 | `docs/knowledge-base/interno/distribuidores.md` | Precios de distribuidor, condiciones y reglas de calificación. **No se carga en el prompt.** |
 | Este documento | Mapa de rutas, diagramas, reglas transversales, traspaso a una persona y lo que falta construir. |
 
@@ -364,7 +365,7 @@ Esto va al *system prompt* y es el criterio para evaluar las respuestas de Claud
 | Contenido | Dónde vive | Por qué |
 |---|---|---|
 | Voz de marca y prohibiciones | *System prompt* | Guía cómo redacta Claude. |
-| Catálogo público, envíos, pagos, puntos de venta | `docs/knowledge-base/saboryarte.md`, en el prompt | Son los únicos hechos que Claude puede afirmar. |
+| Catálogo público, envíos, pagos, puntos de venta | `contenido/base_de_conocimiento.md` (precios de `contenido/precios.yaml`), en el prompt | Son los únicos hechos que Claude puede afirmar. |
 | Texto de cada paso, botones y listas | `app/flows/mensajes.json` | Lo envía el código tal cual: es predecible y se puede probar. |
 | Rutas, reglas transversales, horario, calificación, totales | Código | Son decisiones que no deben depender del modelo. |
 | Precios y condiciones de distribuidor | `docs/knowledge-base/interno/` | **Nunca** en el prompt; así no pueden filtrarse a un cliente final. |
@@ -423,7 +424,7 @@ Ordenado según las fases de la guía.
 | 3 | **Enviar listas y botones** (`interactive`) a partir de `mensajes.json` | Todas | ✅ Listas y botones (`app/router.py`). |
 | 4 | **Recibir respuestas** `interactive` (`button_reply`, `list_reply`) y enrutar por `id` de opción | Todas | 🟡 Ruta de compra completa hasta P8: G1, P1–P8, P2F, P9 con sus respuestas (P9B, P9C, P9O, P9S, O1). P11, el traspaso y las demás rutas responden «en construcción». |
 | 5 | **Router** con las reglas transversales y el horario | Todas | 🟡 Saludo → menú (G1 o G2 según horario), «menú» reinicia, «asesor» traspasa, un saludo a mitad de flujo no reinicia. Faltan salud, quejas y los dos fallos seguidos. |
-| 6 | ***System prompt*** con voz de marca + `knowledge-base/saboryarte.md` | Consultas, Ventas | ✅ `app/prompt.py`. Avisa a Claude que aún no toma pedidos ni traspasa. |
+| 6 | ***System prompt*** con voz de marca (`contenido/voz_whatsapp.md`) + `contenido/base_de_conocimiento.md` | Consultas, Ventas | ✅ `app/prompt.py`. Avisa a Claude que aún no toma pedidos ni traspasa. |
 | 7 | **Cálculo de totales** (catálogo + tarifa por ciudad) para P8 | Compra | ✅ `app/orders.py`. Claude solo extrae productos y datos de envío del texto (salidas estructuradas); el código valida contra el catálogo y hace las cuentas. |
 | 8 | **Traspaso real:** dónde llega la ficha, cómo responde el equipo y cómo se reactiva el bot | Todas | 🟡 Núcleo listo con coexistencia (§4). Falta dar de alta el número en coexistencia y configurar el correo. |
 | 9 | **Mensajes no textuales:** O2, y en M3 aceptar audio y foto | Mezcla | Se ignoran sin responder. |

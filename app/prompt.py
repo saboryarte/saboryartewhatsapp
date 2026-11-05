@@ -1,9 +1,18 @@
-"""System prompt de Claude: instrucciones de comportamiento + base de conocimiento pública de Saboryarte."""
+"""System prompt de Claude: instrucciones de comportamiento + voz de marca + base de conocimiento pública.
+
+La voz y la base viven en contenido/, que edita la dueña. Los precios de la base salen de contenido/precios.yaml.
+"""
 from functools import cache
 from pathlib import Path
 
+from .flows import format_price, orderable_products
+from .precios import current_prices
+
+_CONTENIDO = Path(__file__).resolve().parent.parent / "contenido"
 # Solo la base pública. docs/knowledge-base/interno/ (precios de distribuidor) nunca se carga aquí.
-_KB_PATH = Path(__file__).resolve().parent.parent / "docs" / "knowledge-base" / "saboryarte.md"
+_KB_PATH = _CONTENIDO / "base_de_conocimiento.md"
+# El manual completo (voz_de_marca.md) no se carga: es para Instagram y nombra otras cuentas.
+_VOZ_PATH = _CONTENIDO / "voz_whatsapp.md"
 
 _INSTRUCCIONES = """Te llamas Chatsabor y eres el chat de Saboryarte en WhatsApp. Si te presentas, di siempre «Soy Chatsabor». Nunca te describas como «asistente», «asistente virtual» ni «bot». Saboryarte hace mezclas de sales y especias con ingredientes 100 % naturales en Colombia. Ayudas a los clientes con dudas, con la elección de mezclas y con información para comprar, de forma clara, cercana y honesta.
 
@@ -23,11 +32,8 @@ ESTADO ACTUAL DEL ASISTENTE
 {navegacion}
 
 VOZ DE MARCA
-- Habla de «tú», con calidez y cercanía. Modismos paisas con moderación («por acá», «ahorita»).
-- Mensajes de 2 a 4 líneas y una sola pregunta por mensaje. Uno o dos emojis de naturaleza o cocina (🌿 🧂 ✨).
-- Formato de WhatsApp: *negrita* con un asterisco, viñetas con «•». Sin encabezados ni tablas.
+Sigue la guía de <voz_de_marca>. Además:
 - Cada vez que menciones el Instagram de Saboryarte, incluye el enlace https://www.instagram.com/saboryarte.cocina/ para que el cliente pueda tocarlo.
-- Usa «usted» y un tono formal, sin emojis, solo si el cliente reporta un reclamo grave (producto en mal estado, salud, cobro errado). En ese caso responde en 2 o 3 líneas, sin viñetas: muestra empatía, pide en una sola frase lo que ocurrió y el nombre o número de pedido, e indica que escriba «asesor» para que una persona lo atienda.
 - No prometas tiempos de respuesta ni atención inmediata.
 
 LÍMITES
@@ -60,8 +66,45 @@ DESTINOS = {
 _NAVEGACION = "\n".join(f"- IR:{option_id} → {description}" for option_id, description in DESTINOS.items())
 
 
+_DESTINOS_ENVIO = (
+    ("medellin", "Medellín"),
+    ("area_metropolitana", "Bello, Envigado, Itagüí, Sabaneta y La Estrella"),
+    ("resto_del_pais", "Resto del país"),
+)
+
+
+def _price_tables() -> dict[str, str]:
+    """Tablas de la base de conocimiento generadas desde precios.yaml: el precio que se dice es el que se cobra."""
+    prices = current_prices()
+    productos = "\n".join(
+        f"| {p['nombre']} | {p['descripcion']} | {p['presentacion']} | {format_price(p['precio'])} |"
+        for p in orderable_products()
+    )
+    kits = prices["kits_armados"]
+    envios = "\n".join(f"| {nombre} | {format_price(prices['envios'][key])} |" for key, nombre in _DESTINOS_ENVIO)
+    return {
+        "{{tabla_productos}}": "| Producto | Descripción | Presentación | Precio |\n|---|---|---|---|\n" + productos,
+        "{{tabla_kits}}": (
+            "| Mezclas | " + " | ".join(str(n) for n in kits) + " |\n"
+            "|---|" + "---|" * len(kits) + "\n"
+            "| Precio | " + " | ".join(format_price(v) for v in kits.values()) + " |"
+        ),
+        "{{tabla_envios}}": "| Destino | Tarifa estándar |\n|---|---|\n" + envios,
+    }
+
+
+def knowledge_base() -> str:
+    """Base de conocimiento con las tablas de precios. Solo se reemplazan las líneas que son solo la marca."""
+    tables = _price_tables()
+    lines = _KB_PATH.read_text(encoding="utf-8").splitlines()
+    return "\n".join(tables.get(line.strip(), line) for line in lines)
+
+
 @cache
 def system_prompt() -> str:
-    knowledge = _KB_PATH.read_text(encoding="utf-8")
+    voz = _VOZ_PATH.read_text(encoding="utf-8")
     instrucciones = _INSTRUCCIONES.replace("{navegacion}", _NAVEGACION)
-    return f"{instrucciones}\n\n<base_de_conocimiento>\n{knowledge}\n</base_de_conocimiento>"
+    return (
+        f"{instrucciones}\n\n<voz_de_marca>\n{voz}\n</voz_de_marca>"
+        f"\n\n<base_de_conocimiento>\n{knowledge_base()}\n</base_de_conocimiento>"
+    )

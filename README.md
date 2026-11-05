@@ -17,7 +17,7 @@ Agente de WhatsApp construido con **Python + FastAPI** que recibe mensajes via [
 - Toma de pedidos (P6 → P7 → P8): Claude extrae del texto las mezclas, cantidades y datos de envío; el código valida contra el catálogo y calcula subtotal, envío por ciudad y total. El pedido aún no se registra ni se pasa al equipo
 - Traspaso a una persona en modo coexistencia: "asesor", "Hablar con alguien" o "Confirmar pedido" silencian el bot y envían la ficha por correo al equipo, que responde desde la app de WhatsApp Business. El bot retoma con la frase de cierre o tras horas sin mensajes del equipo, y alerta si nadie responde a tiempo
 - Pago con Bold: al confirmar el pedido se guarda en SQLite y el cliente recibe un link de pago (tarjeta, PSE, Botón Bancolombia, Nequi) por el total con la tarifa estándar de envío. El webhook `POST /webhooks/bold` verifica la firma, confirma con Bold que el link quedó pagado y por el monto correcto, avisa al cliente y envía al equipo la ficha para despachar
-- Claude responde con la voz de Saboryarte y solo con la base de conocimiento pública (`docs/knowledge-base/saboryarte.md`)
+- Claude responde con la voz de Saboryarte y solo con la base de conocimiento pública (`contenido/base_de_conocimiento.md`)
 
 ---
 
@@ -142,6 +142,21 @@ python -m app.usage --dias 7
 
 Muestra el costo de Claude y los mensajes enviados por conversación (una pausa de más de 24 h abre otra) y los mensajes de WhatsApp del mes con su costo estimado: 1.000 mensajes de servicio gratis al mes y US$0,0008 cada uno después (tarifa de Colombia, oct 2026). Los precios están en `app/usage.py`, y los evals usan los mismos. El reporte solo muestra los últimos 4 dígitos de cada número.
 
+## Contenido que edita la dueña (`contenido/`)
+
+Precios y voz de marca viven fuera del código, en la carpeta `contenido/`, para que se puedan cambiar desde github.com sin tocar programación:
+
+| Archivo | Qué es | ¿Lo lee Chatsabor? |
+|---|---|---|
+| `precios.yaml` | Precios al público, kits armados y tarifas de envío. **Única fuente de precios**: de aquí salen el cobro en Bold, los resúmenes del pedido y lo que Chatsabor responde. | Sí |
+| `base_de_conocimiento.md` | Lo que Chatsabor sabe: marca, catálogo, envíos, pagos, puntos de venta. Las tablas de precios se generan desde `precios.yaml` (marcas `{{tabla_…}}`). | Sí |
+| `voz_whatsapp.md` | Cómo habla Chatsabor en WhatsApp, sacado del manual aprobado. | Sí |
+| `voz_de_marca.md` | Manual de tono completo, tal como lo aprobó la marca (sobre todo para Instagram). | No: nombra otras cuentas y trae reglas de redes |
+
+**Cómo cambiar un precio:** en github.com, abrir `contenido/precios.yaml`, tocar el lápiz (Edit), cambiar el número (sin puntos ni `$`) y guardar con «Commit changes». Los cambios se aplican cuando el bot se reinicia con la versión nueva (`git pull` y reiniciar uvicorn).
+
+**Si el archivo queda mal escrito** (un precio con puntos, una mezcla borrada, un nombre cambiado), Chatsabor no cobra con datos dudosos: sigue con los últimos precios válidos (copia en `data/precios_validos.json`) y envía un correo al equipo con el error. Sin ninguna copia válida, el bot no arranca.
+
 ## Estructura del proyecto
 
 ```
@@ -154,6 +169,7 @@ whatsapp-claude-agent/
 │   ├── greetings.py   # Detección de saludos y de "menú", y mensajes de bienvenida aleatorios
 │   ├── router.py      # Decide qué responder según el estado y los pasos de los flujos
 │   ├── prompt.py      # System prompt de Claude: voz de marca + base de conocimiento pública
+│   ├── precios.py     # Precios de contenido/precios.yaml, validados (con respaldo de los últimos válidos)
 │   ├── orders.py      # Cálculos del pedido: subtotal, tarifa de envío por ciudad y resumen (P8)
 │   ├── handoff.py     # Traspaso: horario, ficha, silencio, reactivación y alertas
 │   ├── notify.py      # Aviso al equipo por correo (SMTP)
@@ -163,13 +179,14 @@ whatsapp-claude-agent/
 │   ├── usage.py       # Registro y reporte del costo real (tokens de Claude y mensajes enviados)
 │   ├── flows/
 │   │   ├── __init__.py    # Lectura de mensajes.json y catalogo.json (pasos, opciones, fichas)
-│   │   ├── catalogo.json  # Productos con precio al público (fichas y recomendaciones)
+│   │   ├── catalogo.json  # Nombres y descripciones de los productos (los precios están en contenido/)
 │   │   └── mensajes.json  # Texto, botones y listas de cada paso de los flujos de Saboryarte
 │   └── config.py      # Configuración via variables de entorno
+├── contenido/                       # Lo edita la dueña: precios, base de conocimiento y voz de marca
 ├── docs/
 │   ├── guia-construccion-flujos.md  # Cómo diseñar los flujos de ventas, consultas, pedidos y atención
 │   ├── flujos/saboryarte.md         # Diseño de los flujos de Saboryarte (rutas, traspaso, voz de marca)
-│   └── knowledge-base/              # Contenido que puede usar el bot (interno/ nunca va al prompt)
+│   └── knowledge-base/interno/      # Precios de distribuidor: nunca van al prompt
 ├── tests/
 │   ├── __init__.py
 │   └── test_webhook.py

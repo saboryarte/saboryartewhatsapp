@@ -4,6 +4,8 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
+from ..precios import current_prices
+
 _MENSAJES_PATH = Path(__file__).with_name("mensajes.json")
 _CATALOGO_PATH = Path(__file__).with_name("catalogo.json")
 
@@ -84,7 +86,14 @@ def button_rows(step_id: str) -> list[dict[str, str]]:
 
 @cache
 def _catalogo() -> dict[str, Any]:
-    return json.loads(_CATALOGO_PATH.read_text(encoding="utf-8"))
+    """Nombres y descripciones de catalogo.json con los precios de contenido/precios.yaml."""
+    catalogo = json.loads(_CATALOGO_PATH.read_text(encoding="utf-8"))
+    prices = current_prices()
+    for product in catalogo["productos"]:
+        product["precio"] = prices["mezclas"][product["id"]]
+    catalogo["kit_mini"]["precio"] = prices["kit_mini"]
+    catalogo["kits_armados"] = prices["kits_armados"]
+    return catalogo
 
 
 def get_product(product_id: str) -> dict[str, Any] | None:
@@ -108,7 +117,7 @@ def ordered_mix_ids() -> list[str]:
 
 
 def kit_price(size: int) -> int | None:
-    return _catalogo()["kits_armados"].get(str(size))
+    return _catalogo()["kits_armados"].get(size)
 
 
 def format_price(value: int) -> str:

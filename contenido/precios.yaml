@@ -1,0 +1,34 @@
+# Precios al público de Saboryarte, en pesos colombianos.
+#
+# Cómo cambiar un precio:
+#   - Cambia solo el número que está después de los dos puntos.
+#   - Escríbelo sin puntos, comas ni signo $. Ejemplo: 26000 (no $26.000).
+#   - No cambies los nombres de la izquierda ni borres líneas.
+#
+# Chatsabor usa estos precios para responder Y para cobrar con Bold.
+# Si algo queda mal escrito, Chatsabor sigue con los últimos precios correctos y avisa al equipo por correo.
+# Las líneas que empiezan con # son notas: Chatsabor no las lee.
+
+mezclas:
+  sal_de_oro: 26000         # Sal de oro, 100 g
+  sal_de_sol: 26000         # Sal de sol, 100 g
+  sal_de_luna_rosa: 26000   # Sal de luna rosa, 100 g
+  sal_de_la_vid: 26000      # Sal de la vid, 100 g
+  sal_chilemon: 26000       # Sal chilemon, 100 g
+  tierra_de_fuego: 26000    # Mezcla tierra de fuego, 60 g
+
+kit_mini: 60000             # Las 6 mezclas en miniatura
+
+# Kit armado: el precio depende de cuántas mezclas elige el cliente.
+kits_armados:
+  2_mezclas: 48000
+  3_mezclas: 70000
+  4_mezclas: 88000
+  5_mezclas: 110000
+  6_mezclas: 133000
+
+# Tarifa de envío estándar. Una persona del equipo confirma el valor final.
+envios:
+  medellin: 9000
+  area_metropolitana: 12000   # Bello, Envigado, Itagüí, Sabaneta y La Estrella
+  resto_del_pais: 18000

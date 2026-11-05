@@ -1,12 +1,11 @@
 """Ruta de compra: navegación del catálogo (P1–P5, P9) y prompt de Claude con la base de conocimiento."""
-import json
 from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app.flows import format_price, get_step, list_rows
+from app.flows import format_price, get_step, list_rows, orderable_products
 from app.main import app
 from app.prompt import system_prompt
 from app.state import Conversation, load_conversation, save_conversation
@@ -166,10 +165,23 @@ class TestPromptDeClaude:
         prompt = system_prompt()
         assert "18.500" not in prompt and "160 por gramo" not in prompt
 
-    def test_catalogo_coincide_con_la_base_de_conocimiento(self):
-        catalogo = json.loads((ROOT / "app/flows/catalogo.json").read_text(encoding="utf-8"))
-        kb = (ROOT / "docs/knowledge-base/saboryarte.md").read_text(encoding="utf-8")
-        for producto in catalogo["productos"] + [catalogo["kit_mini"]]:
-            fila = next((l for l in kb.splitlines() if l.startswith(f"| {producto['nombre']} |")), None)
-            assert fila, producto["nombre"]
-            assert format_price(producto["precio"]) in fila, producto["nombre"]
+    def test_la_base_de_conocimiento_no_tiene_precios_escritos_a_mano(self):
+        # Los precios salen de precios.yaml; uno escrito a mano en la base podría no coincidir con lo que se cobra.
+        kb = (ROOT / "contenido/base_de_conocimiento.md").read_text(encoding="utf-8")
+        assert "$" not in kb
+        for marca in ("{{tabla_productos}}", "{{tabla_kits}}", "{{tabla_envios}}"):
+            assert marca + "\n" in kb, marca
+
+    def test_el_prompt_trae_los_precios_que_se_cobran(self):
+        prompt = system_prompt()
+        assert not [l for l in prompt.splitlines() if l.strip().startswith("{{tabla")]
+        for producto in orderable_products():
+            fila = next((l for l in prompt.splitlines() if l.startswith(f"| {producto['nombre']} |")), None)
+            assert fila and fila.endswith(f"| {format_price(producto['precio'])} |"), producto["nombre"]
+        assert "| Precio | $48.000 | $70.000 | $88.000 | $110.000 | $133.000 |" in prompt
+        assert "| Medellín | $9.000 |" in prompt
+
+    def test_incluye_la_voz_para_whatsapp_y_no_el_manual_completo(self):
+        prompt = system_prompt()
+        assert "<voz_de_marca>" in prompt and "💛" in prompt
+        assert "@tropical_spice_co" not in prompt and "hashtags propios" not in prompt

@@ -80,7 +80,7 @@ def test_destinos_existen():
 
 def test_mensajes_y_base_publica_sin_datos_de_distribuidor():
     publico = (ROOT / "app/flows/mensajes.json").read_text(encoding="utf-8")
-    publico += (ROOT / "docs/knowledge-base/saboryarte.md").read_text(encoding="utf-8")
+    publico += (ROOT / "contenido/base_de_conocimiento.md").read_text(encoding="utf-8")
     for dato in DATOS_INTERNOS:
         assert dato not in publico, dato
 
