@@ -206,6 +206,15 @@
           "notas": "Solo envío, no hay recogida en persona. La tarifa sale de contenido/base_de_conocimiento.md según la ciudad; una persona confirma el valor final."
         },
         {
+          "id": "P7G", "tipo": "botones",
+          "texto": "¿Te lo enviamos a los mismos datos de la vez pasada? 💛\n\n[datos de envío guardados]",
+          "opciones": [
+            {"id": "p7g_misma", "titulo": "Sí, a los mismos", "va_a": "P8"},
+            {"id": "p7g_otra", "titulo": "Otros datos", "va_a": "P7"}
+          ],
+          "notas": "Solo para clientes que ya confirmaron un pedido (app/archivo.py guarda sus datos de envío 60 días, o 1 año si pagaron). «Sí» va al resumen (P8); «Otros datos» pide los datos de envío desde cero (P7). Si el cliente escribe una dirección nueva, se toma como P7."
+        },
+        {
           "id": "P8", "tipo": "botones",
           "texto": "Este es tu pedido:\n[resumen de productos y cantidades]\nSubtotal: [valor]\nEnvío: [según tu ciudad]\nTotal: [valor]\n\n¿Todo bien?",
           "opciones": [

@@ -153,9 +153,19 @@ Precios y voz de marca viven fuera del código, en la carpeta `contenido/`, para
 | `voz_whatsapp.md` | Cómo habla Chatsabor en WhatsApp, sacado del manual aprobado. | Sí |
 | `voz_de_marca.md` | Manual de tono completo, tal como lo aprobó la marca (sobre todo para Instagram). | No: nombra otras cuentas y trae reglas de redes |
 
-**Cómo cambiar un precio:** en github.com, abrir `contenido/precios.yaml`, tocar el lápiz (Edit), cambiar el número (sin puntos ni `$`) y guardar con «Commit changes». Los cambios se aplican cuando el bot se reinicia con la versión nueva (`git pull` y reiniciar uvicorn).
+**Cómo cambiar un precio (la dueña):** con una hoja de cálculo, sin editar archivos de código:
+
+1. Pedirle a Claude Code, en un chat del proyecto, «la hoja de precios actual». Claude la genera con `python -m app.hoja_precios exportar`.
+2. Cambiar los precios en la columna amarilla (Excel o Google Sheets) y guardarla como `.xlsx`.
+3. Adjuntarla en un chat de Claude Code del proyecto: «Actualiza los precios con esta hoja». Claude la valida, muestra qué cambia, pide confirmación y deja el cambio en un pull request (el procedimiento está en `CLAUDE.md`).
+
+Los precios nuevos se cobran cuando el bot se reinicia con esa versión. También se puede editar `contenido/precios.yaml` directamente en github.com.
 
 **Si el archivo queda mal escrito** (un precio con puntos, una mezcla borrada, un nombre cambiado), Chatsabor no cobra con datos dudosos: sigue con los últimos precios válidos (copia en `data/precios_validos.json`) y envía un correo al equipo con el error. Sin ninguna copia válida, el bot no arranca.
+
+## Historial y copias de seguridad
+
+La conversación activa se reinicia a las 24 h, pero el archivo de chats dura 60 días, la memoria del cliente (para ofrecerle «¿a los mismos datos de la vez pasada?») hasta 1 año si compró, y el chat de cada pedido pagado 1 año. La copia diaria cifrada va a Google Drive (60 días) y cada pedido pagado queda como un `.txt` legible en una carpeta del equipo. Plazos, configuración en Hostinger y cómo restaurar: [docs/despliegue/respaldos.md](docs/despliegue/respaldos.md).
 
 ## Estructura del proyecto
 
@@ -170,6 +180,9 @@ whatsapp-claude-agent/
 │   ├── router.py      # Decide qué responder según el estado y los pasos de los flujos
 │   ├── prompt.py      # System prompt de Claude: voz de marca + base de conocimiento pública
 │   ├── precios.py     # Precios de contenido/precios.yaml, validados (con respaldo de los últimos válidos)
+│   ├── archivo.py     # Archivo de chats (60 días), memoria del cliente y chat de cada pedido pagado (1 año)
+│   ├── respaldo.py    # Copia de seguridad diaria a Google Drive con rclone
+│   ├── hoja_precios.py # Hoja de precios para la dueña: exportar e importar con validación
 │   ├── orders.py      # Cálculos del pedido: subtotal, tarifa de envío por ciudad y resumen (P8)
 │   ├── handoff.py     # Traspaso: horario, ficha, silencio, reactivación y alertas
 │   ├── notify.py      # Aviso al equipo por correo (SMTP)

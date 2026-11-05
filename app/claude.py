@@ -4,10 +4,11 @@ import anthropic
 from anthropic import AsyncAnthropic
 from pydantic import BaseModel
 
+from .archivo import client_note
 from .config import settings
 from .flows import orderable_products
 from .prompt import system_prompt
-from .usage import record_claude
+from .usage import record_claude, remitente_actual
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,16 @@ _client = AsyncAnthropic(api_key=settings.anthropic_api_key)
 _RESPONSE_MODEL = "claude-sonnet-5-5"
 
 
+def _system_blocks() -> list[dict]:
+    # El system prompt (voz de marca + base de conocimiento) es igual en cada llamada: se cachea. La nota del
+    # cliente que vuelve va después, en otro bloque, para no romper ese caché.
+    blocks = [{"type": "text", "text": system_prompt(), "cache_control": {"type": "ephemeral"}}]
+    note = client_note(remitente_actual.get())
+    if note:
+        blocks.append({"type": "text", "text": f"<cliente>\n{note}\n</cliente>"})
+    return blocks
+
+
 async def ask_claude(prompt: str, history: list[dict] | None = None) -> str:
     """history: intercambios previos de la conversación, alternando user/assistant y empezando por user."""
     async with _client.messages.stream(
@@ -26,8 +37,7 @@ async def ask_claude(prompt: str, history: list[dict] | None = None) -> str:
         thinking={"type": "adaptive"},
         # Chat de atención: esfuerzo bajo. Aprobó 45/48 en evals/comparar_modelos.py.
         output_config={"effort": "low"},
-        # El system prompt (voz de marca + base de conocimiento) es igual en cada llamada: se cachea.
-        system=[{"type": "text", "text": system_prompt(), "cache_control": {"type": "ephemeral"}}],
+        system=_system_blocks(),
         messages=[*(history or []), {"role": "user", "content": prompt}],
     ) as stream:
         message = await stream.get_final_message()

@@ -7,6 +7,7 @@ from httpx import HTTPStatusError
 from pydantic import BaseModel, ConfigDict, Field
 
 from .config import settings
+from .archivo import CHATSABOR, outgoing_text, record
 from .usage import record_whatsapp
 
 logger = logging.getLogger(__name__)
@@ -164,6 +165,7 @@ async def _send(to: str, message: dict[str, Any]) -> bool:
             response.raise_for_status()
             logger.info("Mensaje enviado (tipo: %s)", message["type"])
             record_whatsapp(to, message["type"])
+            record(to, CHATSABOR, outgoing_text(message))
             return True
         except HTTPStatusError as e:
             # Meta explica el motivo en error.message (p. ej. token vencido: code 190, subcode 463)

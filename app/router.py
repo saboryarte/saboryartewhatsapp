@@ -35,7 +35,7 @@ from .handoff import (
     start_handoff,
     team_went_idle,
 )
-from . import bold
+from . import archivo, bold
 from .notify import notify_team
 from .orders import (
     ask_missing_shipping,
@@ -69,7 +69,7 @@ logger = logging.getLogger(__name__)
 
 # Pasos que el bot ya sabe mostrar. Una opción que lleva a cualquier otro responde «en construcción».
 PASOS_DISPONIBLES = frozenset({
-    "G1", "P1", "P2", "P2F", "P3", "P4", "P4B", "P5", "P6", "P7", "P8", "P9", "P9B", "P9C", "P9O", "P9S", "O1",
+    "G1", "P1", "P2", "P2F", "P3", "P4", "P4B", "P5", "P6", "P7", "P7G", "P8", "P9", "P9B", "P9C", "P9O", "P9S", "O1",
 })
 # Respuestas a una duda: después se pregunta «¿Te sirvió?» (P9S).
 _RESPUESTAS_DE_DUDA = frozenset({"P9B", "P9C", "O1"})
@@ -163,7 +163,10 @@ async def handle_text(body: str, sender: str, profile_name: str | None, conversa
     elif conversation.paso in ("P6", "P6Q", "P6M", "P4C", "P4F"):
         # En los pasos con lista o botones el cliente también puede escribir lo que quiere.
         sent = await _take_order_items(body, sender, conversation)
-    elif conversation.paso == "P7":
+    elif conversation.paso in ("P7", "P7G"):
+        # En P7G el cliente puede escribir otra dirección en vez de tocar un botón: se toma desde cero.
+        if conversation.paso == "P7G":
+            conversation.datos.pop("envio_guardado", None)
         sent = await _take_shipping(body, sender, conversation)
     elif conversation.flujo_activo is None and not conversation.historial:
         # Primer mensaje de la conversación y no es un saludo: se responde y se ofrece el menú en el mismo mensaje.
@@ -444,8 +447,27 @@ async def _items_ready(sender: str, items: list[dict], conversation: Conversatio
     # Si ya tenemos los datos de envío (p. ej. el cliente tocó «Cambiar algo»), se va directo al resumen.
     if not missing_shipping_fields(conversation.datos.get("envio", {})):
         return await _show_summary(sender, conversation)
+    # Cliente que vuelve: se le ofrecen los datos de envío de su último pedido en vez de pedirlos otra vez.
+    saved = archivo.saved_shipping(sender)
+    if saved and not missing_shipping_fields(saved):
+        conversation.datos["envio_guardado"] = saved
+        texto = get_step("P7G")["texto"].replace("[datos de envío guardados]", _shipping_line(saved))
+        return await _show_step(sender, "P7G", conversation, body=f"{intro} {texto}" if intro else texto)
     body = f"{intro} {get_step('P7')['texto']}" if intro else None
     return await _show_step(sender, "P7", conversation, body=body)
+
+
+def _shipping_line(envio: dict) -> str:
+    return f"{envio['nombre']}\n{envio['direccion']}, {envio['ciudad']}\nTel. {envio['telefono']}"
+
+
+async def _use_saved_shipping(sender: str, conversation: Conversation) -> str | None:
+    saved = conversation.datos.pop("envio_guardado", None)
+    if not saved or not conversation.datos.get("pedido"):
+        # El pedido ya no está (p. ej. la conversación caducó): se vuelve a armar desde la lista.
+        return await _show_step(sender, "P6", conversation, rows=_product_rows())
+    conversation.datos["envio"] = saved
+    return await _show_summary(sender, conversation)
 
 
 # ── Kit armado: elegir las mezclas con una lista (P4B → P4C) ──────────────────
@@ -597,6 +619,11 @@ async def handle_choice(interactive: dict | None, sender: str, conversation: Con
         parts.append(await _show_step(sender, "P6", conversation, rows=_product_rows()))
     elif option["id"] == "carrito_listo":
         parts.append(await _finish_cart(sender, conversation))
+    elif option["id"] == "p7g_misma":
+        parts.append(await _use_saved_shipping(sender, conversation))
+    elif option["id"] == "p7g_otra":
+        conversation.datos.pop("envio_guardado", None)
+        parts.append(await _show_step(sender, "P7", conversation))
     elif destination == "P4C":
         parts.append(await _start_kit(sender, option, conversation))
     elif destination == "T1":
@@ -668,6 +695,10 @@ async def _confirm_order(sender: str, conversation: Conversation) -> str | None:
     update_order(order)
     logger.info("Pedido %s con link de pago %s", order.referencia, order.link_id)
     conversation.datos["pedido_id"] = order.id
+    archivo.remember_order(
+        sender, conversation.nombre, envio, order.referencia,
+        "; ".join(describe_item(item).lstrip("• ") for item in items),
+    )
     if "Pendiente de pago" not in conversation.etiquetas:
         conversation.etiquetas.append("Pendiente de pago")
     return await _show_step(sender, "P11L", conversation, body=_fill(get_step("P11L")["texto"], order))
@@ -729,6 +760,9 @@ async def _payment_approved(order: Pedido, data: dict) -> None:
     order.pagado_en = time.time()
     update_order(order)
     await send_text(order.remitente, _fill(get_step("P12")["texto"], order))
+    archivo.remember_payment(order.remitente, order.referencia)
+    # Chat completo + ficha: se guarda 1 año y se copia a Google Drive para que el equipo lo lea.
+    archivo.save_order_chat(order.id, order.referencia, order.remitente, order.nombre, order_ficha(order))
     await notify_team(
         f"[Saboryarte] 💰 Pedido pagado {order.referencia} — {order.nombre or order.remitente}: despachar",
         order_ficha(order),

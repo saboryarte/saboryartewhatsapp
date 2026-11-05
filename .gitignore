@@ -41,3 +41,6 @@ coverage.xml
 
 # macOS
 .DS_Store
+
+# Hojas exportadas para la dueña (se generan con app.hoja_precios)
+exportes/

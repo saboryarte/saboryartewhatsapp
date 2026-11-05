@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     # Archivo SQLite con el estado de las conversaciones y los ids de mensajes ya procesados.
     state_db_path: str = "data/conversaciones.db"
 
+    # Copias de seguridad (app/respaldo.py): remotos de rclone. Vacíos = la copia queda solo en el servidor.
+    # RESPALDO_REMOTO: remoto «crypt» sobre Google Drive (cifra la base). PEDIDOS_REMOTO: carpeta legible del equipo.
+    respaldo_remoto: str = ""
+    pedidos_remoto: str = ""
+
     # Traspaso a una persona: correo que recibe la ficha y servidor SMTP para enviarlo.
     handoff_email_to: str = ""
     smtp_host: str = ""

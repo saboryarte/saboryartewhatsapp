@@ -1,13 +1,14 @@
 import asyncio
 import json
 import logging
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, PlainTextResponse
 
-from . import precios
+from . import archivo, precios
 from .bold import valid_signature
 from .config import settings
 from .notify import notify_team
@@ -15,22 +16,46 @@ from .precios import current_prices
 from .router import check_unanswered_handoffs, handle_bold_event, handle_choice, handle_team_message, handle_text
 from .state import load_conversation, mark_processed, save_conversation
 from .usage import remitente_actual
-from .whatsapp import WhatsAppContact, WhatsAppMessage, WhatsAppPayload
+from .whatsapp import WhatsAppContact, WhatsAppMessage, WhatsAppPayload, flow_response, interactive_reply
 
 logging.basicConfig(level=settings.log_level)
 logger = logging.getLogger(__name__)
 
 # Cada cuánto se revisan los traspasos que nadie del equipo ha respondido.
 _ALERT_CHECK_SECONDS = 60
+# Cada cuánto se borra lo que ya cumplió su plazo de retención (archivo.py).
+_PURGE_SECONDS = 24 * 3600
+
+
+def _purge() -> None:
+    try:
+        archivo.purge()
+    except Exception:
+        logger.exception("Error aplicando la retención del archivo de chats")
 
 
 async def _alert_loop() -> None:
+    last_purge = 0.0
     while True:
         await asyncio.sleep(_ALERT_CHECK_SECONDS)
         try:
             await check_unanswered_handoffs()
         except Exception:
             logger.exception("Error revisando traspasos sin respuesta")
+        if time.time() - last_purge >= _PURGE_SECONDS:
+            _purge()
+            last_purge = time.time()
+
+
+def _incoming_text(message: WhatsAppMessage) -> str:
+    """Texto legible de lo que envió el cliente, para el archivo de chats."""
+    if message.type == "text":
+        return (message.text or {}).get("body", "")
+    response = flow_response(message.interactive)
+    if response is not None:
+        return f"[Formulario] {json.dumps(response, ensure_ascii=False)}"
+    reply = interactive_reply(message.interactive)
+    return f"[Tocó] {reply.get('title', reply['id'])}" if reply else "[Mensaje interactivo]"
 
 
 async def _check_prices() -> None:
@@ -134,6 +159,8 @@ async def _process_payload(payload: WhatsAppPayload) -> None:
                         continue
                 conversation = load_conversation(sender)
                 conversation.nombre = _profile_name(value.contacts, sender) or conversation.nombre
+                archivo.record(sender, archivo.CLIENTE, _incoming_text(message))
+                archivo.touch_client(sender)
                 # Las llamadas a Claude de este mensaje quedan registradas a nombre de este cliente.
                 token = remitente_actual.set(sender)
                 try:
@@ -166,6 +193,7 @@ async def _process_team_echoes(echoes: list[WhatsAppMessage]) -> None:
         logger.info("Mensaje del equipo desde la app (id: %s, tipo: %s)", echo.id, echo.type)
         conversation = load_conversation(echo.to)
         text = (echo.text or {}).get("body", "") if echo.type == "text" else ""
+        archivo.record(echo.to, archivo.EQUIPO, text or f"[{echo.type}]")
         await handle_team_message(text, echo.to, conversation)
         save_conversation(conversation)
 
