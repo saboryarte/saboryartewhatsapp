@@ -85,6 +85,21 @@ Copia la URL HTTPS que ngrok genera (ej. `https://xxxx.ngrok-free.app`) y úsala
 
 ---
 
+## Datos del negocio (precios, flujograma, FAQs)
+
+Toda la información de negocio que usa Claude para responder —precios,
+flujograma de atención, preguntas frecuentes y políticas— vive en
+[`data/negocio.md`](data/negocio.md) y se inyecta completa como contexto en
+cada respuesta (ver `app/claude.py`).
+
+Para actualizarla no hace falta tocar código ni correr nada local: basta con
+pedirle a Claude Code, en el chat, que edite ese archivo (ej. "subí el precio
+del sazonador X a $Y" o "agregá este paso al flujograma"). Los cambios se
+aplican la próxima vez que el servidor se reinicie/despliegue con la versión
+nueva del archivo.
+
+---
+
 ## Pruebas
 
 ```bash
@@ -110,9 +125,12 @@ whatsapp-claude-agent/
 │   ├── whatsapp.py    # Modelos Pydantic + envío de mensajes via Meta Graph API
 │   ├── claude.py      # Consulta a Claude via Anthropic SDK
 │   └── config.py      # Configuración via variables de entorno
+├── data/
+│   └── negocio.md     # Precios, flujograma de atención, FAQs y políticas
 ├── tests/
 │   ├── __init__.py
-│   └── test_webhook.py
+│   ├── test_webhook.py
+│   └── test_claude.py
 ├── .env.example       # Plantilla de variables de entorno
 ├── .gitignore
 ├── requirements.txt
