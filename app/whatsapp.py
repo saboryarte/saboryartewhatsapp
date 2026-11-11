@@ -47,6 +47,10 @@ class WhatsAppContact(BaseModel):
 
 
 class WhatsAppValue(BaseModel):
+    # Se guardan también los campos que no se nombran aquí: los avisos de coexistencia (account_update, history,
+    # smb_app_state_sync) se leen completos en app/conexion.py.
+    model_config = ConfigDict(extra="allow")
+
     messaging_product: str = ""
     metadata: dict[str, Any] = {}
     contacts: list[WhatsAppContact] | None = None

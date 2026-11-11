@@ -1,3 +1,7 @@
+import json
+import logging
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -40,10 +44,15 @@ class Settings(BaseSettings):
     # https://wa.me/<número del bot sin + ni espacios>.
     bold_return_url: str = ""
 
-    # Transferencias: dirección pública del bot (https, sin / al final) y llave para firmar los botones
-    # «Confirmar pago» / «No llegó» del correo del comprobante. Sin ellas el correo llega sin botones.
+    # Dirección pública del bot (https, sin / al final) y llave para firmar los enlaces del equipo: los botones
+    # «Confirmar pago» / «No llegó» del correo del comprobante y el enlace de conexión del número (app/conexion.py).
     public_base_url: str = ""
     transfer_link_secret: str = ""
+
+    # Conexión del número del negocio en coexistencia (app/conexion.py): ID de la app de Meta y ID de la
+    # configuración de «Embedded Signup» (Meta for Developers → Facebook Login for Business → Configuraciones).
+    meta_app_id: str = ""
+    meta_signup_config_id: str = ""
 
     # WhatsApp Flow del kit armado (casillas para elegir las mezclas). Sin ID se usa la lista de una en una.
     whatsapp_kit_flow_id: str = ""
@@ -54,3 +63,29 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def conexion_path() -> Path:
+    """Número del negocio conectado en coexistencia (lo escribe app/conexion.py; contiene la llave de acceso)."""
+    return Path(settings.state_db_path).parent / "whatsapp_conexion.json"
+
+
+def apply_connection() -> dict | None:
+    """Si el número del negocio ya se conectó, el bot usa ese número y su llave en vez de los del .env.
+
+    Para volver al número de prueba: borrar data/whatsapp_conexion.json y reiniciar el bot.
+    """
+    path = conexion_path()
+    if not path.exists():
+        return None
+    try:
+        datos = json.loads(path.read_text())
+        settings.whatsapp_token = datos["token"]
+        settings.whatsapp_phone_number_id = datos["phone_number_id"]
+    except (OSError, ValueError, KeyError):
+        logging.getLogger(__name__).error("No se pudo leer %s: el bot sigue con el número del .env", path)
+        return None
+    return datos
+
+
+apply_connection()

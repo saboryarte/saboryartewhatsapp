@@ -1,4 +1,6 @@
 import asyncio
+import hashlib
+import hmac
 import html
 import json
 import logging
@@ -9,8 +11,9 @@ from urllib.parse import parse_qs
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from pydantic import ValidationError
 
-from . import archivo, precios, transferencias
+from . import archivo, conexion, precios, transferencias
 from .bold import valid_signature
 from .config import settings
 from .notify import notify_team
@@ -57,6 +60,8 @@ async def _alert_loop() -> None:
 
 # Fotos y documentos: se aceptan como comprobante de una transferencia.
 _MEDIA_TYPES = ("image", "document")
+# Avisos de Meta sobre la conexión del número en coexistencia (app/conexion.py).
+_CONNECTION_FIELDS = ("account_update", "history", "smb_app_state_sync")
 
 
 def _incoming_text(message: WhatsAppMessage) -> str:
@@ -154,6 +159,9 @@ async def _process_payload(payload: WhatsAppPayload) -> None:
             if change.field == "smb_message_echoes":
                 await _process_team_echoes(value.message_echoes or [])
                 continue
+            if change.field in _CONNECTION_FIELDS:
+                await conexion.handle_event(change.field, value.model_dump())
+                continue
             if change.field != "messages":
                 continue
 
@@ -217,8 +225,25 @@ async def _process_team_echoes(echoes: list[WhatsAppMessage]) -> None:
         save_conversation(conversation)
 
 
+def _valid_meta_signature(body: bytes, header: str | None) -> bool:
+    """Meta firma cada aviso con la llave secreta de la app (X-Hub-Signature-256: sha256=<hex>)."""
+    if not settings.app_secret:
+        return True  # sin APP_SECRET (pruebas locales) no se puede verificar
+    expected = "sha256=" + hmac.new(settings.app_secret.encode(), body, hashlib.sha256).hexdigest()
+    return bool(header) and hmac.compare_digest(expected, header)
+
+
 @app.post("/webhook", status_code=status.HTTP_200_OK)
-async def receive_webhook(payload: WhatsAppPayload, background_tasks: BackgroundTasks) -> dict:
+async def receive_webhook(request: Request, background_tasks: BackgroundTasks) -> dict:
+    body = await request.body()
+    if not _valid_meta_signature(body, request.headers.get("x-hub-signature-256")):
+        # Sin esta verificación cualquiera podría hacerse pasar por un cliente o por el equipo (y silenciar al bot).
+        logger.warning("Aviso de WhatsApp con firma inválida rechazado")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Firma inválida")
+    try:
+        payload = WhatsAppPayload.model_validate_json(body)
+    except ValidationError as exc:
+        raise RequestValidationError(exc.errors()) from exc
     if payload.object != "whatsapp_business_account":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Objeto no reconocido")
     background_tasks.add_task(_process_payload, payload)
@@ -289,3 +314,35 @@ async def transfer_action(order_id: int, accion: str, request: Request) -> HTMLR
     logger.info("Transferencia del pedido %s: el equipo eligió «%s»", order.referencia, accion)
     result = await resolve_transfer(order, accion)
     return _page(f"Pedido {order.referencia}", f"<p>{html.escape(result)}</p>")
+
+
+# ── Conexión del número del negocio (coexistencia) ──
+
+@app.get("/conectar", response_class=HTMLResponse)
+async def signup_page(exp: int = 0, t: str = "") -> HTMLResponse:
+    if not conexion.valid_link(exp, t):
+        return _page("Enlace no válido", "<p>Este enlace no es válido o ya venció. Pide uno nuevo.</p>", 403)
+    return _page("Conectar el WhatsApp de Saboryarte", conexion.signup_page(exp, t))
+
+
+@app.post("/conectar")
+async def signup_finish(request: Request) -> JSONResponse:
+    try:
+        datos = json.loads(await request.body())
+        exp, t, code = int(datos.get("exp", 0)), str(datos.get("t", "")), str(datos.get("code", ""))
+    except (ValueError, TypeError, AttributeError):
+        return JSONResponse({"ok": False, "mensaje": "Solicitud inválida."}, status_code=400)
+    if not conexion.valid_link(exp, t):
+        return JSONResponse({"ok": False, "mensaje": "El enlace venció o no es válido. Pide uno nuevo."}, status_code=403)
+    if not code:
+        return JSONResponse({"ok": False, "mensaje": "Meta no entregó el código de conexión. Intenta de nuevo."}, status_code=400)
+    try:
+        mensaje = await conexion.connect(code, str(datos.get("waba_id") or ""), str(datos.get("phone_number_id") or ""))
+    except conexion.ConexionError as e:
+        logger.error("Conexión del número fallida: %s", e)
+        return JSONResponse({"ok": False, "mensaje": f"No se pudo conectar: {e}"}, status_code=502)
+    except Exception:
+        logger.exception("Error inesperado conectando el número")
+        return JSONResponse({"ok": False, "mensaje": "No se pudo conectar por un error del servidor. Intenta de nuevo."},
+                            status_code=500)
+    return JSONResponse({"ok": True, "mensaje": mensaje})

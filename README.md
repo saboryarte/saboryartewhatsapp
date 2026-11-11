@@ -59,7 +59,8 @@ cp .env.example .env
 | `WHATSAPP_TOKEN` | ✅ | Token de acceso de la Graph API para enviar mensajes |
 | `WHATSAPP_PHONE_NUMBER_ID` | ✅ | ID del número de teléfono en Meta Developers |
 | `ANTHROPIC_API_KEY` | ✅ | API Key de Anthropic para consultar a Claude |
-| `APP_SECRET` | ⬜ | App Secret para validar firmas de payload |
+| `APP_SECRET` | ✅ en producción | App Secret de Meta: el bot rechaza los avisos de WhatsApp sin su firma (`X-Hub-Signature-256`) |
+| `META_APP_ID`, `META_SIGNUP_CONFIG_ID` | ⬜ | Para conectar el número del negocio en coexistencia (`/conectar`). Ver [docs/despliegue/numero-del-negocio.md](docs/despliegue/numero-del-negocio.md) |
 | `STATE_DB_PATH` | ⬜ | Archivo SQLite del estado de conversaciones (por defecto `data/conversaciones.db`) |
 | `HANDOFF_EMAIL_TO` | ⬜ | Correo del equipo que recibe la ficha de traspaso y las alertas |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | ⬜ | Servidor SMTP para enviar esos correos (Gmail: `smtp.gmail.com`, 587, contraseña de aplicación) |
@@ -102,7 +103,9 @@ Copia la URL HTTPS que ngrok genera (ej. `https://xxxx.ngrok-free.app`) y úsala
    - **Callback URL:** `https://<tu-dominio>/webhook`
    - **Verify Token:** el valor de `VERIFY_TOKEN` en tu `.env`
 4. Haz clic en **Verify and Save**
-5. Suscríbete al campo **messages** (y, con coexistencia, también a **smb_message_echoes**, para que el bot sepa cuándo responde una persona desde la app)
+5. Suscríbete al campo **messages** y, con coexistencia, también a **smb_message_echoes** (para que el bot sepa cuándo responde una persona desde la app), **account_update** (avisa al equipo si el número se desconecta), **history** y **smb_app_state_sync**
+
+Para pasar del número de prueba al número de Saboryarte sin perder la app de WhatsApp Business, sigue [docs/despliegue/numero-del-negocio.md](docs/despliegue/numero-del-negocio.md).
 
 ---
 
@@ -189,6 +192,7 @@ whatsapp-claude-agent/
 │   ├── archivo.py     # Archivo de chats (60 días), memoria del cliente y chat de cada pedido pagado (1 año)
 │   ├── respaldo.py    # Copia de seguridad diaria a Google Drive con rclone
 │   ├── transferencias.py # Pago por transferencia: comprobantes y botones del equipo
+│   ├── conexion.py      # Conexión del número del negocio en coexistencia (/conectar) y avisos de desconexión
 │   ├── exporte.py     # Excel diario de pedidos (correo y Drive)
 │   ├── hoja_precios.py # Hoja de precios para la dueña: exportar e importar con validación
 │   ├── orders.py      # Cálculos del pedido: subtotal, tarifa de envío por ciudad y resumen (P8)
@@ -223,7 +227,8 @@ whatsapp-claude-agent/
 
 - Los secretos se leen **únicamente** de variables de entorno, nunca del código fuente.
 - `.env` está en `.gitignore`; solo `.env.example` (sin valores reales) se versiona.
-- Para producción se recomienda validar la firma HMAC-SHA256 del encabezado `X-Hub-Signature-256` usando `APP_SECRET`.
+- Cada aviso de WhatsApp se verifica con la firma HMAC-SHA256 del encabezado `X-Hub-Signature-256` y `APP_SECRET`; los que no coinciden se rechazan con 403. Sin `APP_SECRET` (solo en pruebas locales) no se verifica.
+- La llave de acceso del número del negocio queda en `data/whatsapp_conexion.json` con permisos 600; los enlaces de conexión y de transferencias van firmados con `TRANSFER_LINK_SECRET`.
 
 ---
 
