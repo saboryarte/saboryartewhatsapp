@@ -193,6 +193,7 @@ whatsapp-claude-agent/
 │   ├── respaldo.py    # Copia de seguridad diaria a Google Drive con rclone
 │   ├── transferencias.py # Pago por transferencia: comprobantes y botones del equipo
 │   ├── conexion.py      # Conexión del número del negocio en coexistencia (/conectar) y avisos de desconexión
+│   ├── privacidad.py    # Página pública /privacidad (contenido/politica_de_privacidad.md)
 │   ├── exporte.py     # Excel diario de pedidos (correo y Drive)
 │   ├── hoja_precios.py # Hoja de precios para la dueña: exportar e importar con validación
 │   ├── orders.py      # Cálculos del pedido: subtotal, tarifa de envío por ciudad y resumen (P8)
@@ -234,8 +235,6 @@ whatsapp-claude-agent/
 
 ## Despliegue en producción
 
-Cualquier plataforma que soporte contenedores o Python funciona. Ejemplo con Railway, Render o Fly.io:
-
-1. Define las variables de entorno en el panel de la plataforma (nunca en el código).
-2. El comando de inicio es: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-3. Asegúrate de usar HTTPS (requerido por Meta).
+Especia corre en el VPS de Hostinger en `https://especia.mariomora.tech`: servicio systemd, nginx con https y tareas
+programadas, todo instalado con `deploy/instalar.sh`. Instalación, actualización y comandos útiles:
+[docs/despliegue/servidor.md](docs/despliegue/servidor.md).

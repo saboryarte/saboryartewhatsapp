@@ -1,0 +1,25 @@
+# Especia en el VPS (docs/despliegue/servidor.md). Se instala con deploy/instalar.sh en /etc/systemd/system/.
+[Unit]
+Description=Especia, bot de WhatsApp de Saboryarte
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=especia
+Group=especia
+WorkingDirectory=/opt/especia
+# Un solo proceso: el estado vive en SQLite y las alertas de traspaso corren dentro del bot.
+ExecStart=/opt/especia/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8010 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=always
+RestartSec=5
+
+# El bot solo escribe en data/ (base, pedidos, comprobantes, respaldos).
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/especia/data
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

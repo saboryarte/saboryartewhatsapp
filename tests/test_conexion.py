@@ -31,6 +31,8 @@ def entorno(monkeypatch, tmp_path):
     # connect() cambia el número y la llave del bot: monkeypatch los restaura al terminar.
     monkeypatch.setattr(settings, "whatsapp_token", "llave-de-prueba")
     monkeypatch.setattr(settings, "whatsapp_phone_number_id", "numero-de-prueba")
+    # Llave permanente del .env: vacía salvo en las pruebas que la usan.
+    monkeypatch.setattr("app.config.env_whatsapp_token", "")
     notify = AsyncMock(return_value=True)
     monkeypatch.setattr("app.conexion.notify_team", notify)
     return notify
@@ -42,8 +44,12 @@ def _enlace():
     return int(query["exp"]), query["t"]
 
 
-def _meta_falso(monkeypatch, numeros=None):
-    """Simula las respuestas de Meta y guarda las llamadas."""
+VENCE = 1_900_000_000
+
+
+def _meta_falso(monkeypatch, numeros=None, permanente_con_acceso=False):
+    """Simula las respuestas de Meta y guarda las llamadas. La llave «llave-permanente» solo tiene acceso a la
+    cuenta si permanente_con_acceso."""
     numeros = numeros if numeros is not None else [
         {"id": "PN1", "display_phone_number": "+57 300 000 0000", "verified_name": "Saboryarte", "is_on_biz_app": True,
          "platform_type": "CLOUD_API"}]
@@ -54,8 +60,11 @@ def _meta_falso(monkeypatch, numeros=None):
         if path == "oauth/access_token":
             return {"access_token": "llave-del-negocio", "token_type": "bearer"}
         if path == "debug_token":
-            return {"data": {"granular_scopes": [{"scope": "whatsapp_business_management", "target_ids": ["WABA9"]}]}}
+            return {"data": {"granular_scopes": [{"scope": "whatsapp_business_management", "target_ids": ["WABA9"]}],
+                             "expires_at": VENCE}}
         if path.endswith("/phone_numbers"):
+            if token == "llave-permanente" and not permanente_con_acceso:
+                raise conexion.ConexionError("sin acceso a la cuenta")
             return {"data": numeros}
         if path.endswith("/subscribed_apps"):
             return {"success": True}
@@ -195,10 +204,74 @@ class TestConectar:
         r = client.post("/conectar", json={"code": "c", "exp": exp, "t": t})
         assert r.status_code == 502 and "código vencido" in r.json()["mensaje"]
 
+    def test_con_acceso_usa_la_llave_permanente(self, entorno, monkeypatch):
+        import asyncio
+        monkeypatch.setattr("app.config.env_whatsapp_token", "llave-permanente")
+        _meta_falso(monkeypatch, permanente_con_acceso=True)
+        asyncio.run(conexion.connect("codigo-5", "WABA1"))
+        datos = json.loads(conexion_path().read_text())
+        assert datos["token"] == "llave-permanente" and datos["llave"] == "permanente" and datos["token_vence"] is None
+        assert settings.whatsapp_token == "llave-permanente"
+        assert "vence" not in entorno.call_args.args[1]
+
+    def test_sin_acceso_usa_la_de_60_dias_y_explica_como_evitarlo(self, entorno, monkeypatch):
+        import asyncio
+        monkeypatch.setattr("app.config.env_whatsapp_token", "llave-permanente")
+        _meta_falso(monkeypatch)
+        asyncio.run(conexion.connect("codigo-6", "WABA1"))
+        datos = json.loads(conexion_path().read_text())
+        assert datos["token"] == "llave-del-negocio" and datos["llave"] == "conexion" and datos["token_vence"] == VENCE
+        cuerpo = entorno.call_args.args[1]
+        assert "vence el 2030-03-17" in cuerpo and "Usuarios del sistema" in cuerpo and "app.conexion llave" in cuerpo
+
+    def test_pasar_a_la_llave_permanente_cuando_ya_tiene_acceso(self, entorno, monkeypatch):
+        import asyncio
+        monkeypatch.setattr("app.config.env_whatsapp_token", "llave-permanente")
+        _meta_falso(monkeypatch)
+        asyncio.run(conexion.connect("codigo-7", "WABA1"))
+        with pytest.raises(conexion.ConexionError, match="todavía no tiene acceso"):
+            asyncio.run(conexion.use_permanent_token())
+        _meta_falso(monkeypatch, permanente_con_acceso=True)
+        assert "Listo" in asyncio.run(conexion.use_permanent_token())
+        datos = json.loads(conexion_path().read_text())
+        assert datos["llave"] == "permanente" and datos["token_vence"] is None
+        assert settings.whatsapp_token == "llave-permanente"
+
     def test_al_reiniciar_el_bot_usa_el_numero_conectado(self, entorno, monkeypatch):
         conexion._save({"token": "llave-guardada", "phone_number_id": "PN7", "waba_id": "W"})
         assert apply_connection()["waba_id"] == "W"
         assert settings.whatsapp_token == "llave-guardada" and settings.whatsapp_phone_number_id == "PN7"
+
+
+class TestVencimientoDeLaLlave:
+    def _conectado(self, vence):
+        conexion._save({"token": "t", "phone_number_id": "PN1", "waba_id": "W", "numero": "+57 300",
+                        "nombre": "Saboryarte", "llave": "conexion", "token_vence": vence})
+
+    def test_avisa_cuando_faltan_pocos_dias(self, entorno):
+        import asyncio
+        self._conectado(time.time() + 5 * 86400 + 60)
+        assert asyncio.run(conexion.check_token_expiry())
+        asunto, cuerpo = entorno.call_args.args
+        assert "vence" in asunto and "vence en 5 día(s)" in cuerpo and "Usuarios del sistema" in cuerpo
+
+    def test_no_avisa_si_falta_mucho(self, entorno):
+        import asyncio
+        self._conectado(time.time() + 30 * 86400)
+        assert not asyncio.run(conexion.check_token_expiry())
+        entorno.assert_not_called()
+
+    def test_si_ya_vencio_lo_dice(self, entorno):
+        import asyncio
+        self._conectado(time.time() - 86400)
+        asyncio.run(conexion.check_token_expiry())
+        assert "Especia ya no puede responder" in entorno.call_args.args[1]
+
+    def test_con_llave_permanente_o_sin_conexion_no_avisa(self, entorno):
+        import asyncio
+        assert not asyncio.run(conexion.check_token_expiry())
+        self._conectado(None)
+        assert not asyncio.run(conexion.check_token_expiry())
 
 
 # ── Avisos de Meta sobre la conexión ─────────────────────────────────────────

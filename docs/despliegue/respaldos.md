@@ -74,21 +74,9 @@ Comparte la carpeta `Saboryarte/Pedidos` de Drive **solo** con las personas del 
 
 ### 5. Programar la copia diaria
 
-```bash
-crontab -e
-```
-
-Agrega esta línea (ajusta la ruta a donde quedó el proyecto):
-
-```
-0 3 * * * cd /opt/especia && .venv/bin/python -m app.respaldo diario >> data/respaldo.log 2>&1
-```
-
-Y esta otra para el exporte diario de pedidos (Excel por correo y en Drive):
-
-```
-0 19 * * * cd /opt/chatsabor && .venv/bin/python -m app.exporte diario >> data/exporte.log 2>&1
-```
+Las tareas programadas las instala `deploy/instalar.sh servicio` en el crontab del usuario `especia`
+([`deploy/crontab`](../../deploy/crontab)): la copia a las 3:00 a. m. y el Excel de pedidos a las 7:00 p. m., con
+sus registros en `data/logs/`. Para verlas: `sudo crontab -u especia -l`.
 
 > La hora del cron es la del servidor. Si el VPS no está en hora de Colombia, cámbiala con
 > `sudo timedatectl set-timezone America/Bogota`. Las fechas del Excel siempre se calculan en hora de Colombia.
@@ -96,7 +84,7 @@ Y esta otra para el exporte diario de pedidos (Excel por correo y en Drive):
 ### 6. Probar
 
 ```bash
-.venv/bin/python -m app.respaldo diario
+cd /opt/especia && sudo -u especia .venv/bin/python -m app.respaldo diario
 rclone ls drive-cifrado:          # debe aparecer la copia de hoy
 rclone ls drive:Saboryarte/Pedidos
 ```

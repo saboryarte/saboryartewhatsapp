@@ -3,8 +3,14 @@ WhatsApp Business en el celular y Especia responde por la API en el mismo númer
 
 Uso (en el servidor):
     .venv/bin/python -m app.conexion enlace        crea el enlace (válido 48 h) de la página de conexión
-    .venv/bin/python -m app.conexion estado        qué número usa el bot y si sigue en coexistencia
+    .venv/bin/python -m app.conexion estado        qué número usa el bot, si sigue en coexistencia y si la llave vence
+    .venv/bin/python -m app.conexion llave         pasa a la llave permanente del .env (después de darle acceso)
     .venv/bin/python -m app.conexion sincronizar   vuelve a pedir contactos e historial (solo en las primeras 24 h)
+
+La llave que entrega Meta al conectar vence a los 60 días (configuración «WhatsApp Embedded Signup Configuration
+With 60 Expiration Token»). Por eso, si el usuario del sistema del .env (WHATSAPP_TOKEN, no vence) tiene acceso a la
+cuenta de WhatsApp conectada, el bot usa esa llave. Si no, usa la de 60 días y avisa al equipo cómo darle acceso;
+cuando falten AVISO_DIAS días para el vencimiento, lo recuerda por correo cada día.
 
 Cómo funciona (guía completa en docs/despliegue/numero-del-negocio.md):
 1. La dueña abre el enlace, toca «Conectar», inicia sesión en Facebook y escanea con la app de WhatsApp Business el
@@ -25,11 +31,14 @@ import json
 import logging
 import os
 import time
+from datetime import datetime
 from typing import Any
 
 import httpx
 
+from . import config
 from .config import conexion_path, settings
+from .handoff import COLOMBIA
 from .notify import notify_team
 
 logger = logging.getLogger(__name__)
@@ -38,6 +47,8 @@ GRAPH_VERSION = "v24.0"
 _GRAPH = f"https://graph.facebook.com/{GRAPH_VERSION}"
 FEATURE_TYPE = "whatsapp_business_app_onboarding"
 LINK_HOURS = 48
+# Días antes del vencimiento de la llave de 60 días en que el bot empieza a avisar al equipo.
+AVISO_DIAS = 10
 
 # Motivos de desconexión que Meta envía en account_update (PARTNER_REMOVED), en palabras del equipo.
 MOTIVOS_DESCONEXION = {
@@ -185,6 +196,40 @@ async def sync_app_data(phone_number_id: str, token: str) -> dict[str, str]:
     return resultado
 
 
+async def _permanent_token_for(waba_id: str) -> str | None:
+    """La llave del .env (usuario del sistema, no vence), si ya tiene acceso a la cuenta de WhatsApp conectada."""
+    token = config.env_whatsapp_token
+    if not token:
+        return None
+    try:
+        await _graph("GET", f"{waba_id}/phone_numbers", token, params={"fields": "id"})
+    except (ConexionError, httpx.HTTPError):
+        return None
+    return token
+
+
+async def _token_expiry(token: str) -> float | None:
+    """Cuándo vence la llave (timestamp). None si no vence o si Meta no lo dice."""
+    try:
+        data = await _graph("GET", "debug_token", params={
+            "input_token": token, "access_token": f"{settings.meta_app_id}|{settings.app_secret}"})
+    except (ConexionError, httpx.HTTPError) as e:
+        logger.warning("No se pudo consultar el vencimiento de la llave: %s", e)
+        return None
+    expira = data.get("data", {}).get("expires_at")
+    return float(expira) if expira else None
+
+
+def _fecha(ts: float) -> str:
+    return datetime.fromtimestamp(ts, tz=COLOMBIA).strftime("%Y-%m-%d")
+
+
+def _instrucciones_llave(datos: dict[str, Any]) -> str:
+    return (f"Para que no venza: en business.facebook.com → Configuración → Usuarios del sistema, elige el usuario del "
+            f"bot → Asignar activos → Cuentas de WhatsApp → «{datos.get('nombre') or datos.get('numero')}» → control "
+            f"total. Después, en el servidor: .venv/bin/python -m app.conexion llave")
+
+
 def _save(datos: dict[str, Any]) -> None:
     path = conexion_path()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -203,19 +248,27 @@ async def connect(code: str, waba_id: str = "", phone_number_id: str = "") -> st
     waba_id = waba_id or await _waba_from_token(token)
     numero = await _pick_number(waba_id, token, phone_number_id)
     await _graph("POST", f"{waba_id}/subscribed_apps", token)
+    # El bot usa la llave permanente del .env si ya tiene acceso a la cuenta; si no, la de la conexión (60 días).
+    permanente = await _permanent_token_for(waba_id)
     datos = {
         "waba_id": waba_id, "phone_number_id": numero["id"],
         "numero": numero.get("display_phone_number", ""), "nombre": numero.get("verified_name", ""),
-        "en_app": bool(numero.get("is_on_biz_app")), "conectado_en": time.time(), "token": token,
+        "en_app": bool(numero.get("is_on_biz_app")), "conectado_en": time.time(),
+        "token": permanente or token, "llave": "permanente" if permanente else "conexion",
+        "token_vence": None if permanente else await _token_expiry(token),
     }
     _save(datos)
     # Desde ya el bot responde en el número del negocio (al reiniciar lo toma de data/whatsapp_conexion.json).
-    settings.whatsapp_token, settings.whatsapp_phone_number_id = token, numero["id"]
+    settings.whatsapp_token, settings.whatsapp_phone_number_id = datos["token"], numero["id"]
     datos["sincronizacion"] = await sync_app_data(numero["id"], token)
     _save(datos)
     logger.info("Número %s conectado (WABA %s, coexistencia: %s)", datos["numero"], waba_id, datos["en_app"])
     aviso = ("" if datos["en_app"] else "\n\nOjo: Meta no reporta este número como activo en la app de WhatsApp "
              "Business (coexistencia). El equipo no podrá atender desde la app: revisa la guía de conexión.")
+    if not permanente:
+        vence = f"el {_fecha(datos['token_vence'])}" if datos["token_vence"] else "en unos 60 días"
+        aviso += (f"\n\nImportante: la llave de esta conexión vence {vence}; ese día Especia dejaría de responder. "
+                  + _instrucciones_llave(datos))
     await notify_team(
         f"[Saboryarte] ✅ WhatsApp {datos['numero']} conectado a Especia",
         f"El número {datos['numero']} ({datos['nombre']}) quedó conectado. Desde ahora Especia responde a los "
@@ -224,6 +277,43 @@ async def connect(code: str, waba_id: str = "", phone_number_id: str = "") -> st
     )
     return (f"¡Listo! El WhatsApp {datos['numero']} quedó conectado con Especia. Desde ahora Especia responde a "
             "los clientes y tú sigues viendo y atendiendo todo desde la app.")
+
+
+def _load() -> dict[str, Any] | None:
+    path = conexion_path()
+    return json.loads(path.read_text()) if path.exists() else None
+
+
+async def use_permanent_token() -> str:
+    """Pasa el número conectado a la llave permanente del .env, si ya tiene acceso a la cuenta."""
+    datos = _load()
+    if datos is None:
+        raise ConexionError("No hay un número del negocio conectado.")
+    if datos.get("llave") == "permanente":
+        return "El bot ya usa la llave permanente."
+    token = await _permanent_token_for(datos["waba_id"])
+    if token is None:
+        raise ConexionError("La llave del .env todavía no tiene acceso a la cuenta de WhatsApp. " + _instrucciones_llave(datos))
+    datos.update(token=token, llave="permanente", token_vence=None)
+    _save(datos)
+    settings.whatsapp_token = token
+    return "Listo: el bot usa la llave permanente; ya no hay vencimiento."
+
+
+async def check_token_expiry(now: float | None = None) -> bool:
+    """Se llama una vez al día. Avisa al equipo si la llave de 60 días vence en AVISO_DIAS días o menos."""
+    datos = _load()
+    if not datos or not datos.get("token_vence"):
+        return False
+    dias = (datos["token_vence"] - (now or time.time())) / 86400
+    if dias > AVISO_DIAS:
+        return False
+    estado = (f"vence en {max(int(dias), 0)} día(s), el {_fecha(datos['token_vence'])}" if dias > 0
+              else f"venció el {_fecha(datos['token_vence'])}: Especia ya no puede responder")
+    await notify_team("[Saboryarte] ⏳ La llave de WhatsApp de Especia vence pronto",
+                      f"La llave con la que Especia responde en {datos.get('numero')} {estado}.\n\n"
+                      + _instrucciones_llave(datos))
+    return True
 
 
 # ── Avisos de Meta sobre la conexión (webhook) ───────────────────────────────
@@ -269,7 +359,10 @@ async def _status() -> None:
         return
     datos = json.loads(path.read_text())
     print(f"Número conectado: {datos.get('numero')} ({datos.get('nombre')}), WABA {datos.get('waba_id')}")
-    print(f"Llave: {_mask(datos.get('token', ''))}")
+    vence = datos.get("token_vence")
+    print(f"Llave: {_mask(datos.get('token', ''))} · "
+          + ("permanente (no vence)" if datos.get("llave") == "permanente"
+             else f"de la conexión, vence el {_fecha(vence)}" if vence else "de la conexión (vencimiento desconocido)"))
     print(f"Sincronización: {datos.get('sincronizacion', 'sin pedir')}")
     try:
         numero = await _graph("GET", datos["phone_number_id"], datos["token"], params={
@@ -295,7 +388,7 @@ async def _resync() -> None:
 def main() -> None:
     logging.basicConfig(level=settings.log_level)
     parser = argparse.ArgumentParser(description="Conexión del número de WhatsApp de Saboryarte (coexistencia)")
-    parser.add_argument("accion", choices=["enlace", "estado", "sincronizar"])
+    parser.add_argument("accion", choices=["enlace", "estado", "llave", "sincronizar"])
     args = parser.parse_args()
     try:
         if args.accion == "enlace":
@@ -303,6 +396,8 @@ def main() -> None:
             print(f"Válido por {LINK_HOURS} horas. Ábrelo en un computador con el celular de la app a la mano.")
         elif args.accion == "estado":
             asyncio.run(_status())
+        elif args.accion == "llave":
+            print(asyncio.run(use_permanent_token()))
         else:
             asyncio.run(_resync())
     except ConexionError as e:

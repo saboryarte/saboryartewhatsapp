@@ -30,18 +30,23 @@ bot. Meta llama a esto **coexistencia**.
 
 1. **Verificar el negocio** en Meta Business Manager → Centro de seguridad → Verificación del negocio. Pide nombre,
    dirección, teléfono, correo, sitio web y documentos (RUT, certificado de Cámara de Comercio). Sin esto no hay
-   revisión de la app.
+   revisión de la app. ✅ Hecho (noviembre de 2026).
 2. **Política de privacidad publicada** con una dirección web (Ley 1581) y cargada en la app: Configuración de la
    app → Básica → URL de la política de privacidad. También el ícono y la categoría de la app.
-3. **Registrar la app como «Tech Provider»**: Casos de uso → WhatsApp → Personalizar → «Tech Provider onboarding».
-   Meta exige ser Tech Provider (o Solution Partner) para la conexión en coexistencia.
-4. **Revisión de la app (App Review)** pidiendo *acceso avanzado* a `whatsapp_business_messaging` y
+3. **Tech Provider: solo si el ensayo lo exige.** La app de Especia es solo para Saboryarte, y registrarla como
+   Tech Provider («Yes, I'm a Tech Provider») es irreversible y obliga a una revisión pensada para quien atiende a
+   otros negocios. Primero se hace el ensayo de la sección «Ensayo con otro número». Si Meta rechaza la coexistencia
+   sin ese registro, se pregunta a Meta por soporte directo (business.facebook.com/direct-support) antes de
+   registrarla, o se usa un proveedor oficial.
+4. **Revisión de la app (App Review)**, si Meta la pide, con *acceso avanzado* a `whatsapp_business_messaging` y
    `whatsapp_business_management`. Meta pide dos videos:
    - Un mensaje enviado desde la app y recibido en WhatsApp (sirve grabar a Especia respondiendo en el número de
      prueba).
    - La creación de una plantilla de mensaje (sirve grabarla en WhatsApp Manager).
-5. **Configuración de «Embedded Signup»**: Facebook Login for Business → Configuraciones → crear una con la
-   plantilla de WhatsApp Embedded Signup. Su ID va en `META_SIGNUP_CONFIG_ID`.
+5. **Configuración de «Embedded Signup»**: Facebook Login for Business → Configurations → Create from template →
+   **«WhatsApp Embedded Signup Configuration With 60 Expiration Token»** (no la de «Measurement Partner», que es de
+   solo lectura). Aparece sin ser Tech Provider. Su Configuration ID va en `META_SIGNUP_CONFIG_ID`.
+   - La llave que entrega esta configuración vence a los 60 días. Ver «La llave de 60 días» en la sección 3.
 6. En Facebook Login for Business → Configuración: activar «Login with the JavaScript SDK» y agregar el dominio
    del bot (el de `PUBLIC_BASE_URL`) en los dominios permitidos.
 7. **Webhook** (WhatsApp → Configuration): la dirección `https://<dominio del bot>/webhook` y suscribir los campos
@@ -96,6 +101,20 @@ nunca va al repositorio) y desde ese momento lo usa en lugar de `WHATSAPP_PHONE_
 
 ## 3. Después
 
+- **La llave de 60 días.** Si el usuario del sistema del `.env` (`WHATSAPP_TOKEN`, que no vence) ya tiene acceso a
+  la cuenta de WhatsApp conectada, el bot la usa y no hay vencimiento. Si no, usa la llave de la conexión, que vence
+  a los 60 días, y el correo de conexión lo advierte. Para pasar a la permanente:
+  1. business.facebook.com → Configuración → Usuarios del sistema → el usuario del bot → **Asignar activos** →
+     Cuentas de WhatsApp → la cuenta de Saboryarte → control total.
+  2. En el servidor:
+
+     ```bash
+     .venv/bin/python -m app.conexion llave
+     ```
+
+  Mientras siga con la de 60 días, el bot envía un correo «⏳ La llave de WhatsApp de Especia vence pronto» cada
+  día durante los últimos 10 días.
+
 - **Contactos e historial**: el bot los pide a Meta al conectar. Meta solo los envía una vez y solo si se piden en
   las primeras 24 horas; si `estado` muestra que falló, repetirlo a tiempo:
 
@@ -111,11 +130,28 @@ nunca va al repositorio) y desde ese momento lo usa en lugar de `WHATSAPP_PHONE_
 - El límite inicial es de 250 clientes nuevos por día; sube con la verificación del negocio y la buena calidad de
   los mensajes. Con coexistencia el número envía hasta 20 mensajes por segundo.
 
+## Ensayo con otro número (antes de tocar el de Saboryarte)
+
+La documentación de Meta exige ser Tech Provider para la coexistencia, pero la configuración de Embedded Signup sí
+aparece sin serlo. El ensayo dice si Meta acepta conectar un número de la app de WhatsApp Business a nuestra app:
+
+1. Un celular con **otro número** (una SIM prepago sirve) y la app WhatsApp Business, con algunos chats.
+2. En el computador, con el bot y ngrok corriendo: en el `.env` local, `PUBLIC_BASE_URL` con la dirección de ngrok,
+   `TRANSFER_LINK_SECRET`, `META_APP_ID` y `META_SIGNUP_CONFIG_ID`. Agregar el dominio de ngrok en Facebook Login
+   for Business → Settings → dominios permitidos del SDK de JavaScript.
+3. `python -m app.conexion enlace`, abrir el enlace y conectar el número de ensayo.
+4. Resultado:
+   - **Conecta y `estado` dice `en la app (coexistencia) = True`:** el camino funciona sin Tech Provider.
+   - **Meta lo rechaza** (la página muestra el error): queda confirmado que hace falta ser Tech Provider o usar un
+     proveedor oficial.
+5. Desconectar el número de ensayo (en su app: Ajustes → Cuenta → Plataforma para empresas → Desconectar) y borrar
+   `data/whatsapp_conexion.json` para que el bot vuelva al número de prueba.
+
 ## Pendiente de confirmar con Meta
 
-- La documentación exige ser Tech Provider para la coexistencia, pero no dice si un negocio puede conectar **su
-  propio número a su propia app** de esta forma (está pensada para conectar números de clientes). Si Meta lo
-  bloquea, la alternativa es hacerlo a través de un proveedor oficial que ya ofrezca coexistencia.
+- Si un negocio puede conectar **su propio número a su propia app** en coexistencia sin registrarse como Tech
+  Provider (lo dice el ensayo). Si Meta lo bloquea, la alternativa es un proveedor oficial que ya ofrezca
+  coexistencia.
 - Meta no menciona restricciones por país, ni a favor ni en contra de Colombia.
 - Meta anunció la versión 5 de Embedded Signup (20 de octubre de 2026). La página de conexión usa el formato de la
   versión 4 y acepta las dos respuestas; si Meta cambia algo, el error aparece en la misma página.

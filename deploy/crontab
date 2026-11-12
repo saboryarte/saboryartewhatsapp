@@ -1,0 +1,5 @@
+# Tareas programadas del usuario «especia» (las instala deploy/instalar.sh servicio). El VPS está en hora de Colombia.
+# Copia de seguridad diaria (docs/despliegue/respaldos.md).
+0 3 * * * cd /opt/especia && .venv/bin/python -m app.respaldo diario >> data/logs/respaldo.log 2>&1
+# Excel de pedidos del día por correo y a Drive.
+0 19 * * * cd /opt/especia && .venv/bin/python -m app.exporte diario >> data/logs/exporte.log 2>&1

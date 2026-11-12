@@ -13,7 +13,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from pydantic import ValidationError
 
-from . import archivo, conexion, precios, transferencias
+from . import archivo, conexion, precios, privacidad, transferencias
 from .bold import valid_signature
 from .config import settings
 from .notify import notify_team
@@ -55,6 +55,10 @@ async def _alert_loop() -> None:
             logger.exception("Error revisando traspasos sin respuesta")
         if time.time() - last_purge >= _PURGE_SECONDS:
             _purge()
+            try:
+                await conexion.check_token_expiry()
+            except Exception:
+                logger.exception("Error revisando el vencimiento de la llave de WhatsApp")
             last_purge = time.time()
 
 
@@ -346,3 +350,9 @@ async def signup_finish(request: Request) -> JSONResponse:
         return JSONResponse({"ok": False, "mensaje": "No se pudo conectar por un error del servidor. Intenta de nuevo."},
                             status_code=500)
     return JSONResponse({"ok": True, "mensaje": mensaje})
+
+
+@app.get("/privacidad", response_class=HTMLResponse)
+async def privacy_policy() -> HTMLResponse:
+    """Política de tratamiento de datos (contenido/politica_de_privacidad.md). La dirección va en la app de Meta."""
+    return HTMLResponse(privacidad.page())

@@ -64,6 +64,10 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
+# Llave del .env (usuario del sistema, no vence). Se guarda antes de aplicar la conexión: app/conexion.py la usa
+# para el número del negocio si ese usuario del sistema tiene acceso a la nueva cuenta de WhatsApp.
+env_whatsapp_token = settings.whatsapp_token
+
 
 def conexion_path() -> Path:
     """Número del negocio conectado en coexistencia (lo escribe app/conexion.py; contiene la llave de acceso)."""
