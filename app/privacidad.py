@@ -1,12 +1,21 @@
-"""Página pública /privacidad.html: la política de tratamiento de datos de contenido/politica_de_privacidad.md.
+"""Política de tratamiento de datos (contenido/politica_de_privacidad.md) y aviso de privacidad por WhatsApp.
 
-El archivo se edita en el repositorio, como los precios. Aquí se convierte a HTML con lo poco de Markdown que usa:
-títulos, párrafos, listas, tablas, citas, separadores, **negrita** y *cursiva*. Los comentarios <!-- --> no se muestran.
+- Página pública /privacidad.html. El archivo se edita en el repositorio, como los precios. Aquí se convierte a
+  HTML con lo poco de Markdown que usa: títulos, párrafos, listas, tablas, citas, separadores, **negrita** y
+  *cursiva*. Los comentarios <!-- --> no se muestran.
+- Aviso de privacidad: el texto corto del final de la política. Especia lo envía antes de su primera respuesta a
+  cada cliente (sección 11 de la política: la autorización se da al seguir escribiendo después de verlo).
 """
 import html
+import logging
 import re
 from functools import cache
 from pathlib import Path
+
+from . import archivo
+from .whatsapp import send_text
+
+logger = logging.getLogger(__name__)
 
 POLITICA = Path(__file__).resolve().parent.parent / "contenido" / "politica_de_privacidad.md"
 
@@ -85,3 +94,30 @@ def page() -> str:
         "hr{border:0;border-top:1px solid var(--line);margin:2rem 0}"
         f"</style></head><body><main>{cuerpo}</main></body></html>"
     )
+
+
+@cache
+def notice_text() -> str:
+    """El aviso de la política («## Aviso de privacidad…», en cita) con el formato de WhatsApp: sin cursivas,
+    *negrita* con un asterisco y el enlace sin marcas, para que WhatsApp lo muestre como enlace."""
+    texto = POLITICA.read_text(encoding="utf-8").split("## Aviso de privacidad", 1)[1]
+    cita = " ".join(l.lstrip(">").strip() for l in texto.splitlines() if l.startswith(">"))
+    cita = re.sub(r"\*\*(https?://[^*]+)\*\*", r"\1", cita)
+    cita = re.sub(r"\*\*([^*]+)\*\*", "\x00\\1\x00", cita)
+    cita = re.sub(r"\*([^*]+)\*", r"\1", cita)
+    return re.sub(r"\s+", " ", cita.replace("\x00", "*")).strip()
+
+
+async def send_notice(remitente: str) -> bool:
+    """Envía el aviso si este cliente no lo ha visto (o lleva más de 60 días sin escribir). True si lo envió."""
+    if not archivo.privacy_notice_pending(remitente):
+        return False
+    try:
+        enviado = await send_text(remitente, notice_text())
+    except Exception:
+        logger.exception("No se pudo enviar el aviso de privacidad; se intenta en el próximo mensaje")
+        return False
+    if enviado:
+        archivo.mark_privacy_notice(remitente)
+        logger.info("Aviso de privacidad enviado")
+    return enviado

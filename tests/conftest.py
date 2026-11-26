@@ -1,5 +1,6 @@
 import pytest
 
+from app import privacidad
 from app.config import settings
 
 
@@ -17,3 +18,14 @@ def sin_enlaces_del_equipo(monkeypatch):
     monkeypatch.setattr(settings, "transfer_link_secret", "")
     monkeypatch.setattr(settings, "meta_app_id", "")
     monkeypatch.setattr(settings, "meta_signup_config_id", "")
+
+
+async def _sin_aviso(remitente: str) -> bool:
+    return False
+
+
+@pytest.fixture(autouse=True)
+def sin_aviso_de_privacidad(monkeypatch):
+    """El aviso de privacidad sale una vez por cliente; las pruebas que cuentan mensajes no lo esperan.
+    tests/test_privacidad.py lo vuelve a activar."""
+    monkeypatch.setattr(privacidad, "send_notice", _sin_aviso)

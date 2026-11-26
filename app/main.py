@@ -189,6 +189,7 @@ async def _process_payload(payload: WhatsAppPayload) -> None:
                 conversation.nombre = _profile_name(value.contacts, sender) or conversation.nombre
                 archivo.record(sender, archivo.CLIENTE, _incoming_text(message))
                 archivo.touch_client(sender)
+                await privacidad.send_notice(sender)
                 # Las llamadas a Claude de este mensaje quedan registradas a nombre de este cliente.
                 token = remitente_actual.set(sender)
                 try:

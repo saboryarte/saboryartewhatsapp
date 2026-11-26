@@ -9,6 +9,9 @@ más tiempo está aquí, con retención fija (Ley 1581 de 2012: guardar solo lo 
 - chats_pedidos:  chat completo + ficha de cada pedido pagado ............. 1 año
                   También se escribe como texto en data/pedidos/ para copiarlo a Google Drive (app/respaldo.py).
 - data/pedidos/Comprobantes y data/pedidos/Exportes (transferencias y Excel diario) ... 1 año
+- avisos_privacidad: a quién ya se le mostró el aviso de privacidad (app/privacidad.py)
+                  ........ 60 días sin escribir; si vuelve después, se le muestra otra vez.
+                  La prueba del aviso es el mensaje mismo, guardado en «chat» y en el chat del pedido.
 
 Contiene datos personales de clientes: data/ no va al repo.
 """
@@ -52,6 +55,10 @@ def _connect() -> sqlite3.Connection:
     conn.execute(
         "CREATE TABLE IF NOT EXISTS chats_pedidos (pedido_id INTEGER PRIMARY KEY, referencia TEXT NOT NULL, "
         "remitente TEXT NOT NULL, texto TEXT NOT NULL, archivo TEXT, creado_en REAL NOT NULL)"
+    )
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS avisos_privacidad (remitente TEXT PRIMARY KEY, mostrado_en REAL NOT NULL, "
+        "actualizado_en REAL NOT NULL)"
     )
     return conn
 
@@ -140,9 +147,21 @@ def remember_payment(remitente: str, referencia: str) -> None:
 
 
 def touch_client(remitente: str) -> None:
-    """El cliente volvió a escribir: su memoria vale 60 días más desde hoy."""
+    """El cliente volvió a escribir: su memoria y el aviso de privacidad valen 60 días más desde hoy."""
     with closing(_connect()) as conn, conn:
         conn.execute("UPDATE clientes SET actualizado_en = ? WHERE remitente = ?", (time.time(), remitente))
+        conn.execute("UPDATE avisos_privacidad SET actualizado_en = ? WHERE remitente = ?", (time.time(), remitente))
+
+
+def privacy_notice_pending(remitente: str) -> bool:
+    with closing(_connect()) as conn:
+        return conn.execute("SELECT 1 FROM avisos_privacidad WHERE remitente = ?", (remitente,)).fetchone() is None
+
+
+def mark_privacy_notice(remitente: str) -> None:
+    now = time.time()
+    with closing(_connect()) as conn, conn:
+        conn.execute("INSERT OR REPLACE INTO avisos_privacidad VALUES (?, ?, ?)", (remitente, now, now))
 
 
 def saved_shipping(remitente: str) -> dict | None:
@@ -227,6 +246,7 @@ def purge(now: float | None = None) -> dict[str, int]:
             "SELECT archivo FROM chats_pedidos WHERE creado_en < ?", (now - PEDIDO_TTL_SECONDS,)
         ).fetchall()
         pedidos = conn.execute("DELETE FROM chats_pedidos WHERE creado_en < ?", (now - PEDIDO_TTL_SECONDS,)).rowcount
+        conn.execute("DELETE FROM avisos_privacidad WHERE actualizado_en < ?", (now - CHAT_TTL_SECONDS,))
     for (archivo,) in viejos:
         if archivo:
             Path(archivo).unlink(missing_ok=True)

@@ -71,6 +71,12 @@ Al final del pedido, en el resumen, el cliente elige cómo pagar:
 - **Oriente antioqueño:** Ecosanos Rionegro (sede principal en el sector La Galería y sede Gualanday), Ecosanos El Retiro y Lácteos Buenavista (La Unión).
 - En otras ciudades: envío a todo Colombia.
 
+## Datos personales
+
+- Política de privacidad: https://especia.mariomora.tech/privacidad.html
+- Los datos del cliente se usan solo para atenderlo, cobrar y enviar sus pedidos. No se venden ni se usan para publicidad sin su autorización. Saboryarte no recibe los datos de la tarjeta: ese pago se hace en la página de Bold.
+- Para consultar, corregir o borrar sus datos, el cliente escribe a saboryarteconsabor@gmail.com o escribe «asesor» para que lo atienda una persona. Especia no borra ni cambia datos: pasa la solicitud a una persona.
+
 ## Lo que el bot no hace
 
 - No da consejos médicos ni habla de efectos en la salud. No usa palabras como «cura» o «medicina». Ante alergias o condiciones de salud, pasa a una persona.
