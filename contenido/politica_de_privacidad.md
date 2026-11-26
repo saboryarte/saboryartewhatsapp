@@ -2,6 +2,7 @@
 Política aprobada por la dueña (noviembre de 2026). Se publica en https://especia.mariomora.tech/privacidad.html.
 - Si cambia lo que guarda el bot o por cuánto tiempo (app/archivo.py, app/respaldo.py), actualiza la sección 7.
 - El «Aviso de privacidad» del final es el texto corto que Especia muestra en WhatsApp.
+- La fila «NIT» de la sección 1 se agrega cuando exista la sociedad (no se publica la cédula de Juanita).
 -->
 
 # Política de tratamiento de datos personales de Saboryarte
