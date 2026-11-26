@@ -61,7 +61,7 @@ flowchart TD
   class R,D,V,G4 hum;
 ```
 
-G1 usa una de las 8 bienvenidas al azar de `app/greetings.py`, a cualquier hora: todas son cercanas, dicen que Especia está para ayudar e invitan a tocar *Ver opciones*. El saludo nunca habla del horario; ese aviso solo aparece cuando el cliente pide una persona («asesor», «hablar con alguien del equipo»: T2) o cuando una ruta lo pasa a Juanita (R1F, D1F, V1F, P13H, P16F, T2). Fuera de un paso guiado, las respuestas de Claude llegan con los atajos G5 («Ver menú» / «Hablar con alguien»).
+G1 usa una de las 8 bienvenidas al azar de `app/greetings.py`, a cualquier hora: son de una sola línea, cercanas y dicen que Especia está para ayudar, sin nombrar las opciones (ya están en *Ver opciones*, justo debajo). El saludo nunca habla del horario; ese aviso solo aparece cuando el cliente pide una persona («asesor», «hablar con alguien del equipo»: T2) o cuando una ruta lo pasa a Juanita (R1F, D1F, V1F, P13H, P16F, T2). Fuera de un paso guiado, las respuestas de Claude llegan con los atajos G5 («Ver menú» / «Hablar con alguien»).
 
 ### Comprar mis mezclas
 

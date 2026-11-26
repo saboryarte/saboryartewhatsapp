@@ -20,7 +20,7 @@
         {
           "id": "G1",
           "tipo": "lista",
-          "texto": "¡Hola! 🌿 Qué alegría tenerte por acá. Soy Especia, la asistente virtual de Saboryarte, y estoy lista para ayudarte.\n\nToca *Ver opciones* para comprar tus mezclas, pedir regalos corporativos, distribuir Saboryarte o contarnos que eres proveedor. También puedes escribirme lo que necesites 💛",
+          "texto": "¡Hola! 🌿 Soy Especia, la asistente virtual de Saboryarte. ¿En qué te puedo ayudar hoy?",
           "boton_lista": "Ver opciones",
           "opciones": [
             {

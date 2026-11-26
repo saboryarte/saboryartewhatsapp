@@ -3,36 +3,19 @@ import re
 import unicodedata
 
 # Mensajes de bienvenida con la voz de Saboryarte (docs/flujos/saboryarte.md, §5). Se elige uno al azar
-# en cada saludo, a cualquier hora, como texto de la lista del menú (G1). Todos son cercanos, dicen que Especia
-# está para ayudar e invitan a abrir «Ver opciones» (el botón de la lista). Ninguno habla del horario: ese aviso
-# solo sale cuando el cliente pide una persona (T2) o se le pasa a Juanita.
+# en cada saludo, a cualquier hora, como texto de la lista del menú (G1). Son de una sola línea, cercanos y
+# disponibles; no nombran las opciones (ya están en «Ver opciones», justo debajo) ni hablan del horario: ese
+# aviso solo sale cuando el cliente pide una persona (T2) o se le pasa a Juanita.
 # "{nombre}" se reemplaza por ", <Nombre>" si conocemos el nombre del perfil, o por "" si no.
 WELCOME_MESSAGES: tuple[str, ...] = (
-    "¡Hola{nombre}! 🌿 Qué alegría tenerte por acá. Soy Especia, la asistente virtual de Saboryarte, "
-    "y estoy lista para ayudarte.\n\n"
-    "Toca *Ver opciones* para comprar tus mezclas, pedir regalos corporativos, distribuir Saboryarte o "
-    "contarnos que eres proveedor. También puedes escribirme lo que necesites 💛",
-    "¡Hola{nombre}! 🧂 Qué gusto que nos escribas. Soy Especia y con mucho cariño te acompaño "
-    "en lo que necesites.\n\n"
-    "En *Ver opciones* te muestro cómo te puedo ayudar, desde armar tu pedido hasta regalos para tu equipo. "
-    "¿Por dónde empezamos?",
-    "¡Qué más{nombre}! 🌿 Por acá Especia, de Saboryarte, lista para ayudarte a encontrar tu sabor.\n\n"
-    "Escoge en *Ver opciones* lo que buscas, o cuéntame con tus palabras y yo te guío.",
-    "¡Hola{nombre}! ✨ Qué rico tenerte por acá. Soy Especia y estoy aquí para ayudarte con nuestras "
-    "mezclas, tus pedidos, regalos y más.\n\n"
-    "Toca *Ver opciones* y elige la que quieras. Si prefieres, escríbeme y lo resolvemos.",
-    "¡Hola{nombre}! 🌿 Gracias por escribirle a Saboryarte. Soy Especia, la asistente virtual, y me "
-    "encanta ayudarte.\n\n"
-    "Te dejo todo en *Ver opciones*: escoge la que más se parezca a lo que necesitas 💛",
-    "¡Holaaa{nombre}! 🧂 Qué bueno verte por acá. Soy Especia y ya estoy lista para atenderte.\n\n"
-    "¿Quieres comprar tus mezclas, un regalo corporativo o llevar Saboryarte a tu negocio? "
-    "Lo encuentras en *Ver opciones*.",
-    "¡Hola{nombre}! 🌿 Qué alegría saludarte. Aquí Especia, con toda la energía para darle más sabor "
-    "a tu cocina.\n\n"
-    "Cuéntame qué necesitas o toca *Ver opciones* para ver en qué te puedo ayudar.",
-    "¡Hola{nombre}! ✨ Bienvenida la buena sazón a esta conversación. Soy Especia, de Saboryarte, y estoy "
-    "para ayudarte.\n\n"
-    "En *Ver opciones* encuentras todo lo que puedo hacer por ti. ¿Empezamos?",
+    "¡Hola{nombre}! 🌿 Soy Especia, la asistente virtual de Saboryarte. ¿En qué te puedo ayudar hoy?",
+    "¡Hola{nombre}! 🧂 Qué gusto que nos escribas. Soy Especia y estoy lista para ayudarte.",
+    "¡Qué más{nombre}! 🌿 Por acá Especia, de Saboryarte. Cuéntame, ¿qué necesitas?",
+    "¡Hola{nombre}! ✨ Qué rico tenerte por acá. Soy Especia, ¿en qué te ayudo?",
+    "¡Hola{nombre}! 🌿 Gracias por escribirle a Saboryarte. Soy Especia y con gusto te ayudo.",
+    "¡Holaaa{nombre}! 🧂 Qué bueno verte por acá. Soy Especia, ¿por dónde empezamos?",
+    "¡Hola{nombre}! 🌿 Qué alegría saludarte. Aquí Especia, lista para darle más sabor a tu cocina.",
+    "¡Hola{nombre}! ✨ Bienvenida la buena sazón. Soy Especia, de Saboryarte, ¿en qué te ayudo hoy?",
 )
 
 # Palabras/frases que, solas o combinadas, cuentan como saludo puro ("hola", "buenas tardes", "hola que tal").

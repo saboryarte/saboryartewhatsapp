@@ -522,11 +522,12 @@ class TestSaludos:
         assert len(set(mensajes)) > 1
         assert all(a != b for a, b in zip(mensajes, mensajes[1:]))
 
-    def test_bienvenidas_cercanas_invitan_a_ver_opciones_sin_hablar_del_horario(self):
+    def test_bienvenidas_cortas_de_una_linea_sin_opciones_ni_horario(self):
         for mensaje in WELCOME_MESSAGES:
-            assert "Especia" in mensaje and "*Ver opciones*" in mensaje
-            assert "horario" not in mensaje.lower() and "bot" not in mensaje.lower()
-            assert len(mensaje.format(nombre=", Maximiliano")) <= 1024
+            assert "Especia" in mensaje and "\n" not in mensaje
+            assert len(mensaje.format(nombre=", Maximiliano")) <= 110
+            texto = mensaje.lower()
+            assert not any(p in texto for p in ("horario", "bot", "ver opciones", "regalo", "distribu", "proveedor"))
 
     def test_bienvenida_personaliza_con_primer_nombre(self):
         for _ in range(30):

@@ -127,7 +127,7 @@ class TestTraspaso:
         monkeypatch.setattr("app.router.is_open", lambda now: False)
         escribir(client, "hola")
         cuerpo = mocks["list"].call_args.args[1]
-        assert "horario" not in cuerpo and "Ver opciones" in cuerpo
+        assert "horario" not in cuerpo
         assert cuerpo in {m.format(nombre=", Laura") for m in WELCOME_MESSAGES}
         assert len(mocks["list"].call_args.args[3]) == 4
 
