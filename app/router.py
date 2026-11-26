@@ -42,7 +42,9 @@ from . import archivo, bold
 from .notify import notify_team
 from .orders import (
     ask_missing_shipping,
+    count_kits,
     describe_item,
+    find_mixes,
     missing_shipping_fields,
     order_summary,
     parse_quantity,
@@ -409,6 +411,13 @@ async def _take_kit_mini(body: str, sender: str, conversation: Conversation) -> 
     return await _items_ready(sender, [{"producto": "kit_mini", "cantidad": quantity}], conversation)
 
 
+def _kit_retry(kit_size: int, named: int) -> str:
+    return (
+        f"Tu kit es de {kit_size} mezclas y me nombraste {named} 🙈 ¿Cuáles {kit_size} quieres? Puedes escribirlas "
+        "cortas: oro, sol, luna rosa, vid, chilemon o tierra de fuego."
+    )
+
+
 def _order_items(extraction, conversation: Conversation) -> tuple[list[dict] | None, str | None]:
     """Convierte la extracción en ítems válidos. Devuelve (ítems, None) o (None, mensaje para volver a preguntar)."""
     kit_size = conversation.datos.get("kit")
@@ -420,11 +429,7 @@ def _order_items(extraction, conversation: Conversation) -> tuple[list[dict] | N
         # Un kit no repite mezclas: se cuentan las distintas que nombró.
         mixes = list(dict.fromkeys(product_id for product_id, _ in lines if product_id in mix_ids()))
         if len(mixes) != kit_size:
-            return None, (
-                f"Tu kit es de {kit_size} mezclas y me nombraste {len(mixes)} 🙈 "
-                f"¿Cuáles {kit_size} mezclas quieres? Pueden ser Sal de oro, Sal de sol, Sal de luna rosa, "
-                "Sal de la vid, Sal chilemon o Mezcla tierra de fuego."
-            )
+            return None, _kit_retry(kit_size, len(mixes))
         return [{"kit": mixes, "cantidad": kits}], None
     if not lines:
         unknown = f" No tenemos {', '.join(extraction.no_reconocidos)}." if extraction.no_reconocidos else ""
@@ -443,8 +448,16 @@ async def _take_order_items(body: str, sender: str, conversation: Conversation) 
     if kit_size and kit_size >= len(ordered_mix_ids()) and (quantity := parse_quantity(body)):
         # El kit de 6 trae todas las mezclas: un «2» es cuántos kits.
         return await _items_ready(sender, [{"kit": ordered_mix_ids(), "cantidad": quantity}], conversation)
+    named = [mix for mix in find_mixes(body) if mix in mix_ids()] if kit_size else []
+    if kit_size and len(named) == kit_size:
+        # Nombró justo las mezclas del kit, con el nombre completo o corto («oro, luna rosa, vid y tierra de
+        # fuego»): se arma sin Claude.
+        return await _items_ready(sender, [{"kit": named, "cantidad": count_kits(body) or 1}], conversation)
     extraction = await extract_order(body, None, kit_size)
     if extraction is None:
+        if named:
+            # Sin Claude, al menos se le dice cuántas reconocimos y cómo escribirlas.
+            return await _reply_text(sender, _kit_retry(kit_size, len(named)))
         return await _reply_text(sender, _REINTENTO_TECNICO)
     if extraction.quiere_distribuir:
         return await _handoff(sender, conversation, "distribuidor")

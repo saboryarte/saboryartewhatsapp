@@ -106,7 +106,7 @@ flowchart TD
 
 **Cómo lo resuelve el código**
 
-- **P6 y P4K son texto libre.** Claude (Haiku, salida estructurada) solo extrae productos, cantidades y número de kits; el código valida contra el catálogo y hace las cuentas. Si un kit trae menos o más mezclas de las elegidas, se le dice cuántas nombró y se le vuelve a preguntar. Una mezcla repetida en un kit cuenta una vez. El kit de 6 trae todas: solo se pregunta cuántos.
+- **P6 y P4K son texto libre.** Claude (Haiku, salida estructurada) solo extrae productos, cantidades y número de kits; el código valida contra el catálogo y hace las cuentas. Si un kit trae menos o más mezclas de las elegidas, se le dice cuántas nombró y se le vuelve a preguntar. Una mezcla repetida en un kit cuenta una vez. El kit de 6 trae todas: solo se pregunta cuántos. En P4K las mezclas se reconocen primero sin Claude, por nombre completo o corto («oro», «luna rosa», «chile limón», «tierra»…, en `app/orders.py`) junto con «2 kits»: si nombró justo las del kit, se arma de una; si no, decide Claude.
 - **P4M:** un número escrito («3», «tres») no usa Claude.
 - **P7 → P7B:** con la ciudad, el código calcula el valor (`precios.yaml`) y el tiempo: 1 a 2 días hábiles en Medellín y el área metropolitana, 2 a 4 en el resto del país, donde además se avisa que el valor puede variar (también en el resumen P8). Si el cliente escribe todos los datos de una vez, va directo a P8.
 - **P7C:** solo si ya compró antes y su dirección guardada es de la misma ciudad. Va en el mismo mensaje que P7B, en lugar de pedirle los datos. Un «sí» escrito también vale.

@@ -170,9 +170,9 @@
         {
           "id": "P4K",
           "tipo": "libre",
-          "texto": "¡Tu kit de [tamaño] mezclas! 🎁 ¿Cuáles [tamaño] quieres y cuántos kits?\n\nPuedes elegir entre Sal de oro, Sal de sol, Sal de luna rosa, Sal de la vid, Sal chilemon y Mezcla tierra de fuego (60 g).",
+          "texto": "¡Tu kit de [tamaño] mezclas! 🎁 ¿Cuáles [tamaño] quieres y cuántos kits?\n\nPuedes escribirlas cortas: oro, sol, luna rosa, vid, chilemon o tierra de fuego (60 g). Por ejemplo: «oro, sol, vid y chilemon, 2 kits».",
           "texto_todas": "¡Tu kit de 6 trae todas nuestras mezclas! ✨ ¿Cuántos kits quieres?",
-          "notas": "Respuesta libre: cuáles mezclas y cuántos kits (si no dice, 1). El kit de 6 trae todas: solo se pregunta cuántos (texto_todas). Sigue a P7."
+          "notas": "Respuesta libre: cuáles mezclas y cuántos kits (si no dice, 1). El kit de 6 trae todas: solo se pregunta cuántos (texto_todas). Sigue a P7. Las mezclas se reconocen por nombre completo o corto (app/orders.py: find_mixes) sin Claude; si no cuadran, se usa la extracción de Claude."
         },
         {
           "id": "P6",

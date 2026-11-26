@@ -108,3 +108,36 @@ def parse_quantity(text: str) -> int | None:
     return quantity if quantity and 1 <= quantity <= 100 else None
 
 
+
+
+# Nombres cortos o con otra ortografía con los que el cliente nombra cada mezcla del kit («oro, luna rosa, vid y
+# tierra de fuego»). Así el kit se arma sin Claude: más rápido, y funciona aunque la API falle.
+_ALIAS_MEZCLAS: dict[str, tuple[str, ...]] = {
+    "sal_de_oro": ("oro",),
+    "sal_de_sol": ("sol",),
+    "sal_de_luna_rosa": ("luna rosa", "luna", "rosa"),
+    "sal_de_la_vid": ("vid",),
+    "sal_chilemon": ("chilemon", "chile limon", "chilimon", "chilemont", "chile"),
+    "tierra_de_fuego": ("tierra de fuego", "tierra", "fuego"),
+}
+
+
+def find_mixes(text: str) -> list[str]:
+    """Mezclas que nombra el texto, sin repetir y en el orden en que las escribió."""
+    normalized = " ".join(re.sub(r"[^\w\s]|_", " ", _normalize(text)).split())
+    found: list[tuple[int, str]] = []
+    for mix_id, aliases in _ALIAS_MEZCLAS.items():
+        positions = [m.start() for alias in aliases for m in re.finditer(rf"\b{re.escape(alias)}\b", normalized)]
+        if positions:
+            found.append((min(positions), mix_id))
+    return [mix_id for _, mix_id in sorted(found)]
+
+
+def count_kits(text: str) -> int | None:
+    """Cuántos kits pide («2 kits», «dos kits»). None si no lo dice."""
+    match = re.search(r"\b(\d+|" + "|".join(_NUMEROS) + r")\s+kits?\b", _normalize(text))
+    if not match:
+        return None
+    word = match.group(1)
+    quantity = int(word) if word.isdigit() else _NUMEROS[word]
+    return quantity if 1 <= quantity <= 100 else None

@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.claude import EnvioExtraido, LineaPedido, PedidoExtraido
 from app.flows import get_step
 from app.main import app
-from app.orders import describe_item, order_summary, parse_quantity, shipping_cost, subtotal
+from app.orders import count_kits, describe_item, find_mixes, order_summary, parse_quantity, shipping_cost, subtotal
 from app.state import load_conversation
 
 REMITENTE = "573001112233"
@@ -272,6 +272,30 @@ class TestKits:
         assert conv.datos["pedido"] == [{"kit": ["sal_de_oro", "sal_de_sol", "tierra_de_fuego"], "cantidad": 2}]
         assert conv.paso == "P7" and "kit" not in conv.datos
 
+    def test_kit_con_nombres_cortos_se_arma_sin_claude(self, client, mocks):
+        elegir(client, "kit_4")
+        assert "oro, sol, luna rosa, vid, chilemon o tierra de fuego" in ultimo_texto(mocks)
+        escribir(client, "Sal de oro, sal Luna Rosa, sal de la vid y tierra de fuego.")
+        mocks["order"].assert_not_called()
+        conv = load_conversation(REMITENTE)
+        assert conv.datos["pedido"] == [
+            {"kit": ["sal_de_oro", "sal_de_luna_rosa", "sal_de_la_vid", "tierra_de_fuego"], "cantidad": 1}]
+        assert conv.paso == "P7"
+
+    def test_kit_con_nombres_cortos_y_cantidad_de_kits(self, client, mocks):
+        elegir(client, "kit_3")
+        escribir(client, "dos kits: chile limón, rosa y fuego")
+        mocks["order"].assert_not_called()
+        assert load_conversation(REMITENTE).datos["pedido"] == [
+            {"kit": ["sal_chilemon", "sal_de_luna_rosa", "tierra_de_fuego"], "cantidad": 2}]
+
+    def test_si_claude_falla_dice_cuantas_mezclas_reconocio(self, client, mocks):
+        elegir(client, "kit_4")
+        mocks["order"].return_value = None
+        escribir(client, "oro y sol")
+        assert ultimo_texto(mocks).startswith("Tu kit es de 4 mezclas y me nombraste 2")
+        assert load_conversation(REMITENTE).paso == "P4K"
+
     def test_kit_no_acepta_kit_mini_como_mezcla(self, client, mocks):
         elegir(client, "kit_2")
         mocks["order"].return_value = pedido(("sal_de_oro", 1), ("kit_mini", 1))
@@ -348,3 +372,20 @@ class TestCantidadEscrita:
     @pytest.mark.parametrize("texto", ["dos de oro", "¿cuánto cuesta?", "0", "500", "hola"])
     def test_no_es_una_cantidad(self, texto):
         assert parse_quantity(texto) is None
+
+
+class TestNombresDeMezclas:
+    @pytest.mark.parametrize("texto, esperado", [
+        ("Sal de oro, sal Luna Rosa, sal de la vid y tierra de fuego.",
+         ["sal_de_oro", "sal_de_luna_rosa", "sal_de_la_vid", "tierra_de_fuego"]),
+        ("ORO, SOL y Chilemon", ["sal_de_oro", "sal_de_sol", "sal_chilemon"]),
+        ("la de luna y la de chile limón", ["sal_de_luna_rosa", "sal_chilemon"]),
+        ("vid, vid y fuego", ["sal_de_la_vid", "tierra_de_fuego"]),
+        ("solo quiero ver precios", []),
+    ])
+    def test_reconoce_nombres_completos_y_cortos(self, texto, esperado):
+        assert find_mixes(texto) == esperado
+
+    @pytest.mark.parametrize("texto, kits", [("2 kits", 2), ("tres kits de oro", 3), ("un kit", 1), ("oro y sol", None)])
+    def test_cuenta_los_kits(self, texto, kits):
+        assert count_kits(texto) == kits
