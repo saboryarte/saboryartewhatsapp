@@ -43,11 +43,8 @@ La idea de la simplificación: **Especia atiende la compra de principio a fin, i
 ```mermaid
 flowchart TD
   A(["Cliente escribe"]) --> G0["G0 Aviso de privacidad (una vez)"]
-  G0 --> B{"¿Dentro de horario?"}
-  B -->|Sí| C["G1 Bienvenida y menú"]
-  B -->|No| C2["G2 Aviso de horario y menú"]
+  G0 --> C["G1 Bienvenida al azar y menú (a cualquier hora)"]
   C --> E{"¿Qué elige?"}
-  C2 --> E
   E -->|🧂 Comprar mis mezclas| P(["P1"])
   E -->|🎁 Regalos corporativos| R(["R1 Juanita"])
   E -->|🏪 Quiero distribuir| D(["D1 Juanita"])
@@ -64,7 +61,7 @@ flowchart TD
   class R,D,V,G4 hum;
 ```
 
-G1 usa una de las bienvenidas al azar de `app/greetings.py` (la primera es la del artefacto). Fuera de un paso guiado, las respuestas de Claude llegan con los atajos G5 («Ver menú» / «Hablar con alguien»).
+G1 usa una de las 8 bienvenidas al azar de `app/greetings.py`, a cualquier hora: todas son cercanas, dicen que Especia está para ayudar e invitan a tocar *Ver opciones*. El saludo nunca habla del horario; ese aviso solo aparece cuando el cliente pide una persona («asesor», «hablar con alguien del equipo»: T2) o cuando una ruta lo pasa a Juanita (R1F, D1F, V1F, P13H, P16F, T2). Fuera de un paso guiado, las respuestas de Claude llegan con los atajos G5 («Ver menú» / «Hablar con alguien»).
 
 ### Comprar mis mezclas
 
@@ -152,7 +149,7 @@ Se evalúan en cada mensaje, **antes** de continuar el paso del flujo activo, en
 |---|---|---|
 | 1 | Conversación en traspaso (`en_traspaso`) | No responder; la atiende una persona. «menú» es la salida del cliente. |
 | 2 | Pide una persona («asesor», «humano», «alguien del equipo», o el atajo «Hablar con alguien») | Traspaso inmediato (T1, o T2 fuera de horario). |
-| 3 | Escribe «menú» | Reinicia a G1 (o G2). |
+| 3 | Escribe «menú» | Reinicia a G1. |
 | 4 | Escribe el texto de una opción visible | Cuenta como tocarla. |
 | 5 | Saludo a mitad de un paso | No reinicia: retoma el paso con sus opciones. |
 | 6 | Pregunta o comentario a mitad de un paso | Claude responde y se repite lo que falta (con las opciones del paso, o con los atajos G5). |
@@ -161,7 +158,7 @@ Se evalúan en cada mensaje, **antes** de continuar el paso del flujo activo, en
 | 9 | Audio, video, imagen o sticker | O2 y retoma el paso o muestra el menú. Una foto en Q1 es la prueba del reclamo; una foto o PDF con una transferencia pendiente es el comprobante. |
 | 10 | No se entiende el mensaje | 1.ª vez: G3. 2.ª vez seguida: G4 y traspaso. |
 
-**Horario:** lunes a sábado de 8:00 a 18:00, hora de Colombia. Define G1/G2, T1/T2, R1/R1F, D1/D1F, V1/V1F, P13H/P13F, P16/P16F y el aviso de P14.
+**Horario:** lunes a sábado de 8:00 a 18:00, hora de Colombia. Define T1/T2, R1/R1F, D1/D1F, V1/V1F, P13H/P13F, P16/P16F y el aviso de P14.
 
 ---
 
@@ -261,7 +258,7 @@ Esto va al *system prompt* y es el criterio para evaluar las respuestas de Claud
 | ID | Mensaje o situación | Esperado |
 |---|---|---|
 | ENT-001 | «Hola» un martes a las 10:00 | Aviso de privacidad (si es la primera vez) y G1 con 4 opciones. |
-| ENT-002 | «Hola» un domingo | G2, con el aviso de horario. |
+| ENT-002 | «Hola» un domingo | G1 con una bienvenida, sin aviso de horario. «asesor» ese mismo día: T2, con el horario. |
 | ENT-003 | Dos mensajes incomprensibles seguidos | G3 y luego G4 con traspaso. |
 | VEN-001 | Hacer mi pedido → «2 de oro y una chilemon» → «Envigado» → nombre, dirección y teléfono | P7B con $12.000 y 1 a 2 días; P8 con subtotal $78.000 y total $90.000. |
 | VEN-002 | Kits → Armar mi kit → 3 mezclas → «2 kits de oro, sol y chilemon» | Resumen con «2 × Kit de 3 mezclas». |

@@ -10,7 +10,8 @@ from fastapi.testclient import TestClient
 from app import router
 from app.claude import EnvioExtraido, LineaPedido, PedidoExtraido
 from app.config import settings
-from app.greetings import is_human_request
+from app.flows import get_step
+from app.greetings import WELCOME_MESSAGES, is_human_request
 from app.handoff import COLOMBIA, business_minutes_between, handoff_ficha, is_closing_message, is_open
 from app.main import app
 from app.state import Conversation, load_conversation, save_conversation
@@ -122,11 +123,23 @@ class TestTraspaso:
         escribir(client, "asesor")
         assert "fuera de horario" in mocks["text"].call_args.args[1]
 
-    def test_fuera_de_horario_el_saludo_muestra_g2(self, client, mocks, monkeypatch):
+    def test_fuera_de_horario_el_saludo_no_habla_del_horario(self, client, mocks, monkeypatch):
         monkeypatch.setattr("app.router.is_open", lambda now: False)
         escribir(client, "hola")
-        assert "fuera de horario" in mocks["list"].call_args.args[1]
+        cuerpo = mocks["list"].call_args.args[1]
+        assert "horario" not in cuerpo and "Ver opciones" in cuerpo
+        assert cuerpo in {m.format(nombre=", Laura") for m in WELCOME_MESSAGES}
         assert len(mocks["list"].call_args.args[3]) == 4
+
+    def test_fuera_de_horario_el_menu_no_habla_del_horario(self, client, mocks, monkeypatch):
+        monkeypatch.setattr("app.router.is_open", lambda now: False)
+        escribir(client, "menú")
+        assert "horario" not in mocks["list"].call_args.args[1]
+
+    def test_fuera_de_horario_hablar_con_alguien_del_equipo_avisa_el_horario(self, client, mocks, monkeypatch):
+        monkeypatch.setattr("app.router.is_open", lambda now: False)
+        escribir(client, "quiero hablar con alguien del equipo")
+        assert mocks["text"].call_args.args[1] == get_step("T2")["texto"]
 
     def test_bot_en_silencio_mientras_atiende_una_persona(self, client, mocks):
         escribir(client, "asesor")

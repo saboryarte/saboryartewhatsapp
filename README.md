@@ -9,7 +9,7 @@ Agente de WhatsApp construido con **Python + FastAPI** que recibe mensajes via [
 - Integración con Claude via Anthropic SDK. **Sonnet 5.5 es el modelo más alto que usa el bot**: responde el texto libre (esfuerzo bajo, system prompt cacheado) y **Haiku 5.5** extrae los datos de pedido y envío. La elección está medida en `evals/` (ver abajo)
 - Variables de entorno con validación via **pydantic-settings**
 - Pruebas con **pytest**
-- Menú principal como lista de WhatsApp: los saludos puros ("hola", "buenas tardes") y la palabra "menú" reciben el menú G1 con 7 opciones. Con el saludo, el texto es una bienvenida aleatoria personalizada con el nombre del perfil (`app/greetings.py`)
+- Menú principal como lista de WhatsApp: los saludos puros ("hola", "buenas tardes") y la palabra "menú" reciben el menú G1 con 4 opciones, a cualquier hora. Con el saludo, el texto es una bienvenida aleatoria personalizada con el nombre del perfil (`app/greetings.py`); el aviso de horario solo sale cuando el cliente pide una persona
 - Estado de conversación por remitente (SQLite, caduca a las 24 h): Claude recibe el historial reciente y se recuerda la opción elegida del menú
 - Deduplicación por `message.id`: un reintento de Meta no genera una segunda respuesta
 - Ruta de compra navegable con listas y botones: catálogo, ficha de cada mezcla, las más queridas, kits, recomendación por uso y dudas frecuentes

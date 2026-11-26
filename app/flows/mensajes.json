@@ -20,7 +20,7 @@
         {
           "id": "G1",
           "tipo": "lista",
-          "texto": "¡Hola! 🌿 Qué alegría tenerte por acá. Soy Especia, la asistente virtual de Saboryarte.\n\nCuéntame, ¿en qué te puedo ayudar hoy?",
+          "texto": "¡Hola! 🌿 Qué alegría tenerte por acá. Soy Especia, la asistente virtual de Saboryarte, y estoy lista para ayudarte.\n\nToca *Ver opciones* para comprar tus mezclas, pedir regalos corporativos, distribuir Saboryarte o contarnos que eres proveedor. También puedes escribirme lo que necesites 💛",
           "boton_lista": "Ver opciones",
           "opciones": [
             {
@@ -48,15 +48,7 @@
               "descripcion": "Para quienes le venden a Saboryarte"
             }
           ],
-          "notas": "Dentro de horario. Al saludar se usa una de las bienvenidas de app/greetings.py con esta misma lista. Si el cliente escribe «asesor» o «responsable», pasa directo a Juanita (T1 o T2)."
-        },
-        {
-          "id": "G2",
-          "tipo": "lista",
-          "texto": "¡Hola! 🌿 Ahorita estamos fuera de horario (atendemos lunes a sábado de 8:00 a. m. a 6:00 p. m.), pero yo sí puedo ayudarte con tu pedido y con casi todo.\n\nSi necesitas a alguien del equipo, te escribimos lo más pronto posible. ¿Qué te trae por acá?",
-          "boton_lista": "Ver opciones",
-          "opciones_de": "G1",
-          "notas": "Fuera de horario (zona horaria America/Bogota)."
+          "notas": "Menú principal, a cualquier hora (ya no hay una versión «fuera de horario»). Al saludar se usa una de las bienvenidas al azar de app/greetings.py con esta misma lista; este texto es la primera. Si el cliente escribe «asesor» o «hablar con alguien del equipo», pasa directo a Juanita (T1, o T2 con el aviso de horario)."
         },
         {
           "id": "G3",

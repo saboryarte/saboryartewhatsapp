@@ -84,16 +84,10 @@ _PASOS_SIMPLES = frozenset({"G1", "P1", "P4", "P4B"})
 _DIRECTOS = {"R1": "corporativo", "D1": "distribuidor", "V1": "proveedor"}
 # Pasos de otras rutas que se usan como respuesta dentro de la ruta actual: no cambian el flujo activo.
 _FLUJOS_DE_APOYO = frozenset({"entrada", "otras"})
-# Menú principal: G1 dentro del horario de atención, G2 (con aviso de horario) fuera.
-_MENUS = frozenset({MENU_PRINCIPAL, "G2"})
 
 
 def _now() -> datetime:
     return datetime.now(COLOMBIA)
-
-
-def _menu_step() -> str:
-    return MENU_PRINCIPAL if is_open(_now()) else "G2"
 
 
 async def _show_step(
@@ -114,7 +108,7 @@ async def _show_step(
     if not sent:
         return None
     conversation.opciones = {"paso": step_id, "tipo": step["tipo"], "cuerpo": text, "boton": list_button, "filas": shown_rows}
-    if step_id in _MENUS:
+    if step_id == MENU_PRINCIPAL:
         conversation.reset_flow()
     elif flow_of(step_id) not in _FLUJOS_DE_APOYO:
         conversation.flujo_activo = flow_of(step_id)
@@ -150,7 +144,7 @@ async def handle_text(body: str, sender: str, profile_name: str | None, conversa
         sent = await _handoff(sender, conversation, "solicitud")
     elif is_menu_request(body):
         logger.info("Menú solicitado, se reinicia el flujo")
-        sent = await _show_step(sender, _menu_step(), conversation)
+        sent = await _show_step(sender, MENU_PRINCIPAL, conversation)
     elif option := _typed_option(body, conversation):
         # Escribir el texto de una opción visible cuenta como tocarla.
         logger.info("Texto reconocido como la opción '%s'", option["id"])
@@ -160,9 +154,9 @@ async def handle_text(body: str, sender: str, profile_name: str | None, conversa
         sent = await _resend(sender, conversation, conversation.opciones["cuerpo"])
     elif conversation.flujo_activo is None and is_greeting(body):
         logger.info("Saludo detectado, se envía el menú")
-        menu = _menu_step()
-        welcome = pick_welcome(profile_name) if menu == MENU_PRINCIPAL else None
-        sent = await _show_step(sender, menu, conversation, body=welcome)
+        # El saludo siempre recibe una bienvenida (al azar) con el menú, a cualquier hora: el aviso de horario
+        # solo aparece cuando el cliente pide una persona (T2) o cuando se le pasa a Juanita.
+        sent = await _show_step(sender, MENU_PRINCIPAL, conversation, body=pick_welcome(profile_name))
     elif is_greeting(body):
         # Un saludo a mitad de un paso no lo reinicia: se retoma donde iba, con sus opciones.
         sent = await _resume(sender, conversation, "¡Hola de nuevo! 🌿 Sigamos donde íbamos.")
@@ -198,15 +192,15 @@ async def _answer_with_menu(body: str, sender: str, conversation: Conversation) 
     """La conversación siempre empieza con el menú: la respuesta de Claude va como texto de la lista de opciones."""
     reply = await ask_claude(body, conversation.historial)
     if not reply or reply.strip().upper().startswith(_NO_ENTIENDO):
-        return await _show_step(sender, _menu_step(), conversation)
+        return await _show_step(sender, MENU_PRINCIPAL, conversation)
     if await _navigate(reply, body, sender, conversation):
         return None
     if _IR.match(reply):
-        return await _show_step(sender, _menu_step(), conversation)
+        return await _show_step(sender, MENU_PRINCIPAL, conversation)
     if len(reply) <= _MAX_CUERPO_LISTA:
-        return await _show_step(sender, _menu_step(), conversation, body=reply)
+        return await _show_step(sender, MENU_PRINCIPAL, conversation, body=reply)
     sent = await _reply_text(sender, reply)
-    return "\n\n".join(filter(None, [sent, await _show_step(sender, _menu_step(), conversation)]))
+    return "\n\n".join(filter(None, [sent, await _show_step(sender, MENU_PRINCIPAL, conversation)]))
 
 
 # ── Nunca dejar al cliente sin opciones ───────────────────────────────────────
@@ -289,7 +283,7 @@ async def _resend(sender: str, conversation: Conversation, body: str) -> str | N
     """Vuelve a enviar las últimas opciones (lista o botones) con otro texto. No cambia el paso."""
     shown = conversation.opciones
     if not shown:
-        return await _show_step(sender, _menu_step(), conversation, body=body)
+        return await _show_step(sender, MENU_PRINCIPAL, conversation, body=body)
     limit = _MAX_CUERPO_LISTA if shown["tipo"] in _INTERACTIVOS else 4096
     if len(body) > limit:
         # Texto demasiado largo para ir con las opciones: va aparte y luego las opciones con su texto original.
@@ -310,7 +304,7 @@ async def _resume(sender: str, conversation: Conversation, intro: str) -> str | 
     """Retoma el paso en curso: el aviso más la pregunta y las opciones que el cliente tenía a la vista."""
     shown = conversation.opciones
     if not shown:
-        return await _show_step(sender, _menu_step(), conversation)
+        return await _show_step(sender, MENU_PRINCIPAL, conversation)
     limit = _MAX_CUERPO_LISTA if shown["tipo"] in _INTERACTIVOS else 4096
     return await _resend(sender, conversation, _join(intro, shown["cuerpo"], limit))
 
@@ -582,7 +576,7 @@ async def handle_choice(interactive: dict | None, sender: str, conversation: Con
     if found is None:
         # Opción de una lista vieja que ya no existe: se vuelve a mostrar el menú.
         logger.info("Opción desconocida '%s', se reenvía el menú", reply["id"])
-        sent = await _show_step(sender, _menu_step(), conversation)
+        sent = await _show_step(sender, MENU_PRINCIPAL, conversation)
         if sent:
             conversation.add_turn(f"Elegí «{reply.get('title', '')}»", sent)
         return
@@ -592,7 +586,7 @@ async def handle_choice(interactive: dict | None, sender: str, conversation: Con
     logger.info("Opción elegida: %s (%s → %s)", option_id, step_id, destination)
 
     if option_id == "atajo_menu":
-        sent = await _show_step(sender, _menu_step(), conversation)
+        sent = await _show_step(sender, MENU_PRINCIPAL, conversation)
     elif destination in _DIRECTOS:
         sent = await _handoff(sender, conversation, _DIRECTOS[destination])
     elif destination == "T1":
@@ -622,7 +616,7 @@ async def handle_choice(interactive: dict | None, sender: str, conversation: Con
     else:
         # Opción de un mensaje que Especia todavía no envía (p. ej. la postventa O4): el menú.
         logger.warning("Opción sin acción '%s': se muestra el menú", option_id)
-        sent = await _show_step(sender, _menu_step(), conversation)
+        sent = await _show_step(sender, MENU_PRINCIPAL, conversation)
     if sent:
         conversation.add_turn(f"Elegí «{option['titulo']}»", sent)
 
@@ -760,7 +754,7 @@ async def _media_not_supported(kind: str, sender: str, conversation: Conversatio
     text = step["texto"].replace("[tipo]", tipo).replace("[emoji]", emoji).replace("[verbo]", verbo)
     if conversation.flujo_activo and conversation.opciones:
         return await _resume(sender, conversation, text)
-    return await _show_step(sender, _menu_step(), conversation, body=text)
+    return await _show_step(sender, MENU_PRINCIPAL, conversation, body=text)
 
 
 async def resolve_transfer(order: Pedido, accion: str) -> str:
