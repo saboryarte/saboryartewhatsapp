@@ -12,7 +12,11 @@ from .usage import record_claude, remitente_actual
 
 logger = logging.getLogger(__name__)
 
-_client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+_client = AsyncAnthropic(
+    api_key=settings.anthropic_api_key,
+    # Las llaves que no están ligadas a un workspace exigen decir cuál usar en cada llamada.
+    default_headers={"anthropic-workspace-id": settings.anthropic_workspace_id} if settings.anthropic_workspace_id else None,
+)
 
 # Sonnet 5.5 es el modelo más alto que usa el bot (decisión de costo del 21 oct 2026; ver evals/).
 # Sin «fallbacks» del servidor: podrían enrutar a un modelo más caro.

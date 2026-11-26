@@ -59,6 +59,7 @@ cp .env.example .env
 | `WHATSAPP_TOKEN` | ✅ | Token de acceso de la Graph API para enviar mensajes |
 | `WHATSAPP_PHONE_NUMBER_ID` | ✅ | ID del número de teléfono en Meta Developers |
 | `ANTHROPIC_API_KEY` | ✅ | API Key de Anthropic para consultar a Claude |
+| `ANTHROPIC_WORKSPACE_ID` | ⬜ | Solo si la llave no está ligada a un workspace (empieza por `sk-ant-usr`): id `wrkspc_…` |
 | `APP_SECRET` | ✅ en producción | App Secret de Meta: el bot rechaza los avisos de WhatsApp sin su firma (`X-Hub-Signature-256`) |
 | `META_APP_ID`, `META_SIGNUP_CONFIG_ID` | ⬜ | Para conectar el número del negocio en coexistencia (`/conectar`). Ver [docs/despliegue/numero-del-negocio.md](docs/despliegue/numero-del-negocio.md) |
 | `STATE_DB_PATH` | ⬜ | Archivo SQLite del estado de conversaciones (por defecto `data/conversaciones.db`) |
