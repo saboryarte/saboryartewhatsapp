@@ -46,7 +46,7 @@ Después, en los paneles:
 1. **Meta** (developers.facebook.com → WhatsApp → Configuration → Webhook): `https://especia.mariomora.tech/webhook`
    con el mismo `VERIFY_TOKEN`. Facebook Login for Business → Settings: agregar el dominio en los permitidos.
 2. **Bold**: el aviso de pagos a `https://especia.mariomora.tech/webhooks/bold`.
-3. **Política de privacidad**: `https://especia.mariomora.tech/privacidad` (en la app de Meta → Configuración → Básica).
+3. **Política de privacidad**: `https://especia.mariomora.tech/privacidad.html` (en la app de Meta → Configuración → Básica).
 
 ## Actualizar a la última versión
 

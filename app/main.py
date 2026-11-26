@@ -10,7 +10,7 @@ from urllib.parse import parse_qs
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Query, Request, status
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from pydantic import ValidationError
 
 from . import archivo, conexion, precios, privacidad, transferencias
@@ -352,7 +352,13 @@ async def signup_finish(request: Request) -> JSONResponse:
     return JSONResponse({"ok": True, "mensaje": mensaje})
 
 
-@app.get("/privacidad", response_class=HTMLResponse)
+@app.get("/privacidad.html", response_class=HTMLResponse)
 async def privacy_policy() -> HTMLResponse:
     """Política de tratamiento de datos (contenido/politica_de_privacidad.md). La dirección va en la app de Meta."""
     return HTMLResponse(privacidad.page())
+
+
+@app.get("/privacidad")
+async def privacy_policy_old() -> RedirectResponse:
+    """La dirección sin «.html» se publicó primero: sigue funcionando y lleva a la nueva."""
+    return RedirectResponse("/privacidad.html", status_code=301)

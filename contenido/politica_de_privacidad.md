@@ -1,13 +1,12 @@
 <!--
-BORRADOR para revisar con la contadora o un abogado antes de publicarlo.
-- Completa todo lo que está entre [corchetes].
+Política aprobada por la dueña (noviembre de 2026). Se publica en https://especia.mariomora.tech/privacidad.html.
 - Si cambia lo que guarda el bot o por cuánto tiempo (app/archivo.py, app/respaldo.py), actualiza la sección 7.
 - El «Aviso de privacidad» del final es el texto corto que Especia muestra en WhatsApp.
 -->
 
 # Política de tratamiento de datos personales de Saboryarte
 
-**Vigente desde:** [fecha de publicación]
+**Vigente desde:** su publicación
 
 En Saboryarte cuidamos los datos que nos compartes cuando nos escribes por WhatsApp o nos haces un pedido. Esta
 política explica qué datos guardamos, para qué, con quién los compartimos, cuánto tiempo los conservamos y cómo
@@ -16,12 +15,12 @@ reglamentarios.
 
 ## 1. Quién es responsable de tus datos
 
-- **Responsable:** [nombre completo o razón social], que comercializa la marca Saboryarte.
-- **NIT o cédula:** [número]
-- **Domicilio y dirección:** [dirección], [ciudad], Colombia
-- **Correo para temas de datos personales:** [correo]
-- **WhatsApp:** [número de WhatsApp de Saboryarte]
-- **Persona que atiende las solicitudes:** [nombre y cargo]
+- **Responsable:** Juanita José Giraldo Pérez, que comercializa la marca Saboryarte.
+- **Domicilio y dirección:** Diagonal 48 este # 46 - 397, Santa Elena (corregimiento de Medellín), Medellín,
+  Antioquia, Colombia
+- **Correo para temas de datos personales:** saboryarteconsabor@gmail.com
+- **WhatsApp:** +57 323 8045194
+- **Persona que atiende las solicitudes:** Juanita José Giraldo Pérez, representante legal
 
 ## 2. A quién aplica
 
@@ -47,6 +46,7 @@ pasarela de pagos; nosotros solo recibimos el aviso de si el pago fue aprobado. 
 - Verificar los pagos por transferencia.
 - Recordar tus datos de envío para que no tengas que escribirlos otra vez en tu próxima compra.
 - Atender reclamos, cambios y garantías.
+- Escribirte unos días después de tu compra para saber cómo te fue, si aceptaste recibir ese mensaje.
 - Llevar nuestro registro de ventas y cumplir las obligaciones contables y tributarias.
 - Mejorar la atención a partir de las conversaciones.
 
@@ -70,10 +70,10 @@ Solo con los proveedores que necesitamos para atenderte, y solo con los datos ne
 | Bold | Procesar los pagos con tarjeta y otros medios de Bold |
 | Hostinger | Servidor donde funciona Especia y se guardan los datos |
 | Google (Gmail y Google Drive) | Avisos internos al equipo y copias de seguridad |
-| [Transportadora] | Entregar tu pedido (nombre, dirección y teléfono de quien recibe) |
+| Coordinadora, u otra transportadora que realice el envío | Entregar tu pedido (nombre, dirección y teléfono de quien recibe) |
 
-Algunos de estos proveedores procesan los datos fuera de Colombia, principalmente en Estados Unidos. Al
-autorizar esta política autorizas también esa transmisión, que hacemos solo para las finalidades de la sección 4.
+Algunos de estos proveedores procesan los datos fuera de Colombia, principalmente en Estados Unidos. Al autorizar
+esta política autorizas también esa transmisión, que hacemos solo para las finalidades de la sección 4.
 
 También entregaremos datos a una autoridad cuando una ley o una orden judicial lo exija.
 
@@ -85,7 +85,7 @@ También entregaremos datos a una autoridad cuando una ley o una orden judicial 
 | Historial de mensajes | 60 días |
 | Datos de envío para tu próxima compra | 60 días desde tu último mensaje, o 1 año si compraste |
 | Chat y comprobante de los pedidos pagados | 1 año |
-| Registro de pedidos (productos, valores y datos de envío) | [el tiempo que exigen las normas contables y tributarias; confirmar con la contadora] |
+| Registro de pedidos (productos, valores y datos de envío) | diez (10) años, que es el tiempo que exigen las normas comerciales y tributarias colombianas |
 | Copias de seguridad cifradas | 60 días |
 
 Pasados esos plazos los datos se borran de forma automática.
@@ -111,8 +111,8 @@ Como titular de los datos puedes:
 
 ## 10. Cómo hacer una consulta o un reclamo
 
-Escríbenos a **[correo]** o por WhatsApp (escribe «asesor» para que te atienda una persona). Indica tu nombre, tu
-número de WhatsApp y qué necesitas.
+Escríbenos a **saboryarteconsabor@gmail.com** o por WhatsApp (escribe «asesor» para que te atienda una persona).
+Indica tu nombre, tu número de WhatsApp y qué necesitas.
 
 - **Consultas** (saber qué datos tenemos y para qué): respondemos en máximo 10 días hábiles. Si no alcanzamos, te
   avisamos el motivo y respondemos en máximo 5 días hábiles más.
@@ -137,6 +137,6 @@ que nos escribas.
 
 ## Aviso de privacidad (texto corto para WhatsApp)
 
-> Te cuento que Especia es nuestra asistente automática 🌿 Usamos tus mensajes y datos solo para atenderte y
-> enviar tus pedidos, según nuestra política de privacidad: [dirección de esta política]. Si quieres hablar con
-> una persona, escribe *asesor* 💛
+> *Te cuento que Especia es nuestra asistente automática 🌿 Usamos tus mensajes y datos solo para atenderte y
+> enviar tus pedidos, según nuestra política de privacidad:* **https://especia.mariomora.tech/privacidad.html**.
+> *Si quieres hablar con una persona, escribe* **asesor** 💛

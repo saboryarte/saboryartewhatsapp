@@ -6,12 +6,19 @@ from app.main import app
 
 
 def test_la_politica_se_publica_en_html():
-    r = TestClient(app).get("/privacidad")
+    r = TestClient(app).get("/privacidad.html")
     assert r.status_code == 200 and "text/html" in r.headers["content-type"]
     assert "<h1>Política de tratamiento de datos personales de Saboryarte</h1>" in r.text
     assert "Ley 1581 de 2012" in r.text
     assert "BORRADOR" not in r.text  # los comentarios para quien edita no se publican
     assert "<table>" in r.text and "<blockquote>" in r.text
+    assert "[" not in r.text.split("<main>")[1]  # sin espacios por llenar del borrador
+    assert "https://especia.mariomora.tech/privacidad.html" in r.text
+
+
+def test_la_direccion_sin_extension_lleva_a_la_nueva():
+    r = TestClient(app).get("/privacidad", follow_redirects=False)
+    assert r.status_code == 301 and r.headers["location"] == "/privacidad.html"
 
 
 def test_convierte_lo_basico_de_markdown_y_escapa_el_html():

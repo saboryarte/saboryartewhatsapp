@@ -193,7 +193,7 @@ whatsapp-claude-agent/
 │   ├── respaldo.py    # Copia de seguridad diaria a Google Drive con rclone
 │   ├── transferencias.py # Pago por transferencia: comprobantes y botones del equipo
 │   ├── conexion.py      # Conexión del número del negocio en coexistencia (/conectar) y avisos de desconexión
-│   ├── privacidad.py    # Página pública /privacidad (contenido/politica_de_privacidad.md)
+│   ├── privacidad.py    # Página pública /privacidad.html (contenido/politica_de_privacidad.md)
 │   ├── exporte.py     # Excel diario de pedidos (correo y Drive)
 │   ├── hoja_precios.py # Hoja de precios para la dueña: exportar e importar con validación
 │   ├── orders.py      # Cálculos del pedido: subtotal, tarifa de envío por ciudad y resumen (P8)

@@ -1,4 +1,4 @@
-"""Página pública /privacidad: la política de tratamiento de datos de contenido/politica_de_privacidad.md.
+"""Página pública /privacidad.html: la política de tratamiento de datos de contenido/politica_de_privacidad.md.
 
 El archivo se edita en el repositorio, como los precios. Aquí se convierte a HTML con lo poco de Markdown que usa:
 títulos, párrafos, listas, tablas, citas, separadores, **negrita** y *cursiva*. Los comentarios <!-- --> no se muestran.
