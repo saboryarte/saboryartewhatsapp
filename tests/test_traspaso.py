@@ -126,7 +126,7 @@ class TestTraspaso:
         monkeypatch.setattr("app.router.is_open", lambda now: False)
         escribir(client, "hola")
         assert "fuera de horario" in mocks["list"].call_args.args[1]
-        assert len(mocks["list"].call_args.args[3]) == 7
+        assert len(mocks["list"].call_args.args[3]) == 4
 
     def test_bot_en_silencio_mientras_atiende_una_persona(self, client, mocks):
         escribir(client, "asesor")
@@ -154,13 +154,14 @@ class TestTraspaso:
         escribir(client, "2 de oro")
         escribir(client, "Laura Gómez, Cra 43 # 10-20, Medellín, 3001112233")
         elegir(client, "p8_confirmar", "button_reply")
+        elegir(client, "p11_link", "button_reply")  # sin Bold configurado: pasa a una persona (P13H)
         asunto, ficha = mocks["notify"].call_args.args
         assert "Pedido armado" in asunto
         assert "• 2 × Sal de oro — $52.000" in ficha
         assert "Total: $61.000" in ficha
         assert "Envío a: Laura Gómez, Cra 43 # 10-20, Medellín · Tel. 3001112233" in ficha
         assert "Etiquetas: Producto, Pendiente de pago" in ficha
-        assert "P6 → P7 → P8 → P11" in ficha
+        assert "P6 → P7 → P8 → P11 → P13H" in ficha
 
 
 # ── Ecos de la app (coexistencia) ─────────────────────────────────────────────

@@ -3,10 +3,10 @@ import re
 import unicodedata
 
 # Mensajes de bienvenida con la voz de Saboryarte (docs/flujos/saboryarte.md, §5). Se elige uno al azar
-# en cada saludo; hacen de G1 mientras el bot no envíe el menú como lista de WhatsApp.
+# en cada saludo como texto de la lista del menú (G1). La primera es la del artefacto.
 # "{nombre}" se reemplaza por ", <Nombre>" si conocemos el nombre del perfil, o por "" si no.
 WELCOME_MESSAGES: tuple[str, ...] = (
-    "¡Hola{nombre}! 🌿 Qué alegría tenerte por acá. Soy Especia, de Saboryarte.\n\n"
+    "¡Hola{nombre}! 🌿 Qué alegría tenerte por acá. Soy Especia, la asistente virtual de Saboryarte.\n\n"
     "Cuéntame, ¿en qué te puedo ayudar hoy?",
     "¡Hola{nombre}! 🧂 Qué gusto que nos escribas. Soy Especia y te ayudo "
     "con nuestras mezclas, tus pedidos o lo que necesites.\n\n¿Qué te trae por acá?",

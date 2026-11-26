@@ -108,18 +108,3 @@ def test_prompt_y_base_de_conocimiento_llevan_enlace_de_instagram():
     from app.prompt import system_prompt
 
     assert system_prompt().count(INSTAGRAM_URL) >= 2  # instrucción + base de conocimiento
-
-
-
-def test_formulario_del_kit_dentro_de_limites():
-    """Botón del Flow: 30 caracteres o menos y sin emojis; opciones del CheckboxGroup: título ≤30, descripción ≤300."""
-    paso = POR_ID["P4F"]
-    assert len(paso["boton_formulario"]) <= 30 and paso["boton_formulario"].isascii()
-    for op in POR_ID["P4C"]["opciones"]:
-        assert len(op["titulo"]) <= 30 and len(op["descripcion"]) <= 300
-    flow = json.loads((ROOT / "app/flows/kit_flow.json").read_text(encoding="utf-8"))
-    pantalla = flow["screens"][0]
-    assert pantalla["id"] == "KIT" and pantalla["terminal"] is True
-    casillas = pantalla["layout"]["children"][0]["children"][0]
-    assert casillas["type"] == "CheckboxGroup"
-    assert casillas["min-selected-items"] == casillas["max-selected-items"] == "${data.cantidad}"

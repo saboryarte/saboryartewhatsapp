@@ -1,6 +1,7 @@
 """Cálculos del pedido: subtotal, envío y resumen (P8). Todo en código, nunca en Claude.
 
-Un ítem del pedido es {"producto": id, "cantidad": n} (mezcla o kit mini) o {"kit": [ids de mezclas]} (kit armado).
+Un ítem del pedido es {"producto": id, "cantidad": n} (mezcla o kit mini) o {"kit": [ids de mezclas], "cantidad": n}
+(n kits armados iguales; los pedidos anteriores no traen «cantidad» y cuentan como 1).
 """
 import re
 import unicodedata
@@ -25,18 +26,32 @@ def _mentions(city: str, name: str) -> bool:
     return re.search(rf"\b{re.escape(name)}\b", _normalize(city)) is not None
 
 
-def shipping_cost(city: str) -> int:
-    envios = current_prices()["envios"]
+def shipping_zone(city: str) -> str:
+    """«medellin», «area_metropolitana» o «resto_del_pais» (las tarifas de contenido/precios.yaml)."""
     if _mentions(city, "medellin"):
-        return envios["medellin"]
+        return "medellin"
     if any(_mentions(city, name) for name in _AREA_METROPOLITANA):
-        return envios["area_metropolitana"]
-    return envios["resto_del_pais"]
+        return "area_metropolitana"
+    return "resto_del_pais"
+
+
+def shipping_cost(city: str) -> int:
+    return current_prices()["envios"][shipping_zone(city)]
+
+
+def same_city(a: str, b: str) -> bool:
+    """«Medellín» y «Medellin, Antioquia» son la misma ciudad."""
+    a, b = " ".join(re.sub(r"[^\w ]", " ", _normalize(a)).split()), " ".join(re.sub(r"[^\w ]", " ", _normalize(b)).split())
+    return bool(a and b) and (re.search(rf"\b{re.escape(a)}\b", b) is not None or re.search(rf"\b{re.escape(b)}\b", a) is not None)
+
+
+def item_quantity(item: dict[str, Any]) -> int:
+    return item.get("cantidad", 1)
 
 
 def item_total(item: dict[str, Any]) -> int:
     if "kit" in item:
-        return kit_price(len(item["kit"])) or 0
+        return (kit_price(len(item["kit"])) or 0) * item_quantity(item)
     return get_product(item["producto"])["precio"] * item["cantidad"]
 
 
@@ -47,7 +62,8 @@ def subtotal(items: list[dict[str, Any]]) -> int:
 def describe_item(item: dict[str, Any]) -> str:
     if "kit" in item:
         names = ", ".join(get_product(mix)["nombre"] for mix in item["kit"])
-        return f"• Kit de {len(item['kit'])} mezclas ({names}) — {format_price(item_total(item))}"
+        kits = f"{item_quantity(item)} × Kit" if item_quantity(item) > 1 else "Kit"
+        return f"• {kits} de {len(item['kit'])} mezclas ({names}) — {format_price(item_total(item))}"
     product = get_product(item["producto"])
     return f"• {item['cantidad']} × {product['nombre']} — {format_price(item_total(item))}"
 
@@ -62,18 +78,18 @@ def ask_missing_shipping(missing: list[str]) -> str:
     return f"¡Gracias! Para el envío me falta {joined}. ¿Me lo compartes? 😊"
 
 
-def order_summary(items: list[dict[str, Any]], shipping: dict[str, str]) -> str:
-    """Cuerpo del mensaje P8 con los valores calculados."""
+def order_summary(items: list[dict[str, Any]], shipping: dict[str, str], aviso_resto: str = "") -> str:
+    """Cuerpo del mensaje P8 con los valores calculados. «aviso_resto» va si el envío es al resto del país."""
     sub = subtotal(items)
     envio = shipping_cost(shipping["ciudad"])
     lines = "\n".join(describe_item(item) for item in items)
+    aviso = f" _{aviso_resto}_" if aviso_resto and shipping_zone(shipping["ciudad"]) == "resto_del_pais" else ""
     return (
         f"Este es tu pedido:\n{lines}\n\n"
         f"Subtotal: {format_price(sub)}\n"
-        f"Envío: {format_price(envio)} ({shipping['ciudad']})\n"
+        f"Envío: {format_price(envio)} ({shipping['ciudad']}){aviso}\n"
         f"*Total: {format_price(sub + envio)}*\n\n"
-        f"Envío a: {shipping['nombre']}, {shipping['direccion']}, {shipping['ciudad']} · Tel. {shipping['telefono']}\n"
-        "_Una persona del equipo confirma el valor final del envío._\n\n"
+        f"Envío a: {shipping['nombre']}, {shipping['direccion']}, {shipping['ciudad']} · Tel. {shipping['telefono']}\n\n"
         "¿Todo bien?"
     )
 
@@ -92,13 +108,3 @@ def parse_quantity(text: str) -> int | None:
     return quantity if quantity and 1 <= quantity <= 100 else None
 
 
-def merge_items(base: list[dict], new: list[dict]) -> list[dict]:
-    """Suma cantidades del mismo producto; los kits armados se agregan aparte."""
-    merged = [dict(item) for item in base]
-    for item in new:
-        same = next((m for m in merged if "producto" in item and m.get("producto") == item["producto"]), None)
-        if same:
-            same["cantidad"] += item["cantidad"]
-        else:
-            merged.append(dict(item))
-    return merged

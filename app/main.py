@@ -27,7 +27,7 @@ from .router import (
 )
 from .state import load_conversation, mark_processed, save_conversation
 from .usage import remitente_actual
-from .whatsapp import WhatsAppContact, WhatsAppMessage, WhatsAppPayload, flow_response, interactive_reply
+from .whatsapp import WhatsAppContact, WhatsAppMessage, WhatsAppPayload, interactive_reply
 
 logging.basicConfig(level=settings.log_level)
 logger = logging.getLogger(__name__)
@@ -62,8 +62,9 @@ async def _alert_loop() -> None:
             last_purge = time.time()
 
 
-# Fotos y documentos: se aceptan como comprobante de una transferencia.
-_MEDIA_TYPES = ("image", "document")
+# Fotos y documentos (comprobante de una transferencia o prueba de una queja); audios, videos y stickers reciben O2.
+_MEDIA_TYPES = ("image", "document", "audio", "video", "sticker")
+_MEDIA_LABELS = {"image": "Foto", "document": "Documento", "audio": "Audio", "video": "Video", "sticker": "Sticker"}
 # Avisos de Meta sobre la conexión del número en coexistencia (app/conexion.py).
 _CONNECTION_FIELDS = ("account_update", "history", "smb_app_state_sync")
 
@@ -72,13 +73,10 @@ def _incoming_text(message: WhatsAppMessage) -> str:
     """Texto legible de lo que envió el cliente, para el archivo de chats."""
     if message.type == "text":
         return (message.text or {}).get("body", "")
-    response = flow_response(message.interactive)
-    if response is not None:
-        return f"[Formulario] {json.dumps(response, ensure_ascii=False)}"
     if message.type in _MEDIA_TYPES:
         media = getattr(message, message.type) or {}
         name = media.get("filename") or media.get("caption") or ""
-        return f"[{'Foto' if message.type == 'image' else 'Documento'}{': ' + name if name else ''}]"
+        return f"[{_MEDIA_LABELS[message.type]}{': ' + name if name else ''}]"
     reply = interactive_reply(message.interactive)
     return f"[Tocó] {reply.get('title', reply['id'])}" if reply else "[Mensaje interactivo]"
 

@@ -5,10 +5,10 @@ responde; vuelve cuando la persona envía la frase de cierre o tras HANDOFF_IDLE
 """
 import time
 import unicodedata
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from .config import settings
-from .flows import format_price, get_product
+from .flows import format_price
 from .orders import describe_item, missing_shipping_fields, shipping_cost, subtotal
 from .state import Conversation
 
@@ -24,11 +24,33 @@ CLOSING_PHRASES = ("te dejo de nuevo con especia", "te dejo de nuevo con chatsab
 
 MOTIVOS = {
     "solicitud": "Pidió hablar con una persona",
-    "pedido": "Pedido armado: confirmar pago y despacho",
+    "pedido": "Pedido armado: enviar el link de pago y confirmar el despacho",
     "equipo_intervino": "El equipo escribió desde la app",
     "no_entiende": "Especia no entendió dos mensajes seguidos",
+    "corporativo": "Regalo corporativo",
+    "distribuidor": "Quiere distribuir Saboryarte",
+    "proveedor": "Proveedor o quiere ofrecernos algo",
+    "queja": "Queja o reclamo",
+    "queja_grave": "Reclamo grave: atender ya",
+    "alianza": "Alianza, prensa o evento",
+    "pago": "La transferencia no llegó: revisar el pago con el cliente",
 }
-_ETIQUETAS = {"pedido": ["Producto", "Pendiente de pago"]}
+_ETIQUETAS = {
+    "pedido": ["Producto", "Pendiente de pago"],
+    "corporativo": ["Corporativo"],
+    "distribuidor": ["Distribuidor"],
+    "proveedor": ["Proveedor"],
+    "queja_grave": ["Urgente"],
+    "alianza": ["Alianzas"],
+    "pago": ["Pagos"],
+}
+# Regalos corporativos: prioridad alta en la temporada de fin de año.
+_MESES_TEMPORADA_REGALOS = (11, 12)
+# Despachos: martes y jueves.
+_DIAS_DE_DESPACHO = (1, 3)
+_DIAS = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
+_MESES = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
+          "noviembre", "diciembre")
 
 
 def _normalize(text: str) -> str:
@@ -60,11 +82,31 @@ def is_closing_message(text: str) -> bool:
     return any(phrase in _normalize(text) for phrase in CLOSING_PHRASES)
 
 
+def priority(motivo: str, now: datetime) -> str:
+    if motivo == "queja_grave":
+        return "urgente"
+    if motivo == "corporativo" and now.astimezone(COLOMBIA).month in _MESES_TEMPORADA_REGALOS:
+        return "alta"
+    return "normal"
+
+
+def dispatch_day(paid: datetime) -> date:
+    """Siguiente martes o jueves después del día del pago (el mismo día puede que ya no alcance)."""
+    day = paid.astimezone(COLOMBIA).date() + timedelta(days=1)
+    while day.weekday() not in _DIAS_DE_DESPACHO:
+        day += timedelta(days=1)
+    return day
+
+
+def spanish_date(day: date) -> str:
+    return f"{_DIAS[day.weekday()]} {day.day} de {_MESES[day.month - 1]}"
+
+
 def start_handoff(conversation: Conversation, motivo: str) -> None:
     conversation.en_traspaso = True
     conversation.traspaso = {
         "motivo": motivo,
-        "prioridad": "normal",
+        "prioridad": priority(motivo, datetime.now(COLOMBIA)),
         "inicio": time.time(),
         "equipo_respondio": motivo == "equipo_intervino",
         "ultima_respuesta_equipo": time.time() if motivo == "equipo_intervino" else None,
@@ -115,6 +157,8 @@ def handoff_ficha(conversation: Conversation) -> str:
         lines.append(f"Etiquetas: {', '.join(conversation.etiquetas)}")
     if conversation.ruta:
         lines.append(f"Ruta: {' → '.join(conversation.ruta)}")
+    if conversation.datos.get("detalle"):
+        lines.append(f"Lo que contó el cliente: {conversation.datos['detalle']}")
 
     datos = conversation.datos
     if datos.get("pedido"):
@@ -129,8 +173,6 @@ def handoff_ficha(conversation: Conversation) -> str:
             ]
         else:
             lines.append(f"Subtotal: {format_price(sub)} (faltan datos de envío)")
-    elif datos.get("producto") and get_product(datos["producto"]):
-        lines.append(f"Producto que estaba viendo: {get_product(datos['producto'])['nombre']}")
 
     recent = conversation.historial[-6:]
     if recent:

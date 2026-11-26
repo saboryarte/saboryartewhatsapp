@@ -30,10 +30,3 @@ def bold_desactivado(monkeypatch):
     monkeypatch.setattr(settings, "bold_sandbox", False)
     monkeypatch.setattr(settings, "bold_return_url", "")
 
-
-@pytest.fixture(autouse=True)
-def flow_del_kit_desactivado(monkeypatch):
-    """Sin WhatsApp Flow por defecto, aunque el .env tenga WHATSAPP_KIT_FLOW_ID: el kit usa la lista de una en una."""
-    from app.config import settings
-
-    monkeypatch.setattr(settings, "whatsapp_kit_flow_id", "")

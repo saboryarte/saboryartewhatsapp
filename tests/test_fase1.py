@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import state, whatsapp
-from app.flows import EN_CONSTRUCCION, get_step, list_rows
+from app.flows import get_step, list_rows
 from app.main import app
 from app.state import Conversation, load_conversation, mark_processed, save_conversation
 
@@ -110,7 +110,7 @@ class TestDeduplicacion:
     def test_eleccion_duplicada_responde_una(self, client, mocks):
         client.post("/webhook", json=eleccion_lista("wamid.ldup", "menu_comprar"))
         client.post("/webhook", json=eleccion_lista("wamid.ldup", "menu_comprar"))
-        mocks["list"].assert_called_once()
+        mocks["buttons"].assert_called_once()
 
 
 class TestMenu:
@@ -123,17 +123,17 @@ class TestMenu:
 
     def test_eleccion_del_menu_guarda_flujo_y_responde(self, client, mocks):
         client.post("/webhook", json=eleccion_lista("wamid.e1", "menu_proveedor", "🤝 Soy proveedor"))
-        mocks["text"].assert_called_once_with(REMITENTE, EN_CONSTRUCCION.format(opcion="🤝 Soy proveedor"))
+        mocks["text"].assert_called_once_with(REMITENTE, get_step("V1")["texto"])
         conv = load_conversation(REMITENTE)
-        assert (conv.flujo_activo, conv.paso) == ("proveedor", "V1")
+        assert (conv.flujo_activo, conv.paso, conv.en_traspaso) == ("directo", "V1", True)
         assert conv.historial[0] == {"role": "user", "content": "Elegí «🤝 Soy proveedor»"}
 
     def test_respuesta_de_boton_tambien_se_reconoce(self, client, mocks):
         payload = _payload({"id": "wamid.b1", "type": "interactive", "interactive": {
-            "type": "button_reply", "button_reply": {"id": "menu_seguimiento", "title": "📦 Seguir mi pedido"},
+            "type": "button_reply", "button_reply": {"id": "p1_kits", "title": "Kits"},
         }})
         client.post("/webhook", json=payload)
-        assert load_conversation(REMITENTE).flujo_activo == "seguimiento"
+        assert load_conversation(REMITENTE).paso == "P4"
 
     def test_opcion_desconocida_reenvia_menu(self, client, mocks):
         client.post("/webhook", json=eleccion_lista("wamid.e2", "opcion_vieja"))
@@ -148,11 +148,11 @@ class TestMenu:
         mocks["list"].assert_not_called()
 
     def test_saludo_a_mitad_de_flujo_retoma_el_paso(self, client, mocks):
-        client.post("/webhook", json=eleccion_lista("wamid.f1", "menu_comprar", "🧂 Comprar mezclas"))
+        client.post("/webhook", json=eleccion_lista("wamid.f1", "menu_comprar", "🧂 Comprar mis mezclas"))
         client.post("/webhook", json=texto("wamid.f2", "hola"))
-        cuerpo, filas = mocks["list"].call_args.args[1], mocks["list"].call_args.args[3]
+        cuerpo, filas = mocks["buttons"].call_args.args[1], mocks["buttons"].call_args.args[2]
         assert cuerpo.startswith("¡Hola de nuevo! 🌿 Sigamos donde íbamos.") and "¿Qué quieres hacer?" in cuerpo
-        assert filas[0]["id"] == "p1_catalogo"  # las opciones de P1, no el menú
+        assert filas[0]["id"] == "p1_kits"  # las opciones de P1, no el menú
         mocks["ask"].assert_not_called()
 
 
@@ -231,8 +231,8 @@ class TestWhatsAppInteractivo:
         assert lista["body"] == {"text": "¿Qué buscas?"}
         assert lista["action"]["button"] == "Ver opciones"
         filas = lista["action"]["sections"][0]["rows"]
-        assert len(filas) == 7
-        assert filas[0] == {"id": "menu_comprar", "title": "🧂 Comprar mezclas", "description": "Catálogo, kits y pedidos"}
+        assert len(filas) == 4
+        assert filas[0] == {"id": "menu_comprar", "title": "🧂 Comprar mis mezclas", "description": "Kits y pedidos"}
 
     def test_send_buttons_arma_el_payload_de_botones(self, graph):
         enviados, _ = graph
@@ -261,29 +261,3 @@ class TestWhatsAppInteractivo:
     def test_interactive_reply(self, interactive, esperado):
         reply = whatsapp.interactive_reply(interactive)
         assert (reply or {}).get("id") == esperado
-
-
-def test_send_flow_arma_el_mensaje_de_formulario(monkeypatch):
-    enviados = []
-
-    def handler(request: httpx.Request) -> httpx.Response:
-        enviados.append(json.loads(request.content))
-        return httpx.Response(200, json={"messages": [{"id": "wamid.out"}]})
-
-    cliente_real = httpx.AsyncClient
-    monkeypatch.setattr(whatsapp.httpx, "AsyncClient", lambda: cliente_real(transport=httpx.MockTransport(handler)))
-    monkeypatch.setattr(whatsapp.settings, "whatsapp_token", "token-prueba")
-    monkeypatch.setattr(whatsapp.settings, "whatsapp_phone_number_id", "123")
-    asyncio.run(whatsapp.send_flow(REMITENTE, "Arma tu kit", "Elegir mezclas", "FLOW1", "kit-3", "KIT", {"cantidad": 3}, "draft"))
-    parametros = enviados[0]["interactive"]["action"]["parameters"]
-    assert enviados[0]["interactive"]["type"] == "flow"
-    assert parametros == {
-        "flow_message_version": "3", "flow_token": "kit-3", "flow_id": "FLOW1", "flow_cta": "Elegir mezclas",
-        "flow_action": "navigate", "flow_action_payload": {"screen": "KIT", "data": {"cantidad": 3}}, "mode": "draft",
-    }
-
-
-def test_flow_response():
-    assert whatsapp.flow_response({"type": "nfm_reply", "nfm_reply": {"response_json": '{"mezclas": ["a"]}'}}) == {"mezclas": ["a"]}
-    assert whatsapp.flow_response({"type": "list_reply", "list_reply": {"id": "x"}}) is None
-    assert whatsapp.flow_response({"type": "nfm_reply", "nfm_reply": {"response_json": "no es json"}}) is None

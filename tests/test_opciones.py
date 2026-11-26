@@ -52,56 +52,53 @@ def elegir(client, opcion_id: str, tipo: str = "list_reply") -> None:
 
 class TestEscribirEsTocar:
     def test_escribir_el_texto_de_una_opcion_la_elige(self, client, mocks):
-        escribir(client, "hola")                # menú G1
-        escribir(client, "Comprar mezclas")     # = tocar «🧂 Comprar mezclas»
-        assert [f["id"] for f in mocks["list"].call_args.args[3]][0] == "p1_catalogo"
+        escribir(client, "hola")                    # menú G1
+        escribir(client, "Comprar mis mezclas")     # = tocar «🧂 Comprar mis mezclas»
+        assert [b["id"] for b in mocks["buttons"].call_args.args[2]] == ["p1_kits", "p1_pedido"]
         assert load_conversation(REMITENTE).paso == "P1"
         mocks["ask"].assert_not_called()
 
     def test_parte_unica_del_nombre_tambien_cuenta(self, client, mocks):
-        elegir(client, "p1_catalogo")           # lista de las 6 mezclas
-        escribir(client, "chilemon")            # solo «Sal chilemon» la contiene
-        assert "*Sal chilemon*" in mocks["buttons"].call_args.args[1]
+        elegir(client, "p1_kits", "button_reply")   # botones Kit mini / Armar mi kit
+        escribir(client, "armar")                   # solo «Armar mi kit» lo contiene
+        assert mocks["list"].call_args.args[2] == "Ver kits"
+        assert load_conversation(REMITENTE).paso == "P4B"
 
     def test_texto_ambiguo_no_elige(self, client, mocks):
-        elegir(client, "p1_catalogo")
-        escribir(client, "sal de")              # varias mezclas lo contienen: va a Claude
+        elegir(client, "p4_armar", "button_reply")
+        escribir(client, "mezclas")                 # todas las filas lo contienen: va a Claude
         mocks["ask"].assert_called_once()
 
     def test_escribir_el_boton_de_la_lista_la_vuelve_a_mostrar(self, client, mocks):
-        elegir(client, "p1_pedido")             # lista con botón «Ver productos»
-        escribir(client, "Ver productos")
+        elegir(client, "p4_armar", "button_reply")  # lista con botón «Ver kits»
+        escribir(client, "Ver kits")
         assert mocks["list"].call_count == 2
-        assert mocks["list"].call_args.args[2] == "Ver productos"
+        assert mocks["list"].call_args.args[2] == "Ver kits"
         mocks["ask"].assert_not_called()
 
-    def test_cantidad_con_botones_escrita(self, client, mocks):
-        elegir(client, "pedir_sal_de_oro")      # botones 1 / 2 / 3
+    def test_cantidad_de_kits_mini_escrita(self, client, mocks):
+        elegir(client, "p4_kit_mini", "button_reply")
         escribir(client, "2")
-        assert "• 2 × Sal de oro — $52.000" in mocks["buttons"].call_args.args[1]
+        conv = load_conversation(REMITENTE)
+        assert conv.datos["pedido"] == [{"producto": "kit_mini", "cantidad": 2}] and conv.paso == "P7"
 
 
 class TestPreguntaEnUnPaso:
     def test_la_respuesta_llega_con_las_opciones_del_paso(self, client, mocks):
-        elegir(client, "p1_kits")               # botones Kit mini / Armar mi kit / Regalo empresarial
+        elegir(client, "p1_kits", "button_reply")   # botones Kit mini / Armar mi kit
         escribir(client, "¿el kit mini sirve para regalo?")
         cuerpo, botones = mocks["buttons"].call_args.args[1], mocks["buttons"].call_args.args[2]
         assert cuerpo == "respuesta de Claude"
-        assert [b["id"] for b in botones] == ["p4_kit_mini", "p4_armar", "p4_regalo"]
+        assert [b["id"] for b in botones] == ["p4_kit_mini", "p4_armar"]
 
     def test_fuera_de_un_paso_llega_con_ver_menu_y_persona(self, client, mocks):
-        elegir(client, "faq_uso")               # P9C (texto) + P9S («¿Te sirvió?»)
-        elegir(client, "p9s_si", "button_reply")
-        elegir(client, "p1_catalogo")
-        elegir(client, "prod_sal_de_oro")
-        elegir(client, "p2f_agregar", "button_reply")
-        elegir(client, "cantidad_1", "button_reply")
-        elegir(client, "carrito_listo", "button_reply")  # P7: pide datos de envío (texto)
+        elegir(client, "p4_kit_mini", "button_reply")
+        escribir(client, "1")                       # P7: pregunta la ciudad (texto)
         escribir(client, "¿hacen envíos a Pasto?")
         cuerpo, botones = mocks["buttons"].call_args.args[1], mocks["buttons"].call_args.args[2]
         assert cuerpo.startswith("respuesta de Claude") and "¿A qué ciudad" in cuerpo  # repite lo pendiente
         assert [b["id"] for b in botones] == ["atajo_menu", "atajo_persona"]
-        assert load_conversation(REMITENTE).paso == "P7"  # sigue esperando los datos
+        assert load_conversation(REMITENTE).paso == "P7"  # sigue esperando la ciudad
 
     def test_ver_menu_abre_el_menu(self, client, mocks):
         elegir(client, "atajo_menu", "button_reply")
@@ -123,7 +120,7 @@ class TestNoEntiende:
         mocks["ask"].return_value = "NO_ENTIENDO"
         escribir(client, "asdf qwe")
         escribir(client, "zxcv")
-        assert mocks["text"].call_args.args[1].startswith("Mejor te paso con alguien del equipo")
+        assert mocks["text"].call_args.args[1].startswith("Mejor te paso con Juanita")
         conv = load_conversation(REMITENTE)
         assert conv.en_traspaso and conv.traspaso["motivo"] == "no_entiende"
         assert "no entendió" in mocks["notify"].call_args.args[0]
@@ -153,25 +150,27 @@ def test_saludos_con_letras_repetidas(texto):
 
 class TestLlevarALaOpcion:
     def test_quiero_un_kit_lleva_a_los_kits(self, client, mocks):
-        elegir(client, "p1_catalogo")
+        escribir(client, "hola")
         mocks["ask"].return_value = "IR:p1_kits"
         escribir(client, "Mejor quiero un kit")
         botones = mocks["buttons"].call_args.args[2]
-        assert [b["id"] for b in botones] == ["p4_kit_mini", "p4_armar", "p4_regalo"]
+        assert [b["id"] for b in botones] == ["p4_kit_mini", "p4_armar"]
         conv = load_conversation(REMITENTE)
-        assert conv.paso == "P4" and conv.historial[-2]["content"] == "Elegí «Kit mini y kits»"
+        assert conv.paso == "P4" and conv.historial[-1]["content"].startswith("Tenemos el kit mini")
 
     def test_kit_de_3_abre_la_seleccion_de_mezclas(self, client, mocks):
         mocks["ask"].return_value = "IR:kit_3"
         escribir(client, "hola")                          # menú
         escribir(client, "quiero armar un kit de 3 mezclas")
-        assert "kit de 3 mezclas" in mocks["list"].call_args.args[1]  # sin Flow en pruebas: lista de una en una
-        assert load_conversation(REMITENTE).datos["kit"] == 3
+        assert mocks["text"].call_args.args[1].startswith("¡Tu kit de 3 mezclas! 🎁 ¿Cuáles 3 quieres")
+        conv = load_conversation(REMITENTE)
+        assert conv.paso == "P4K" and conv.datos["kit"] == 3
 
     def test_primer_mensaje_con_intencion_va_directo(self, client, mocks):
         mocks["ask"].return_value = "IR:p1_pedido"
         escribir(client, "quiero hacer un pedido")
-        assert mocks["list"].call_args.args[2] == "Ver productos"
+        assert mocks["text"].call_args.args[1].startswith("¡Listo! Armemos tu pedido")
+        assert load_conversation(REMITENTE).paso == "P6"
 
     def test_destino_no_permitido_no_navega_ni_muestra_el_codigo(self, client, mocks):
         escribir(client, "hola")

@@ -1,4 +1,4 @@
-"""Ruta de compra: navegación del catálogo (P1–P5, P9) y prompt de Claude con la base de conocimiento."""
+"""Ruta de compra: navegación (P1, P4, P6) y prompt de Claude con la base de conocimiento."""
 from pathlib import Path
 from unittest.mock import AsyncMock
 
@@ -59,100 +59,42 @@ def ids(filas: list[dict]) -> list[str]:
     return [f["id"] for f in filas]
 
 
-class TestNavegacionCatalogo:
-    def test_comprar_muestra_p1(self, client, mocks):
+class TestNavegacionCompra:
+    def test_comprar_muestra_p1_con_dos_botones(self, client, mocks):
         elegir(client, "menu_comprar")
-        _, cuerpo, boton, filas = mocks["list"].call_args.args
-        assert cuerpo == get_step("P1")["texto"] and boton == "Ver opciones"
-        assert ids(filas) == ids(list_rows("P1"))
+        _, cuerpo, botones = mocks["buttons"].call_args.args
+        assert cuerpo == get_step("P1")["texto"]
+        assert [(b["id"], b["title"]) for b in botones] == [("p1_kits", "Kits"), ("p1_pedido", "Hacer mi pedido")]
         conv = load_conversation(REMITENTE)
         assert (conv.flujo_activo, conv.paso) == ("compra", "P1")
 
-    def test_ver_mezclas_lista_los_6_productos(self, client, mocks):
-        elegir(client, "p1_catalogo")
-        filas = mocks["list"].call_args.args[3]
-        assert [f["title"] for f in filas] == [
-            "Sal de oro", "Sal de sol", "Sal de luna rosa", "Sal de la vid", "Sal chilemon", "Mezcla tierra de fuego",
-        ]
-
-    def test_elegir_mezcla_envia_ficha_con_botones(self, client, mocks):
-        elegir(client, "prod_sal_de_la_vid")
-        _, ficha, botones = mocks["buttons"].call_args.args
-        assert "*Sal de la vid*" in ficha and "vino tinto" in ficha and "$26.000" in ficha
-        assert ids(botones) == ["p2f_agregar", "p2f_otra", "p2f_menu"]
-        conv = load_conversation(REMITENTE)
-        assert conv.paso == "P2F" and conv.datos["producto"] == "sal_de_la_vid"
-
-    def test_tierra_de_fuego_muestra_60_g(self, client, mocks):
-        elegir(client, "prod_tierra_de_fuego")
-        assert "60 g" in mocks["buttons"].call_args.args[1]
-
-    def test_agregar_al_pedido_inicia_el_pedido(self, client, mocks):
-        elegir(client, "prod_sal_de_oro")
-        elegir(client, "p2f_agregar", "button_reply")
+    def test_kits_muestra_el_precio_del_kit_mini(self, client, mocks):
+        elegir(client, "p1_kits", "button_reply")
         _, cuerpo, botones = mocks["buttons"].call_args.args
-        assert "*Sal de oro*" in cuerpo and "$26.000 c/u" in cuerpo
-        assert [b["title"] for b in botones] == ["1", "2", "3"]
-        conv = load_conversation(REMITENTE)
-        assert conv.paso == "P6Q" and conv.datos["producto_pendiente"] == "sal_de_oro"
+        assert "$60.000" in cuerpo and "[precio" not in cuerpo
+        assert ids(botones) == ["p4_kit_mini", "p4_armar"]
 
-    def test_volver_al_menu_reinicia(self, client, mocks):
-        elegir(client, "prod_sal_de_oro")
-        elegir(client, "p2f_menu", "button_reply")
-        assert ids(mocks["list"].call_args.args[3])[0] == "menu_comprar"
-        conv = load_conversation(REMITENTE)
-        assert conv.flujo_activo is None and conv.datos == {}
-
-    def test_las_mas_queridas_envia_botones(self, client, mocks):
-        elegir(client, "p1_queridas")
-        _, cuerpo, botones = mocks["buttons"].call_args.args
-        assert "Chilemon" in cuerpo
-        assert ids(botones) == ["p3_oro", "p3_sol", "p3_chilemon"]
-
-    def test_kits_y_armar_kit(self, client, mocks):
-        elegir(client, "p1_kits")
-        assert "$60.000" in mocks["buttons"].call_args.args[1]
+    def test_armar_kit_lista_los_tamanos_con_precio(self, client, mocks):
         elegir(client, "p4_armar", "button_reply")
-        assert ids(mocks["list"].call_args.args[3]) == ["kit_2", "kit_3", "kit_4", "kit_5", "kit_6"]
+        filas = mocks["list"].call_args.args[3]
+        assert ids(filas) == ["kit_2", "kit_3", "kit_4", "kit_5", "kit_6"]
+        assert filas[0]["title"] == "2 mezclas · $48.000"
 
-    def test_no_se_cual_recomienda_y_muestra_mezclas(self, client, mocks):
-        elegir(client, "uso_carnes")
-        recomendacion = mocks["text"].call_args.args[1]
-        assert "Sal de la vid" in recomendacion and "Mezcla tierra de fuego" in recomendacion
-        assert len(mocks["list"].call_args.args[3]) == 6  # lista P2 para elegir
+    def test_el_precio_de_los_kits_sale_de_la_hoja_de_precios(self, client, mocks, monkeypatch):
+        monkeypatch.setattr("app.flows.kit_price", lambda n: 50_000 if n == 2 else 1)
+        elegir(client, "p4_armar", "button_reply")
+        assert mocks["list"].call_args.args[3][0]["title"] == "2 mezclas · $50.000"
 
-    def test_hablar_con_alguien_inicia_traspaso(self, client, mocks):
-        elegir(client, "menu_persona")
-        assert mocks["text"].call_args.args[1].startswith("Te paso con Juanita")
-        assert load_conversation(REMITENTE).en_traspaso
+    def test_hacer_mi_pedido_lista_las_mezclas_y_el_precio(self, client, mocks):
+        elegir(client, "p1_pedido", "button_reply")
+        texto = mocks["text"].call_args.args[1]
+        assert "$26.000" in texto and "• Sal chilemon (100 g)" in texto and "• Mezcla tierra de fuego (60 g)" in texto
+        assert "[mezclas]" not in texto and "[precio]" not in texto
+        assert load_conversation(REMITENTE).paso == "P6"
 
-
-class TestDudas:
-    def test_tema_de_base_conocimiento_responde_claude_y_pregunta_si_sirvio(self, client, mocks):
-        elegir(client, "faq_envios")
-        prompt = mocks["ask"].call_args.args[0]
-        assert "Envíos y tiempos" in prompt
-        mocks["text"].assert_called_once_with(REMITENTE, "respuesta de Claude")
-        assert ids(mocks["buttons"].call_args.args[2]) == ["p9s_si", "p9s_no"]
-
-    def test_como_usar_envia_p9c_y_pregunta_si_sirvio(self, client, mocks):
-        elegir(client, "faq_uso")
-        assert mocks["text"].call_args.args[1] == get_step("P9C")["texto"]
-        mocks["buttons"].assert_called_once()
-        assert load_conversation(REMITENTE).paso == "P9S"
-
-    def test_otra_duda_libre_responde_claude_y_pregunta_si_sirvio(self, client, mocks):
-        elegir(client, "faq_otra")
-        assert mocks["text"].call_args.args[1] == get_step("P9O")["texto"]
-        escribir(client, "¿Las mezclas tienen conservantes?")
-        mocks["ask"].assert_called_once()
-        assert ids(mocks["buttons"].call_args.args[2]) == ["p9s_si", "p9s_no"]
-        historial = load_conversation(REMITENTE).historial
-        assert historial[-1]["content"].startswith("respuesta de Claude")
-
-    def test_si_me_sirvio_vuelve_a_p1(self, client, mocks):
-        elegir(client, "p9s_si", "button_reply")
-        assert ids(mocks["list"].call_args.args[3]) == ids(list_rows("P1"))
+    def test_opcion_de_una_lista_vieja_muestra_el_menu(self, client, mocks):
+        elegir(client, "p1_catalogo")  # ya no existe
+        assert ids(mocks["list"].call_args.args[3])[0] == "menu_comprar"
 
 
 class TestPromptDeClaude:

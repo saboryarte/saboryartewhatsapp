@@ -70,6 +70,11 @@ class PedidoExtraido(BaseModel):
     no_reconocidos: list[str]
     quiere_distribuir: bool
     pregunta_o_comentario: bool
+    kits: int | None = None
+
+
+class ReclamoClasificado(BaseModel):
+    grave: bool
 
 
 class EnvioExtraido(BaseModel):
@@ -93,7 +98,15 @@ Reglas:
 - Si el cliente ya había elegido un producto y solo responde con una cantidad, aplícala a ese producto.
 - «no_reconocidos»: productos que menciona y no están en el catálogo (por ejemplo, «sal negra» o «granel»).
 - «quiere_distribuir»: true si habla de revender, distribuir, comprar a granel o para su negocio.
-- «pregunta_o_comentario»: true si el mensaje no trae productos para el pedido (una pregunta u otro tema)."""
+- «pregunta_o_comentario»: true si el mensaje no trae productos para el pedido (una pregunta u otro tema).
+- «kits»: solo si el cliente está armando un kit: cuántos kits iguales pide («2 kits», «dos de esos»). null si no lo dice."""
+
+
+_COMPLAINT_INSTRUCTIONS = """Clasificas el reclamo de un cliente de Saboryarte (mezclas de sales y especias) que llega por WhatsApp.
+
+«grave» es true si el reclamo es por un producto en mal estado o dañado, por un tema de salud (alergia, malestar,
+algo extraño en el producto) o por un cobro errado (le cobraron de más, dos veces o un valor que no corresponde).
+Es false para demoras, dudas, detalles del empaque o del pedido y cualquier otro caso."""
 
 
 _SHIPPING_INSTRUCTIONS = """Extraes los datos de envío de un mensaje de WhatsApp de un cliente en Colombia.
@@ -136,6 +149,13 @@ async def extract_order(text: str, selected_product: str | None = None, kit_size
         context.append(f"El cliente está armando un kit de {kit_size} mezclas; el mensaje dice cuáles quiere.")
     content = "\n".join([*context, f"Mensaje del cliente: «{text}»"])
     return await _extract(_order_instructions(), content, PedidoExtraido)
+
+
+async def is_serious_complaint(text: str) -> bool:
+    """True si el reclamo es grave (producto dañado, salud o cobro errado). Si la API falla, se trata como grave:
+    es más seguro que una persona lo atienda con prioridad."""
+    result = await _extract(_COMPLAINT_INSTRUCTIONS, f"Reclamo del cliente: «{text}»", ReclamoClasificado)
+    return True if result is None else result.grave
 
 
 async def extract_shipping(text: str) -> EnvioExtraido | None:

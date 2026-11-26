@@ -54,11 +54,6 @@ class Settings(BaseSettings):
     meta_app_id: str = ""
     meta_signup_config_id: str = ""
 
-    # WhatsApp Flow del kit armado (casillas para elegir las mezclas). Sin ID se usa la lista de una en una.
-    whatsapp_kit_flow_id: str = ""
-    # «draft» mientras se prueba (solo la versión borrador); «published» después de publicarlo.
-    whatsapp_flows_mode: str = "draft"
-
     log_level: str = "INFO"
 
 

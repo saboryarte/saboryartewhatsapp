@@ -1,9 +1,12 @@
 """Archivo de chats (60 días), memoria del cliente que vuelve y chat de cada pedido pagado (1 año)."""
 import time
 
+from unittest.mock import AsyncMock
+
 import pytest
 
 from app import archivo
+from app.claude import EnvioExtraido
 from app.state import load_conversation, save_conversation
 from tests.test_bold import LINK, REMITENTE, armar_y_confirmar, aviso_bold, bold_pruebas, client, elegir, escribir, mocks  # noqa: F401
 
@@ -48,32 +51,68 @@ class TestArchivoDeChats:
 
 
 class TestClienteQueVuelve:
-    def test_ofrece_los_mismos_datos_de_envio(self, client, mocks, bold_pruebas):
+    def _solo_ciudad(self, mocks, monkeypatch, ciudad="Envigado"):
+        monkeypatch.setattr("app.router.extract_shipping", AsyncMock(return_value=EnvioExtraido(
+            nombre=None, direccion=None, ciudad=ciudad, telefono=None, pregunta_o_comentario=False)))
+
+    def test_ofrece_la_misma_direccion_si_es_la_misma_ciudad(self, client, mocks, bold_pruebas, monkeypatch):
         armar_y_confirmar(client)
         _nueva_sesion()
-        elegir(client, "p1_pedido", "list_reply")
+        self._solo_ciudad(mocks, monkeypatch)
+        elegir(client, "p1_pedido")
         escribir(client, "2 de oro")
+        escribir(client, "envigado")
         cuerpo, botones = mocks["buttons"].call_args.args[1:3]
-        assert "mismos datos" in cuerpo and "Cra 43 # 10-20, Envigado" in cuerpo and "Tel. 3001112233" in cuerpo
-        assert [b["id"] for b in botones] == ["p7g_misma", "p7g_otra"]
-        elegir(client, "p7g_misma")
+        assert cuerpo.startswith("El envío a Envigado cuesta $12.000")
+        assert "Laura Gómez\nCra 43 # 10-20, Envigado\nTel. 3001112233" in cuerpo and "misma dirección" in cuerpo
+        assert "nombre completo" not in cuerpo  # no se le piden los datos que ya tenemos
+        assert [b["id"] for b in botones] == ["p7c_misma", "p7c_otra"]
+        elegir(client, "p7c_misma")
         resumen = mocks["buttons"].call_args.args[1]
         assert "Envío a: Laura Gómez, Cra 43 # 10-20, Envigado" in resumen
         assert load_conversation(REMITENTE).paso == "P8"
 
-    def test_otros_datos_pide_el_envio_desde_cero(self, client, mocks, bold_pruebas):
+    def test_un_si_escrito_usa_la_misma_direccion(self, client, mocks, bold_pruebas, monkeypatch):
         armar_y_confirmar(client)
         _nueva_sesion()
-        elegir(client, "p1_pedido", "list_reply")
+        self._solo_ciudad(mocks, monkeypatch)
+        elegir(client, "p1_pedido")
         escribir(client, "2 de oro")
-        elegir(client, "p7g_otra")
-        conv = load_conversation(REMITENTE)
-        assert conv.paso == "P7" and "envio" not in conv.datos and "envio_guardado" not in conv.datos
+        escribir(client, "envigado")
+        escribir(client, "Sí")
+        assert load_conversation(REMITENTE).paso == "P8"
 
-    def test_cliente_nuevo_no_ve_la_pregunta(self, client, mocks):
-        elegir(client, "p1_pedido", "list_reply")
+    def test_otra_direccion_pide_los_datos(self, client, mocks, bold_pruebas, monkeypatch):
+        armar_y_confirmar(client)
+        _nueva_sesion()
+        self._solo_ciudad(mocks, monkeypatch)
+        elegir(client, "p1_pedido")
         escribir(client, "2 de oro")
-        assert load_conversation(REMITENTE).paso == "P7"
+        escribir(client, "envigado")
+        elegir(client, "p7c_otra")
+        conv = load_conversation(REMITENTE)
+        assert conv.paso == "P7D" and "envio_guardado" not in conv.datos
+
+    def test_otra_ciudad_no_ofrece_la_direccion_guardada(self, client, mocks, bold_pruebas, monkeypatch):
+        armar_y_confirmar(client)
+        _nueva_sesion()
+        self._solo_ciudad(mocks, monkeypatch, "Cali")
+        elegir(client, "p1_pedido")
+        escribir(client, "2 de oro")
+        escribir(client, "Cali")
+        cuerpo = mocks["text"].call_args.args[1]
+        assert cuerpo.startswith("El envío a Cali cuesta") and "2 a 4 días hábiles" in cuerpo
+        assert "puede variar" in cuerpo and "nombre completo" in cuerpo
+        assert load_conversation(REMITENTE).paso == "P7B"
+
+    def test_cliente_nuevo_no_ve_la_pregunta(self, client, mocks, monkeypatch):
+        self._solo_ciudad(mocks, monkeypatch)
+        elegir(client, "p1_pedido")
+        escribir(client, "2 de oro")
+        escribir(client, "envigado")
+        cuerpo = mocks["text"].call_args.args[1]
+        assert "1 a 2 días hábiles" in cuerpo and "nombre completo" in cuerpo
+        assert load_conversation(REMITENTE).paso == "P7B"
 
     def test_nota_para_claude_sin_direccion_ni_telefono(self, client, mocks, bold_pruebas):
         armar_y_confirmar(client)
@@ -92,7 +131,7 @@ class TestChatDelPedidoPagado:
         assert len(archivos) == 1 and "Laura" in archivos[0].name
         texto = archivos[0].read_text(encoding="utf-8")
         assert "Pedido SAB-00001 · estado: Pagado" in texto
-        assert "Laura: 2 de oro" in texto and "Laura: [Tocó] p8_confirmar" in texto
+        assert "Laura: 2 de oro" in texto and "Laura: [Tocó] p11_link" in texto
 
     def test_un_pago_rechazado_no_guarda_el_chat(self, client, mocks, bold_pruebas):
         armar_y_confirmar(client)

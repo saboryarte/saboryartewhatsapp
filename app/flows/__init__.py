@@ -11,19 +11,6 @@ _CATALOGO_PATH = Path(__file__).with_name("catalogo.json")
 
 MENU_PRINCIPAL = "G1"
 
-# Respuestas temporales para los pasos que aún no están construidos.
-EN_CONSTRUCCION = (
-    "¡Listo! Elegiste «{opcion}» 🌿 Esa parte de Especia todavía está en construcción.\n\n"
-    "Mientras tanto, cuéntame en un mensaje qué necesitas y con gusto te ayudo."
-)
-_EN_CONSTRUCCION_POR_PASO = {
-    "P11": "¡Gracias! Tu pedido quedó armado ✨ Registrarlo y pasarlo al equipo para el pago y el despacho "
-    "todavía está en construcción, así que *este pedido aún no quedó registrado*.\n\n"
-    "Mientras tanto, puedes seguir viendo el catálogo o escribir «menú» para volver a empezar.",
-    "T1": "Todavía no puedo pasarte con una persona desde este chat 🛠️ Esa parte está en construcción.\n\n"
-    "Mientras tanto, cuéntame qué necesitas y te ayudo con gusto.",
-}
-
 
 @cache
 def _flujos() -> dict[str, Any]:
@@ -56,16 +43,15 @@ def list_rows(step_id: str) -> list[dict[str, str]]:
     """Filas para send_list a partir de las opciones del paso."""
     rows = []
     for op in step_options(step_id):
-        row = {"id": op["id"], "title": op["titulo"]}
+        title = op["titulo"]
+        if "kit" in op and (price := kit_price(op["kit"])):
+            # Los precios de los kits salen de contenido/precios.yaml, no del texto guardado en mensajes.json.
+            title = f"{op['kit']} mezclas · {format_price(price)}"
+        row = {"id": op["id"], "title": title}
         if op.get("descripcion"):
             row["description"] = op["descripcion"]
         rows.append(row)
     return rows
-
-
-def under_construction(step_id: str, option_title: str) -> str:
-    """Respuesta para una opción que lleva a un paso que aún no está construido."""
-    return _EN_CONSTRUCCION_POR_PASO.get(step_id) or EN_CONSTRUCCION.format(opcion=option_title)
 
 
 @cache
@@ -124,18 +110,18 @@ def format_price(value: int) -> str:
     return "$" + f"{value:,}".replace(",", ".")
 
 
-def product_card(product: dict[str, Any]) -> str:
-    """Texto de la ficha de producto (P2F)."""
-    return (
-        f"*{product['nombre']}* ✨\n{product['descripcion']}\n\n"
-        f"{product['presentacion']}, con cuchara tallada artesanalmente · {format_price(product['precio'])}"
-    )
-
-
-def recommendation(product_ids: list[str]) -> str:
-    """Texto con las mezclas recomendadas para un uso (P5)."""
-    lines = []
-    for product_id in product_ids:
-        product = get_product(product_id)
-        lines.append(f"• *{product['nombre']}*: {product['descripcion']}")
-    return "Te recomiendo estas mezclas 🌿\n\n" + "\n".join(lines)
+def step_text(step_id: str) -> str:
+    """Texto del paso con los precios del catálogo (P4: kit mini; P6: las mezclas). Así no se desactualizan."""
+    text = get_step(step_id)["texto"]
+    if step_id == "P4":
+        return text.replace("[precio kit mini]", format_price(_catalogo()["kit_mini"]["precio"]))
+    if step_id == "P6":
+        mixes = _catalogo()["productos"]
+        prices = {p["precio"] for p in mixes}
+        if len(prices) == 1:
+            lines = "\n".join(f"• {p['nombre']} ({p['presentacion']})" for p in mixes)
+            return text.replace("[mezclas]", lines).replace("[precio]", format_price(prices.pop()))
+        # Si algún día cambian los precios de una sola mezcla, cada línea lleva el suyo.
+        lines = "\n".join(f"• {p['nombre']} ({p['presentacion']}) · {format_price(p['precio'])}" for p in mixes)
+        return text.replace("[mezclas]", lines).replace(" y cuesta [precio]", "")
+    return text

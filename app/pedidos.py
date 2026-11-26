@@ -46,6 +46,8 @@ class Pedido:
     medio_pago: str = BOLD
     # Ruta del último comprobante de transferencia recibido (data/pedidos/Comprobantes/).
     comprobante: str | None = None
+    # Respuesta en P15 a «¿te escribimos para saber cómo te fue?»: 1 sí, 0 no, None sin responder.
+    postventa: int | None = None
 
     @property
     def referencia(self) -> str:
@@ -55,9 +57,10 @@ class Pedido:
 _COLUMNAS = (
     "id", "remitente", "nombre", "items", "envio", "subtotal", "valor_envio", "total", "estado",
     "link_id", "link_url", "payment_id", "creado_en", "vence_en", "pagado_en", "medio_pago", "comprobante",
+    "postventa",
 )
 # Columnas agregadas después de crear la tabla: se agregan solas a una base existente.
-_COLUMNAS_NUEVAS = {"medio_pago": f"TEXT NOT NULL DEFAULT '{BOLD}'", "comprobante": "TEXT"}
+_COLUMNAS_NUEVAS = {"medio_pago": f"TEXT NOT NULL DEFAULT '{BOLD}'", "comprobante": "TEXT", "postventa": "INTEGER"}
 
 
 def _connect() -> sqlite3.Connection:
@@ -125,10 +128,20 @@ def update_order(order: Pedido) -> None:
     with closing(_connect()) as conn, conn:
         conn.execute(
             "UPDATE pedidos SET estado = ?, link_id = ?, link_url = ?, payment_id = ?, vence_en = ?, pagado_en = ?, "
-            "medio_pago = ?, comprobante = ? WHERE id = ?",
+            "medio_pago = ?, comprobante = ?, postventa = ? WHERE id = ?",
             (order.estado, order.link_id, order.link_url, order.payment_id, order.vence_en, order.pagado_en,
-             order.medio_pago, order.comprobante, order.id),
+             order.medio_pago, order.comprobante, order.postventa, order.id),
         )
+
+
+def last_paid(remitente: str) -> Pedido | None:
+    """Último pedido pagado del cliente (para guardar su respuesta a P15)."""
+    with closing(_connect()) as conn:
+        row = conn.execute(
+            f"SELECT {', '.join(_COLUMNAS)} FROM pedidos WHERE remitente = ? AND estado = ? ORDER BY id DESC LIMIT 1",
+            (remitente, PAGADO),
+        ).fetchone()
+    return _from_row(row) if row else None
 
 
 # Un comprobante que llega días después todavía se acepta; más tarde ya no se asocia a un pedido viejo.

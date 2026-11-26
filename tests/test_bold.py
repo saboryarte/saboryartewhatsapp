@@ -43,6 +43,7 @@ def mocks(monkeypatch):
     monkeypatch.setattr("app.router.extract_shipping", AsyncMock(return_value=EnvioExtraido(
         nombre="Laura Gómez", direccion="Cra 43 # 10-20", ciudad="Envigado", telefono="3001112233",
         pregunta_o_comentario=False)))
+    monkeypatch.setattr("app.router.is_serious_complaint", AsyncMock(return_value=False))
     m["crear_link"] = AsyncMock(return_value=LINK)
     m["estado_link"] = AsyncMock(return_value="PAID")
     monkeypatch.setattr("app.bold.create_payment_link", m["crear_link"])
@@ -81,6 +82,7 @@ def armar_y_confirmar(client) -> None:
     escribir(client, "2 de oro")
     escribir(client, "Laura Gómez, Cra 43 # 10-20, Envigado, 3001112233")
     elegir(client, "p8_confirmar")
+    elegir(client, "p11_link")
 
 
 def aviso_bold(client, tipo: str, total: int = 64_000, link_id: str = LINK["id"], evento: str | None = None,
@@ -130,17 +132,16 @@ class TestLinkDePago:
         assert total == 64_000  # 2 × $26.000 + envío a Envigado $12.000
         assert descripcion == "Pedido Saboryarte SAB-00001"
         assert referencia.startswith("SAB-00001-")
-        texto = mocks["text"].call_args.args[1]
-        assert "SAB-00001" in texto and "$64.000" in texto and LINK["url"] in texto and "24 horas" in texto
+        assert LINK["url"] in mocks["text"].call_args.args[1]
         pedido = find_by_link(LINK["id"])
         assert pedido.estado == PENDIENTE and pedido.envio["ciudad"] == "Envigado"
         conv = load_conversation(REMITENTE)
-        assert not conv.en_traspaso and conv.paso == "P11L"
+        assert not conv.en_traspaso and conv.paso == "P13"
         mocks["notify"].assert_not_called()
 
     def test_confirmar_dos_veces_reenvia_el_mismo_link(self, client, mocks, bold_pruebas):
         armar_y_confirmar(client)
-        elegir(client, "p8_confirmar")
+        elegir(client, "p11_link")
         mocks["crear_link"].assert_called_once()
         assert LINK["url"] in mocks["text"].call_args.args[1]
 
@@ -169,8 +170,10 @@ class TestAvisos:
         assert aviso_bold(client, "SALE_APPROVED").status_code == 200
         pedido = get_order(1)
         assert pedido.estado == PAGADO and pedido.payment_id == "PAY123" and pedido.pagado_en
-        destinatario, texto = mocks["text"].call_args.args
-        assert destinatario == REMITENTE and texto.startswith("¡Recibimos tu pago!") and "SAB-00001" in texto
+        destinatario, texto, botones = mocks["buttons"].call_args.args
+        assert destinatario == REMITENTE and texto.startswith("¡Pago confirmado!")
+        assert [b["id"] for b in botones] == ["p15_si", "p15_no"]
+        assert load_conversation(REMITENTE).etiquetas == ["Producto", "Pagado"]
         asunto, ficha = mocks["notify"].call_args.args
         assert "Pedido pagado SAB-00001" in asunto and "despachar" in asunto
         assert "Envío a: Laura Gómez, Cra 43 # 10-20, Envigado" in ficha and "Pago Bold: PAY123" in ficha
@@ -178,8 +181,9 @@ class TestAvisos:
     def test_aviso_repetido_se_procesa_una_vez(self, client, mocks, pedido_con_link):
         aviso_bold(client, "SALE_APPROVED", evento="evt-repetido")
         aviso_bold(client, "SALE_APPROVED", evento="evt-repetido")
+        mocks["buttons"].reset_mock()
         aviso_bold(client, "SALE_APPROVED")  # otro aviso del mismo pago: el pedido ya está pagado
-        mocks["text"].assert_called_once()
+        mocks["buttons"].assert_not_called()
         mocks["notify"].assert_called_once()
 
     def test_monto_distinto_queda_por_revisar(self, client, mocks, pedido_con_link):
@@ -224,7 +228,7 @@ class TestAvisos:
     def test_pago_rechazado_reenvia_el_link(self, client, mocks, pedido_con_link):
         aviso_bold(client, "SALE_REJECTED")
         texto = mocks["text"].call_args.args[1]
-        assert "no se pudo completar" in texto and LINK["url"] in texto
+        assert texto.startswith("Uy, tu pago no se pudo completar") and LINK["url"] in texto
         assert get_order(1).estado == PENDIENTE
 
     def test_anulacion(self, client, mocks, pedido_con_link):

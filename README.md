@@ -71,8 +71,6 @@ cp .env.example .env
 | `BOLD_SANDBOX` | ⬜ | `true` solo con las llaves de pruebas de Bold |
 | `BOLD_LINK_HOURS` | ⬜ | Vigencia del link de pago en horas (por defecto 24) |
 | `BOLD_RETURN_URL` | ⬜ | A dónde lleva «Volver a la tienda» tras pagar; idealmente `https://wa.me/<número del bot>` |
-| `WHATSAPP_KIT_FLOW_ID` | ⬜ | WhatsApp Flow para elegir las mezclas del kit con casillas (se crea con `python -m app.whatsapp_flows crear <WABA_ID>`). Sin él, se eligen de una en una con listas |
-| `WHATSAPP_FLOWS_MODE` | ⬜ | `draft` mientras se prueba el Flow; `published` después de publicarlo |
 | `LOG_LEVEL` | ⬜ | Nivel de logging (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 
 > **Importante:** Nunca subas `.env` al repositorio. El archivo `.gitignore` ya lo excluye.

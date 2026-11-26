@@ -548,10 +548,7 @@ class TestSaludos:
         assert destinatario == "521234567890"
         assert "Ana" in cuerpo
         assert boton == "Ver opciones"
-        assert [f["id"] for f in filas] == [
-            "menu_comprar", "menu_mezcla", "menu_regalo", "menu_distribuir",
-            "menu_seguimiento", "menu_proveedor", "menu_persona",
-        ]
+        assert [f["id"] for f in filas] == ["menu_comprar", "menu_regalo", "menu_distribuir", "menu_proveedor"]
 
     def test_saludo_sin_profile_envia_menu(self, client, monkeypatch):
         list_mock = AsyncMock(return_value=True)

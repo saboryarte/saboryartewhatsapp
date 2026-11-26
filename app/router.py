@@ -1,10 +1,14 @@
-"""Decide qué responder a cada mensaje según el estado de la conversación y los pasos de mensajes.json."""
+"""Decide qué responder a cada mensaje según el estado de la conversación y los pasos de mensajes.json.
+
+Rutas (artefacto de noviembre de 2026): el menú tiene cuatro opciones. «Comprar mis mezclas» la atiende Especia de
+principio a fin, incluido el pago; regalos corporativos, distribuidores y proveedores pasan directo a Juanita.
+"""
 import logging
 import re
 import time
 from datetime import datetime
 
-from .claude import ask_claude, extract_order, extract_shipping
+from .claude import ask_claude, extract_order, extract_shipping, is_serious_complaint
 from .flows import (
     MENU_PRINCIPAL,
     button_rows,
@@ -16,22 +20,21 @@ from .flows import (
     list_rows,
     mix_ids,
     ordered_mix_ids,
-    product_card,
-    step_options,
-    recommendation,
-    under_construction,
+    step_text,
 )
 from .greetings import is_greeting, is_human_request, is_menu_request, normalize_text, pick_welcome
 from .handoff import (
     COLOMBIA,
     MOTIVOS,
     business_minutes_between,
+    dispatch_day,
     end_handoff,
     handoff_ficha,
     is_closing_message,
     is_open,
     needs_alert,
     register_team_message,
+    spanish_date,
     start_handoff,
     team_went_idle,
 )
@@ -40,15 +43,16 @@ from .notify import notify_team
 from .orders import (
     ask_missing_shipping,
     describe_item,
-    merge_items,
     missing_shipping_fields,
     order_summary,
     parse_quantity,
+    same_city,
     shipping_cost,
+    shipping_zone,
     subtotal,
 )
 from .config import settings
-from .prompt import DESTINOS
+from .prompt import DESTINOS, RUTAS_ESCRITAS
 from .pedidos import (
     ANULADO,
     ESPERANDO_COMPROBANTE,
@@ -63,22 +67,21 @@ from .pedidos import (
     find_by_link,
     find_by_reference,
     get_order,
+    last_paid,
     order_ficha,
     pending_transfer,
     update_order,
 )
 from . import transferencias
-from .state import Conversation, list_handoffs, mark_processed, save_conversation
-from .whatsapp import download_media, flow_response, interactive_reply, send_buttons, send_flow, send_list, send_text
+from .state import Conversation, list_handoffs, load_conversation, mark_processed, save_conversation
+from .whatsapp import download_media, interactive_reply, send_buttons, send_list, send_text
 
 logger = logging.getLogger(__name__)
 
-# Pasos que el bot ya sabe mostrar. Una opción que lleva a cualquier otro responde «en construcción».
-PASOS_DISPONIBLES = frozenset({
-    "G1", "P1", "P2", "P2F", "P3", "P4", "P4B", "P5", "P6", "P7", "P7G", "P8", "P9", "P9B", "P9C", "P9O", "P9S", "O1",
-})
-# Respuestas a una duda: después se pregunta «¿Te sirvió?» (P9S).
-_RESPUESTAS_DE_DUDA = frozenset({"P9B", "P9C", "O1"})
+# Pasos que se muestran tal cual cuando el cliente elige una opción que lleva a ellos.
+_PASOS_SIMPLES = frozenset({"G1", "P1", "P4", "P4B"})
+# Opciones del menú que pasan directo a Juanita, sin preguntas del bot: destino → motivo del traspaso.
+_DIRECTOS = {"R1": "corporativo", "D1": "distribuidor", "V1": "proveedor"}
 # Pasos de otras rutas que se usan como respuesta dentro de la ruta actual: no cambian el flujo activo.
 _FLUJOS_DE_APOYO = frozenset({"entrada", "otras"})
 # Menú principal: G1 dentro del horario de atención, G2 (con aviso de horario) fuera.
@@ -96,10 +99,9 @@ def _menu_step() -> str:
 async def _show_step(
     sender: str, step_id: str, conversation: Conversation, body: str | None = None, rows: list[dict] | None = None,
 ) -> str | None:
-    """Envía un paso según su tipo y actualiza el estado. Devuelve el texto enviado, o None si Meta lo rechazó.
-    «rows» reemplaza las filas de una lista (p. ej. para quitar las mezclas ya elegidas)."""
+    """Envía un paso según su tipo y actualiza el estado. Devuelve el texto enviado, o None si Meta lo rechazó."""
     step = get_step(step_id)
-    text = body or step["texto"]
+    text = body or step_text(step_id)
     shown_rows, list_button = None, None
     if step["tipo"] == "lista":
         shown_rows, list_button = rows or list_rows(step_id), step["boton_lista"]
@@ -164,16 +166,21 @@ async def handle_text(body: str, sender: str, profile_name: str | None, conversa
     elif is_greeting(body):
         # Un saludo a mitad de un paso no lo reinicia: se retoma donde iba, con sus opciones.
         sent = await _resume(sender, conversation, "¡Hola de nuevo! 🌿 Sigamos donde íbamos.")
-    elif conversation.paso == "P6Q" and (quantity := parse_quantity(body)):
-        sent = await _add_to_cart(sender, quantity, conversation)
-    elif conversation.paso in ("P6", "P6Q", "P6M", "P4C", "P4F"):
-        # En los pasos con lista o botones el cliente también puede escribir lo que quiere.
+    elif conversation.paso == "P4M":
+        sent = await _take_kit_mini(body, sender, conversation)
+    elif conversation.paso in ("P6", "P4K"):
         sent = await _take_order_items(body, sender, conversation)
-    elif conversation.paso in ("P7", "P7G"):
-        # En P7G el cliente puede escribir otra dirección en vez de tocar un botón: se toma desde cero.
-        if conversation.paso == "P7G":
-            conversation.datos.pop("envio_guardado", None)
+    elif conversation.paso == "P7":
+        sent = await _take_city(body, sender, conversation)
+    elif conversation.paso == "P7C" and _is_yes(body):
+        sent = await _use_saved_shipping(sender, conversation)
+    elif conversation.paso in ("P7B", "P7C", "P7D"):
         sent = await _take_shipping(body, sender, conversation)
+    elif conversation.paso == "Q1":
+        sent = await _take_complaint(body, sender, conversation)
+    elif conversation.paso == "O3":
+        conversation.datos["detalle"] = body
+        sent = await _handoff(sender, conversation, "alianza")
     elif conversation.flujo_activo is None and not conversation.historial:
         # Primer mensaje de la conversación y no es un saludo: se responde y se ofrece el menú en el mismo mensaje.
         sent = await _answer_with_menu(body, sender, conversation)
@@ -192,7 +199,7 @@ async def _answer_with_menu(body: str, sender: str, conversation: Conversation) 
     reply = await ask_claude(body, conversation.historial)
     if not reply or reply.strip().upper().startswith(_NO_ENTIENDO):
         return await _show_step(sender, _menu_step(), conversation)
-    if await _navigate(reply, sender, conversation):
+    if await _navigate(reply, body, sender, conversation):
         return None
     if _IR.match(reply):
         return await _show_step(sender, _menu_step(), conversation)
@@ -204,21 +211,40 @@ async def _answer_with_menu(body: str, sender: str, conversation: Conversation) 
 
 # ── Nunca dejar al cliente sin opciones ───────────────────────────────────────
 
-_INTERACTIVOS = ("lista", "botones", "formulario")
+_INTERACTIVOS = ("lista", "botones")
 _NO_ENTIENDO = "NO_ENTIENDO"
 _IR = re.compile(r"^\s*IR:\s*([a-z0-9_]+)\s*$", re.IGNORECASE)
 
 
-async def _navigate(reply: str, sender: str, conversation: Conversation) -> bool:
-    """Si Claude respondió «IR:<opción>», lleva al cliente a esa opción como si la hubiera tocado."""
+async def _navigate(reply: str, body: str, sender: str, conversation: Conversation) -> bool:
+    """Si Claude respondió «IR:<destino>», lleva al cliente ahí como si hubiera tocado la opción. True si lo hizo
+    (la respuesta y el turno ya quedaron guardados)."""
     match = _IR.match(reply)
-    found = find_any_option(match.group(1).lower()) if match else None
+    target = match.group(1).lower() if match else None
+    if target in RUTAS_ESCRITAS:
+        logger.info("Texto llevado a la ruta '%s'", target)
+        sent = await _written_route(target, sender, conversation)
+        if sent:
+            conversation.add_turn(body, sent)
+        return True
+    found = find_any_option(target) if target else None
     if not found or found[1]["id"] not in DESTINOS:
         return False
     option = found[1]
     logger.info("Texto llevado a la opción '%s'", option["id"])
     await handle_choice({"type": "list_reply", "list_reply": {"id": option["id"], "title": option["titulo"]}}, sender, conversation)
     return True
+
+
+async def _written_route(target: str, sender: str, conversation: Conversation) -> str | None:
+    """Rutas a las que se llega escribiendo: queja (Q1), alianza (O3) y «por ahora no» (P10)."""
+    if target == "queja":
+        return await _show_step(sender, "Q1", conversation)
+    if target == "alianza":
+        return await _show_step(sender, "O3", conversation)
+    sent = await _show_step(sender, "P10", conversation)
+    conversation.reset_flow()
+    return sent
 
 
 def _join(first: str, second: str | None, limit: int = _MAX_CUERPO_LISTA) -> str:
@@ -228,7 +254,7 @@ def _join(first: str, second: str | None, limit: int = _MAX_CUERPO_LISTA) -> str
 
 
 def _typed_option(body: str, conversation: Conversation) -> dict | None:
-    """La opción visible cuyo texto escribió el cliente («Sal de oro», «2», «chilemon»), si es una sola."""
+    """La opción visible cuyo texto escribió el cliente («Kit mini», «Link de pago»…), si es una sola."""
     rows = (conversation.opciones or {}).get("filas") or []
     text = normalize_text(body)
     if not text or not rows:
@@ -244,17 +270,23 @@ def _typed_option(body: str, conversation: Conversation) -> dict | None:
     return None
 
 
+_SI = {"si", "sii", "dale", "ok", "listo", "claro", "de una", "esa", "esa misma", "la misma", "si claro", "si senor"}
+
+
+def _is_yes(body: str) -> bool:
+    return normalize_text(body) in _SI
+
+
 def _asks_to_see_options(body: str, conversation: Conversation) -> bool:
-    """El cliente escribió el botón que abre las opciones («Ver mezclas», «Elegir mezclas»…)."""
+    """El cliente escribió el botón que abre la lista («Ver opciones», «Ver kits»…)."""
     shown = conversation.opciones or {}
-    if shown.get("tipo") not in _INTERACTIVOS:
+    if shown.get("tipo") not in _INTERACTIVOS or not shown.get("boton"):
         return False
-    labels = {shown.get("boton") or "", get_step("P4F")["boton_formulario"] if shown.get("tipo") == "formulario" else ""}
-    return normalize_text(body) in {normalize_text(label) for label in labels if label}
+    return normalize_text(body) == normalize_text(shown["boton"])
 
 
 async def _resend(sender: str, conversation: Conversation, body: str) -> str | None:
-    """Vuelve a enviar las últimas opciones (lista, botones o formulario) con otro texto. No cambia el paso."""
+    """Vuelve a enviar las últimas opciones (lista o botones) con otro texto. No cambia el paso."""
     shown = conversation.opciones
     if not shown:
         return await _show_step(sender, _menu_step(), conversation, body=body)
@@ -267,8 +299,6 @@ async def _resend(sender: str, conversation: Conversation, body: str) -> str | N
         sent = await send_list(sender, body, shown["boton"], shown["filas"])
     elif shown["tipo"] == "botones":
         sent = await send_buttons(sender, body, shown["filas"])
-    elif shown["tipo"] == "formulario":
-        return await _send_kit_flow(sender, shown["tamaño"], conversation, body=body)
     else:
         sent = await send_text(sender, body)
     if sent:
@@ -326,76 +356,63 @@ async def _answer_and_resume(body: str, sender: str, conversation: Conversation)
     if reply.strip().upper().startswith(_NO_ENTIENDO):
         logger.info("Especia no entendió el mensaje (intento %d)", conversation.intentos_fallidos + 1)
         return await _not_understood(sender, conversation)
-    if await _navigate(reply, sender, conversation):
-        return None  # handle_choice ya respondió y guardó el turno
+    if await _navigate(reply, body, sender, conversation):
+        return None  # la ruta ya respondió y guardó el turno
     if _IR.match(reply):
         # Un destino no permitido: nunca se le muestra el código al cliente.
         logger.warning("Claude propuso un destino no permitido: se retoman las opciones")
         return await _resume(sender, conversation, "Te muestro las opciones para seguir 🌿")
     conversation.intentos_fallidos = 0
-    if conversation.paso == "P9O":
-        # Después de responder una duda libre, se pregunta si sirvió.
-        return await _show_step(sender, "P9S", conversation, body=_join(reply, get_step("P9S")["texto"]))
     if (conversation.opciones or {}).get("tipo") in _INTERACTIVOS:
         return await _resend(sender, conversation, reply)
     return await _shortcuts(sender, conversation, reply)
 
 
-# ── Pedido: P6 (qué y cuánto) → P7 (envío) → P8 (resumen) ─────────────────────
+# ── Pedido: P6 o kits (qué y cuánto) → P7 (ciudad) → P7B/P7C (envío) → P8 (resumen) ─
 
 _REINTENTO_TECNICO = "Uy, tuve un problema técnico leyendo tu mensaje 🙈 ¿Me lo repites, por favor?"
-_DISTRIBUIR = (
-    "¡Qué bueno que quieras llevar Saboryarte a tu negocio! 🌿 Para distribuidores tenemos una ruta especial "
-    "que todavía está en construcción.\n\nMientras tanto, si es para ti, cuéntame qué mezclas quieres y cuántas."
-)
+_DATOS_DEL_PEDIDO = ("pedido_id", "pedido", "kit", "envio_guardado")
 
 
-def _product_rows() -> list[dict]:
-    """Filas de P6 con el precio del catálogo delante de la descripción (así no se desactualiza)."""
-    rows = []
-    for op in step_options("P6"):
-        product = get_product(op["agregar"])
-        rows.append({"id": op["id"], "title": op["titulo"], "description": f"{format_price(product['precio'])} · {op['descripcion']}"})
-    return rows
-
-
-async def _start_order(sender: str, option: dict, conversation: Conversation) -> str | None:
-    """Empieza un pedido nuevo: con un producto ya elegido pregunta la cantidad; si no, muestra la lista."""
-    for key in ("pedido_id", "pedido", "kit", "kit_mezclas", "carrito", "producto_pendiente"):
+def _clear_order(conversation: Conversation) -> None:
+    """Empieza un pedido nuevo. Los datos de envío se conservan: si ya están, se va directo al resumen."""
+    for key in _DATOS_DEL_PEDIDO:
         conversation.datos.pop(key, None)
-    product_id = option.get("producto") or (conversation.datos.get("producto") if option["id"] == "p2f_agregar" else None)
-    if product_id and get_product(product_id):
-        return await _ask_quantity(sender, product_id, conversation)
-    return await _show_step(sender, "P6", conversation, rows=_product_rows())
 
 
-async def _ask_quantity(sender: str, product_id: str, conversation: Conversation) -> str | None:
-    product = get_product(product_id)
-    conversation.datos["producto_pendiente"] = product_id
-    body = (
-        get_step("P6Q")["texto"]
-        .replace("[producto]", f"*{product['nombre']}*")
-        .replace("[precio]", format_price(product["precio"]))
-    )
-    return await _show_step(sender, "P6Q", conversation, body=body)
+async def _start_order(sender: str, conversation: Conversation) -> str | None:
+    _clear_order(conversation)
+    return await _show_step(sender, "P6", conversation)
 
 
-async def _add_to_cart(sender: str, quantity: int, conversation: Conversation) -> str | None:
-    product_id = conversation.datos.pop("producto_pendiente", None)
-    if not product_id:
-        # Botón de cantidad de un mensaje viejo: se vuelve a mostrar la lista.
-        return await _show_step(sender, "P6", conversation, rows=_product_rows())
-    cart = merge_items(conversation.datos.get("carrito", []), [{"producto": product_id, "cantidad": quantity}])
-    conversation.datos["carrito"] = cart
-    lines = "\n".join(describe_item(item) for item in cart) + f"\nSubtotal: {format_price(subtotal(cart))}"
-    return await _show_step(sender, "P6M", conversation, body=get_step("P6M")["texto"].replace("[carrito]", lines))
+async def _start_kit_mini(sender: str, conversation: Conversation) -> str | None:
+    _clear_order(conversation)
+    return await _show_step(sender, "P4M", conversation)
 
 
-async def _finish_cart(sender: str, conversation: Conversation) -> str | None:
-    cart = conversation.datos.get("carrito")
-    if not cart:
-        return await _show_step(sender, "P6", conversation, rows=_product_rows())
-    return await _items_ready(sender, cart, conversation)
+async def _start_kit(sender: str, option: dict, conversation: Conversation) -> str | None:
+    _clear_order(conversation)
+    size = option["kit"]
+    conversation.datos["kit"] = size
+    step = get_step("P4K")
+    text = step["texto_todas"] if size >= len(ordered_mix_ids()) else step["texto"].replace("[tamaño]", str(size))
+    return await _show_step(sender, "P4K", conversation, body=text)
+
+
+async def _take_kit_mini(body: str, sender: str, conversation: Conversation) -> str | None:
+    quantity = parse_quantity(body)
+    if quantity is None:
+        extraction = await extract_order(body, get_product("kit_mini")["nombre"])
+        if extraction is None:
+            return await _reply_text(sender, _REINTENTO_TECNICO)
+        if extraction.quiere_distribuir:
+            return await _handoff(sender, conversation, "distribuidor")
+        quantity = sum(l.cantidad for l in extraction.lineas if l.producto == "kit_mini" and 1 <= l.cantidad <= 100) or None
+        if quantity is None:
+            if extraction.pregunta_o_comentario:
+                return await _answer_and_resume(body, sender, conversation)
+            return await _reply_text(sender, "¿Cuántos kits mini quieres? Escríbeme solo el número 🙌")
+    return await _items_ready(sender, [{"producto": "kit_mini", "cantidad": quantity}], conversation)
 
 
 def _order_items(extraction, conversation: Conversation) -> tuple[list[dict] | None, str | None]:
@@ -403,14 +420,18 @@ def _order_items(extraction, conversation: Conversation) -> tuple[list[dict] | N
     kit_size = conversation.datos.get("kit")
     lines = [(l.producto, l.cantidad) for l in extraction.lineas if get_product(l.producto) and 1 <= l.cantidad <= 100]
     if kit_size:
-        mixes = [product_id for product_id, quantity in lines if product_id in mix_ids() for _ in range(quantity)]
+        kits = extraction.kits if extraction.kits and 1 <= extraction.kits <= 100 else 1
+        if kit_size >= len(ordered_mix_ids()):
+            return [{"kit": ordered_mix_ids(), "cantidad": kits}], None
+        # Un kit no repite mezclas: se cuentan las distintas que nombró.
+        mixes = list(dict.fromkeys(product_id for product_id, _ in lines if product_id in mix_ids()))
         if len(mixes) != kit_size:
             return None, (
                 f"Tu kit es de {kit_size} mezclas y me nombraste {len(mixes)} 🙈 "
                 f"¿Cuáles {kit_size} mezclas quieres? Pueden ser Sal de oro, Sal de sol, Sal de luna rosa, "
                 "Sal de la vid, Sal chilemon o Mezcla tierra de fuego."
             )
-        return [{"kit": mixes}], None
+        return [{"kit": mixes, "cantidad": kits}], None
     if not lines:
         unknown = f" No tenemos {', '.join(extraction.no_reconocidos)}." if extraction.no_reconocidos else ""
         return None, (
@@ -424,150 +445,106 @@ def _order_items(extraction, conversation: Conversation) -> tuple[list[dict] | N
 
 
 async def _take_order_items(body: str, sender: str, conversation: Conversation) -> str | None:
-    # Si se le estaba preguntando la cantidad de un producto, un «tres» se refiere a ese producto.
-    selected = get_product(conversation.datos.get("producto_pendiente", ""))
-    extraction = await extract_order(body, selected["nombre"] if selected else None, conversation.datos.get("kit"))
+    kit_size = conversation.datos.get("kit")
+    if kit_size and kit_size >= len(ordered_mix_ids()) and (quantity := parse_quantity(body)):
+        # El kit de 6 trae todas las mezclas: un «2» es cuántos kits.
+        return await _items_ready(sender, [{"kit": ordered_mix_ids(), "cantidad": quantity}], conversation)
+    extraction = await extract_order(body, None, kit_size)
     if extraction is None:
-        return await _resume(sender, conversation, _REINTENTO_TECNICO)
+        return await _reply_text(sender, _REINTENTO_TECNICO)
     if extraction.quiere_distribuir:
-        return await _resume(sender, conversation, _DISTRIBUIR)
-    if extraction.pregunta_o_comentario and not extraction.lineas:
-        # Una pregunta a mitad del pedido: se responde con las opciones del paso para seguir donde iba.
+        return await _handoff(sender, conversation, "distribuidor")
+    if extraction.pregunta_o_comentario and not extraction.lineas and not extraction.kits:
+        # Una pregunta a mitad del pedido: se responde y se repite lo que falta para seguir donde iba.
         return await _answer_and_resume(body, sender, conversation)
     items, retry = _order_items(extraction, conversation)
     if items is None:
-        return await _resume(sender, conversation, retry)
-    if not conversation.datos.get("kit") and conversation.datos.get("carrito"):
-        # Lo que escribe se suma a lo que ya eligió de la lista.
-        items = merge_items(conversation.datos["carrito"], items)
+        return await _reply_text(sender, retry)
     return await _items_ready(sender, items, conversation)
 
 
-async def _items_ready(sender: str, items: list[dict], conversation: Conversation, intro: str | None = None) -> str | None:
-    """Pedido listo: pasa a los datos de envío (P7) o, si ya se conocen, al resumen.
-    «intro» se antepone a la pregunta de envío en el mismo mensaje (sin agregar un paso)."""
+async def _items_ready(sender: str, items: list[dict], conversation: Conversation) -> str | None:
+    """Pedido listo: pasa a la ciudad de envío (P7) o, si ya se conocen los datos, al resumen."""
     conversation.datos["pedido"] = items
-    for key in ("kit_mezclas", "carrito", "producto_pendiente"):
-        conversation.datos.pop(key, None)
+    conversation.datos.pop("kit", None)
     logger.info("Pedido capturado: %d ítem(s)", len(items))
     # Si ya tenemos los datos de envío (p. ej. el cliente tocó «Cambiar algo»), se va directo al resumen.
     if not missing_shipping_fields(conversation.datos.get("envio", {})):
         return await _show_summary(sender, conversation)
-    # Cliente que vuelve: se le ofrecen los datos de envío de su último pedido en vez de pedirlos otra vez.
-    saved = archivo.saved_shipping(sender)
-    if saved and not missing_shipping_fields(saved):
-        conversation.datos["envio_guardado"] = saved
-        texto = get_step("P7G")["texto"].replace("[datos de envío guardados]", _shipping_line(saved))
-        return await _show_step(sender, "P7G", conversation, body=f"{intro} {texto}" if intro else texto)
-    body = f"{intro} {get_step('P7')['texto']}" if intro else None
-    return await _show_step(sender, "P7", conversation, body=body)
+    return await _show_step(sender, "P7", conversation)
 
 
 def _shipping_line(envio: dict) -> str:
     return f"{envio['nombre']}\n{envio['direccion']}, {envio['ciudad']}\nTel. {envio['telefono']}"
 
 
+async def _extract_shipping_fields(body: str) -> tuple[dict | None, bool]:
+    """(datos de envío encontrados, es una pregunta sin datos). None si la extracción falló."""
+    extraction = await extract_shipping(body)
+    if extraction is None:
+        return None, False
+    found = {field: value.strip() for field, value in extraction.model_dump(exclude={"pregunta_o_comentario"}).items()
+             if value and value.strip()}
+    return found, extraction.pregunta_o_comentario and not found
+
+
+async def _take_city(body: str, sender: str, conversation: Conversation) -> str | None:
+    found, question = await _extract_shipping_fields(body)
+    if found is None:
+        return await _reply_text(sender, _REINTENTO_TECNICO)
+    if question:
+        return await _answer_and_resume(body, sender, conversation)
+    shipping = {**conversation.datos.get("envio", {}), **found}
+    conversation.datos["envio"] = shipping
+    if not shipping.get("ciudad"):
+        return await _reply_text(sender, "¿A qué ciudad te lo enviamos? 🙌")
+    if not missing_shipping_fields(shipping):
+        # Escribió todos los datos de una vez: directo al resumen, que trae el valor del envío.
+        return await _show_summary(sender, conversation)
+    return await _shipping_info(sender, conversation)
+
+
+async def _shipping_info(sender: str, conversation: Conversation) -> str | None:
+    """P7B: valor y tiempo del envío a su ciudad, días de despacho y los datos que faltan. Si ya compró y su
+    dirección guardada es de la misma ciudad, se le ofrece (P7C) en el mismo mensaje."""
+    shipping = conversation.datos["envio"]
+    city = shipping["ciudad"]
+    step = get_step("P7B")
+    far = shipping_zone(city) == "resto_del_pais"
+    info = (
+        step["texto"].replace("[ciudad]", city).replace("[valor del envío]", format_price(shipping_cost(city)))
+        .replace("[tiempo de entrega]", step["tiempos"]["resto" if far else "cerca"])
+    )
+    if far:
+        info += f" {step['aviso_resto']}"
+    missing = missing_shipping_fields(shipping)
+    saved = archivo.saved_shipping(sender)
+    if (missing == ["nombre", "direccion", "telefono"] and saved and not missing_shipping_fields(saved)
+            and same_city(saved["ciudad"], city)):
+        conversation.datos["envio_guardado"] = saved
+        texto = get_step("P7C")["texto"].replace("[dirección guardada]", _shipping_line(saved))
+        return await _show_step(sender, "P7C", conversation, body=f"{info}\n\n{texto}")
+    ask = step["pide_datos"] if missing == ["nombre", "direccion", "telefono"] else ask_missing_shipping(missing)
+    return await _show_step(sender, "P7B", conversation, body=f"{info}\n\n{ask}")
+
+
 async def _use_saved_shipping(sender: str, conversation: Conversation) -> str | None:
     saved = conversation.datos.pop("envio_guardado", None)
     if not saved or not conversation.datos.get("pedido"):
-        # El pedido ya no está (p. ej. la conversación caducó): se vuelve a armar desde la lista.
-        return await _show_step(sender, "P6", conversation, rows=_product_rows())
+        # El pedido ya no está (p. ej. la conversación caducó): se vuelve a armar.
+        return await _start_order(sender, conversation)
     conversation.datos["envio"] = saved
     return await _show_summary(sender, conversation)
 
 
-# ── Kit armado: elegir las mezclas con una lista (P4B → P4C) ──────────────────
-
-async def _start_kit(sender: str, option: dict, conversation: Conversation) -> str | None:
-    for key in ("pedido_id", "pedido", "producto"):
-        conversation.datos.pop(key, None)
-    size = option["kit"]
-    conversation.datos["kit"] = size
-    conversation.datos["kit_mezclas"] = []
-    if size >= len(ordered_mix_ids()):
-        # El kit de 6 trae todas las mezclas: no hay nada que elegir y no se agrega ningún paso.
-        return await _items_ready(
-            sender, [{"kit": ordered_mix_ids()}], conversation, intro=f"¡Tu kit de {size} trae todas nuestras mezclas! ✨",
-        )
-    if settings.whatsapp_kit_flow_id:
-        sent = await _send_kit_flow(sender, size, conversation)
-        if sent:
-            return sent
-        logger.warning("No se pudo enviar el Flow del kit: se usa la lista de una en una")
-    return await _show_kit_picker(sender, conversation)
-
-
-async def _send_kit_flow(sender: str, size: int, conversation: Conversation, body: str | None = None) -> str | None:
-    """Formulario con casillas: WhatsApp exige marcar exactamente «size» mezclas."""
-    step = get_step("P4F")
-    prompt = step["texto"].replace("[tamaño]", str(size))
-    body = body or prompt
-    data = {
-        "cantidad": size,
-        "titulo": f"Elige {size} mezclas",
-        "ayuda": f"Marca exactamente {size}. Cada una viene en 100 g (tierra de fuego en 60 g).",
-        "mezclas": [{"id": op["mezcla"], "title": op["titulo"], "description": op["descripcion"]} for op in step_options("P4C")],
-    }
-    sent = await send_flow(
-        sender, body, step["boton_formulario"], settings.whatsapp_kit_flow_id, f"kit-{size}", "KIT", data,
-        settings.whatsapp_flows_mode,
-    )
-    if not sent:
-        return None
-    if conversation.paso != "P4F":
-        conversation.add_step("P4F")
-    conversation.paso = "P4F"
-    conversation.opciones = {"paso": "P4F", "tipo": "formulario", "cuerpo": prompt, "boton": step["boton_formulario"],
-                             "filas": None, "tamaño": size}
-    return body
-
-
-async def _kit_flow_reply(sender: str, response: dict, conversation: Conversation) -> str | None:
-    """Respuesta del Flow del kit: las mezclas marcadas. Se valida en código aunque WhatsApp ya exige la cantidad."""
-    token = str(response.get("flow_token") or "")
-    size = conversation.datos.get("kit") or (int(token.split("-")[1]) if token.startswith("kit-") and token[4:].isdigit() else None)
-    mixes = response.get("mezclas") or []
-    valid = size and len(mixes) == size == len(set(mixes)) and all(m in mix_ids() for m in mixes)
-    if not valid:
-        logger.warning("Respuesta del Flow del kit inválida (%d mezclas para un kit de %s)", len(mixes), size)
-        return await _show_step(sender, "P4B", conversation)
-    conversation.datos["kit"] = size
-    return await _items_ready(sender, [{"kit": list(mixes)}], conversation)
-
-
-async def _show_kit_picker(sender: str, conversation: Conversation) -> str | None:
-    size, chosen = conversation.datos["kit"], conversation.datos["kit_mezclas"]
-    rows = [
-        {"id": op["id"], "title": op["titulo"], "description": op["descripcion"]}
-        for op in step_options("P4C") if op["mezcla"] not in chosen
-    ]
-    prompt = get_step("P4C")["texto"].replace("[n]", str(len(chosen) + 1)).replace("[tamaño]", str(size))
-    if chosen:
-        prefix = f"Llevas: {', '.join(get_product(m)['nombre'] for m in chosen)}."
-    else:
-        prefix = f"¡Arma tu kit de {size} mezclas! 🎁 Toca «Ver mezclas» y elige una por una."
-    return await _show_step(sender, "P4C", conversation, body=f"{prefix}\n{prompt}", rows=rows)
-
-
-async def _pick_kit_mix(sender: str, option: dict, conversation: Conversation) -> str | None:
-    size = conversation.datos.get("kit")
-    chosen = conversation.datos.get("kit_mezclas")
-    if not size or chosen is None:
-        # Una lista vieja: no hay un kit en curso, se vuelve a ofrecer el tamaño.
-        return await _show_step(sender, "P4B", conversation)
-    if option["mezcla"] not in chosen:
-        chosen.append(option["mezcla"])
-    if len(chosen) < size:
-        return await _show_kit_picker(sender, conversation)
-    return await _items_ready(sender, [{"kit": list(chosen)}], conversation)
-
-
 async def _take_shipping(body: str, sender: str, conversation: Conversation) -> str | None:
-    extraction = await extract_shipping(body)
-    if extraction is None:
+    if conversation.paso == "P7C":
+        # Escribió otra dirección en vez de tocar un botón: se toma esa.
+        conversation.datos.pop("envio_guardado", None)
+    found, question = await _extract_shipping_fields(body)
+    if found is None:
         return await _reply_text(sender, _REINTENTO_TECNICO)
-    found = {field: value.strip() for field, value in extraction.model_dump(exclude={"pregunta_o_comentario"}).items() if value and value.strip()}
-    if extraction.pregunta_o_comentario and not found:
+    if question:
         return await _answer_and_resume(body, sender, conversation)
     shipping = {**conversation.datos.get("envio", {}), **found}
     conversation.datos["envio"] = shipping
@@ -578,21 +555,25 @@ async def _take_shipping(body: str, sender: str, conversation: Conversation) -> 
 
 
 async def _show_summary(sender: str, conversation: Conversation) -> str | None:
-    summary = order_summary(conversation.datos["pedido"], conversation.datos["envio"])
+    summary = order_summary(conversation.datos["pedido"], conversation.datos["envio"], get_step("P7B")["aviso_resto"])
     return await _show_step(sender, "P8", conversation, body=summary)
 
+
+# ── Quejas (Q1 → Q2 o T1/T2) ──────────────────────────────────────────────────
+
+async def _take_complaint(body: str, sender: str, conversation: Conversation) -> str | None:
+    """Lo que el cliente contó del reclamo: si es grave (producto dañado, salud o cobro errado) pasa urgente con Q2."""
+    conversation.datos["detalle"] = body
+    serious = await is_serious_complaint(body)
+    return await _handoff(sender, conversation, "queja_grave" if serious else "queja")
+
+
+# ── Opciones tocadas ──────────────────────────────────────────────────────────
 
 async def handle_choice(interactive: dict | None, sender: str, conversation: Conversation) -> None:
     if _bot_is_silenced(conversation):
         return
     conversation.intentos_fallidos = 0
-    response = flow_response(interactive)
-    if response is not None:
-        sent = await _kit_flow_reply(sender, response, conversation)
-        if sent:
-            names = ", ".join(get_product(m)["nombre"] for m in response.get("mezclas", []) if get_product(m))
-            conversation.add_turn(f"Elegí para mi kit: {names}", sent)
-        return
     reply = interactive_reply(interactive)
     if reply is None:
         logger.info("Mensaje interactivo sin respuesta de lista o botón ignorado")
@@ -607,68 +588,46 @@ async def handle_choice(interactive: dict | None, sender: str, conversation: Con
         return
 
     step_id, option = found
-    destination = option.get("va_a")
-    logger.info("Opción elegida: %s (%s → %s)", option["id"], step_id, destination)
-    if "producto" in option:
-        conversation.datos["producto"] = option["producto"]
+    option_id, destination = option["id"], option.get("va_a")
+    logger.info("Opción elegida: %s (%s → %s)", option_id, step_id, destination)
 
-    parts: list[str | None] = []
-    if option["id"] == "atajo_menu":
-        parts.append(await _show_step(sender, _menu_step(), conversation))
-    elif "mezcla" in option:
-        parts.append(await _pick_kit_mix(sender, option, conversation))
-    elif "agregar" in option:
-        parts.append(await _ask_quantity(sender, option["agregar"], conversation))
-    elif "cantidad" in option:
-        parts.append(await _add_to_cart(sender, option["cantidad"], conversation))
-    elif option["id"] == "carrito_agregar":
-        parts.append(await _show_step(sender, "P6", conversation, rows=_product_rows()))
-    elif option["id"] == "carrito_listo":
-        parts.append(await _finish_cart(sender, conversation))
-    elif option["id"] == "p7g_misma":
-        parts.append(await _use_saved_shipping(sender, conversation))
-    elif option["id"] == "p7g_otra":
-        conversation.datos.pop("envio_guardado", None)
-        parts.append(await _show_step(sender, "P7", conversation))
-    elif destination == "P4C":
-        parts.append(await _start_kit(sender, option, conversation))
+    if option_id == "atajo_menu":
+        sent = await _show_step(sender, _menu_step(), conversation)
+    elif destination in _DIRECTOS:
+        sent = await _handoff(sender, conversation, _DIRECTOS[destination])
     elif destination == "T1":
-        parts.append(await _handoff(sender, conversation, "solicitud"))
-    elif destination == "P11":
-        parts.append(await _confirm_order(sender, conversation))
-    elif destination == "P11T":
-        parts.append(await _confirm_transfer(sender, conversation))
-    elif "recomienda" in option:
-        parts.append(await _reply_text(sender, recommendation(option["recomienda"])))
-        parts.append(await _show_step(sender, "P2", conversation))
-    elif "tema_kb" in option:
-        answer = await ask_claude(
-            f"Elegí el tema «{option['titulo']}» en el menú de dudas. Respóndeme de forma breve.",
-            conversation.historial,
-        )
-        parts.append(await _reply_text(sender, answer) if answer else None)
-        parts.append(await _show_step(sender, "P9S", conversation))
+        sent = await _handoff(sender, conversation, "solicitud")
+    elif "kit" in option:
+        sent = await _start_kit(sender, option, conversation)
+    elif option_id == "p4_kit_mini":
+        sent = await _start_kit_mini(sender, conversation)
     elif destination == "P6":
-        parts.append(await _start_order(sender, option, conversation))
-    elif destination == "P2F":
-        product = get_product(conversation.datos.get("producto", ""))
-        parts.append(await _show_step(sender, "P2F", conversation, body=product_card(product)) if product else None)
-    elif destination in PASOS_DISPONIBLES:
-        parts.append(await _show_step(sender, destination, conversation))
-        if destination in _RESPUESTAS_DE_DUDA:
-            parts.append(await _show_step(sender, "P9S", conversation))
+        sent = await _start_order(sender, conversation)
+    elif option_id == "p7c_misma":
+        sent = await _use_saved_shipping(sender, conversation)
+    elif option_id == "p7c_otra":
+        conversation.datos.pop("envio_guardado", None)
+        sent = await _show_step(sender, "P7D", conversation)
+    elif option_id == "p8_confirmar":
+        ready = conversation.datos.get("pedido") and not missing_shipping_fields(conversation.datos.get("envio", {}))
+        sent = await (_show_step(sender, "P11", conversation) if ready else _start_order(sender, conversation))
+    elif option_id == "p11_transferencia":
+        sent = await _confirm_transfer(sender, conversation)
+    elif option_id == "p11_link":
+        sent = await _confirm_order(sender, conversation)
+    elif option_id in ("p15_si", "p15_no"):
+        sent = await _after_sale_answer(sender, option_id == "p15_si")
+    elif destination in _PASOS_SIMPLES:
+        sent = await _show_step(sender, destination, conversation)
     else:
-        if destination and flow_of(destination) not in _FLUJOS_DE_APOYO:
-            conversation.flujo_activo = flow_of(destination)
-        conversation.paso = destination
-        parts.append(await _reply_text(sender, under_construction(destination or "", option["titulo"])))
-
-    sent = "\n\n".join(p for p in parts if p)
+        # Opción de un mensaje que Especia todavía no envía (p. ej. la postventa O4): el menú.
+        logger.warning("Opción sin acción '%s': se muestra el menú", option_id)
+        sent = await _show_step(sender, _menu_step(), conversation)
     if sent:
         conversation.add_turn(f"Elegí «{option['titulo']}»", sent)
 
 
-# ── Pago con link de Bold (P11L → P12 / P12R) ─────────────────────────────────
+# ── Pago: link de Bold (P13) o transferencia (P12 → P14) → confirmado (P15) ──
 
 def _fill(text: str, order: Pedido) -> str:
     return (
@@ -678,14 +637,25 @@ def _fill(text: str, order: Pedido) -> str:
     )
 
 
+def _remember(sender: str, conversation: Conversation, order: Pedido, items: list[dict], envio: dict) -> None:
+    conversation.datos["pedido_id"] = order.id
+    archivo.remember_order(
+        sender, conversation.nombre, envio, order.referencia,
+        "; ".join(describe_item(item).lstrip("• ") for item in items),
+    )
+    for etiqueta in ("Producto", "Pendiente de pago"):
+        if etiqueta not in conversation.etiquetas:
+            conversation.etiquetas.append(etiqueta)
+
+
 async def _confirm_order(sender: str, conversation: Conversation) -> str | None:
-    """«Confirmar pedido»: guarda el pedido y envía el link de pago. Sin Bold, o si falla, pasa a una persona."""
+    """«Link de pago»: guarda el pedido y envía el link de Bold (P13). Sin Bold, o si falla, pasa a una persona."""
     if not bold.is_enabled():
         return await _handoff(sender, conversation, "pedido")
-    # Si el cliente vuelve a tocar «Confirmar pedido», se reenvía el mismo link en vez de crear otro.
+    # Si el cliente vuelve a tocar «Link de pago», se reenvía el mismo link en vez de crear otro.
     previous = get_order(conversation.datos["pedido_id"]) if conversation.datos.get("pedido_id") else None
     if previous and previous.estado == PENDIENTE and previous.link_url:
-        return await _show_step(sender, "P11L", conversation, body=_fill(get_step("P11L")["texto"], previous))
+        return await _show_step(sender, "P13", conversation, body=_fill(get_step("P13")["texto"], previous))
     _cancel_unpaid_transfer(previous)
 
     items, envio = conversation.datos.get("pedido"), conversation.datos.get("envio", {})
@@ -703,14 +673,8 @@ async def _confirm_order(sender: str, conversation: Conversation) -> str | None:
     order.link_id, order.link_url, order.vence_en = link["id"], link["url"], link["vence_en"]
     update_order(order)
     logger.info("Pedido %s con link de pago %s", order.referencia, order.link_id)
-    conversation.datos["pedido_id"] = order.id
-    archivo.remember_order(
-        sender, conversation.nombre, envio, order.referencia,
-        "; ".join(describe_item(item).lstrip("• ") for item in items),
-    )
-    if "Pendiente de pago" not in conversation.etiquetas:
-        conversation.etiquetas.append("Pendiente de pago")
-    return await _show_step(sender, "P11L", conversation, body=_fill(get_step("P11L")["texto"], order))
+    _remember(sender, conversation, order, items, envio)
+    return await _show_step(sender, "P13", conversation, body=_fill(get_step("P13")["texto"], order))
 
 
 def _cancel_unpaid_transfer(order: Pedido | None) -> None:
@@ -721,10 +685,10 @@ def _cancel_unpaid_transfer(order: Pedido | None) -> None:
 
 
 async def _confirm_transfer(sender: str, conversation: Conversation) -> str | None:
-    """«Transferencia» en el resumen: registra el pedido y da los datos de la cuenta (P11T)."""
+    """«Transferencia»: registra el pedido y da los datos de la cuenta (P12)."""
     previous = get_order(conversation.datos["pedido_id"]) if conversation.datos.get("pedido_id") else None
     if previous and previous.medio_pago == TRANSFERENCIA and previous.estado in (ESPERANDO_COMPROBANTE, POR_VERIFICAR):
-        return await _show_step(sender, "P11T", conversation, body=_fill(get_step("P11T")["texto"], previous))
+        return await _show_step(sender, "P12", conversation, body=_fill(get_step("P12")["texto"], previous))
     items, envio = conversation.datos.get("pedido"), conversation.datos.get("envio", {})
     if not items or missing_shipping_fields(envio):
         return await _handoff(sender, conversation, "pedido")
@@ -735,37 +699,44 @@ async def _confirm_transfer(sender: str, conversation: Conversation) -> str | No
     order = create_order(sender, conversation.nombre, items, envio, subtotal(items), shipping_cost(envio["ciudad"]),
                          medio_pago=TRANSFERENCIA)
     logger.info("Pedido %s por transferencia: se espera el comprobante", order.referencia)
-    conversation.datos["pedido_id"] = order.id
-    archivo.remember_order(
-        sender, conversation.nombre, envio, order.referencia,
-        "; ".join(describe_item(item).lstrip("• ") for item in items),
-    )
-    if "Pendiente de pago" not in conversation.etiquetas:
-        conversation.etiquetas.append("Pendiente de pago")
-    return await _show_step(sender, "P11T", conversation, body=_fill(get_step("P11T")["texto"], order))
+    _remember(sender, conversation, order, items, envio)
+    return await _show_step(sender, "P12", conversation, body=_fill(get_step("P12")["texto"], order))
+
+
+_TIPOS_SIN_COMPROBANTE = ("audio", "video", "sticker")
 
 
 async def handle_media(kind: str, media: dict, sender: str, conversation: Conversation) -> None:
-    """Foto o documento del cliente: si tiene un pedido por transferencia pendiente, es el comprobante."""
+    """Foto, documento, audio, video o sticker del cliente. Una foto o un documento es el comprobante si tiene un
+    pedido por transferencia pendiente; una foto durante una queja es la prueba del problema."""
     if _bot_is_silenced(conversation):
         return
-    order = pending_transfer(sender)
-    if order is None:
-        sent = await _reply_text(sender, get_step("P11A")["texto"])
+    if conversation.paso == "Q1":
+        conversation.datos["detalle"] = "Envió una foto o un archivo del problema (revísalo en el chat)."
+        sent = await _handoff(sender, conversation, "queja_grave")
         if sent:
-            conversation.add_turn("[Envié un archivo]", sent)
+            conversation.add_turn("[Envié una foto del problema]", sent)
+        return
+    order = pending_transfer(sender) if kind not in _TIPOS_SIN_COMPROBANTE else None
+    if order is None:
+        sent = await (_reply_text(sender, get_step("P14A")["texto"]) if kind == "document"
+                      else _media_not_supported(kind, sender, conversation))
+        if sent:
+            conversation.add_turn(f"[Envié {'un archivo' if kind == 'document' else 'un ' + kind}]", sent)
         return
     mime = (media.get("mime_type") or "").split(";")[0].strip()
     downloaded = await download_media(media["id"]) if mime in transferencias.TIPOS_COMPROBANTE else None
     if downloaded is None or downloaded[1] not in transferencias.TIPOS_COMPROBANTE:
-        await _reply_text(sender, get_step("P11P")["texto"])
+        await _reply_text(sender, get_step("P14P")["texto"])
         return
     path = transferencias.save_receipt(order.referencia, *downloaded)
     order.estado = POR_VERIFICAR
     order.comprobante = str(path)
     update_order(order)
     logger.info("Comprobante recibido para el pedido %s", order.referencia)
-    sent = await _reply_text(sender, _fill(get_step("P11C")["texto"], order))
+    step = get_step("P14")
+    text = step["texto"] if is_open(_now()) else f"{step['texto']} {step['fuera_de_horario']}"
+    sent = await _reply_text(sender, _fill(text, order))
     if sent:
         conversation.add_turn("[Envié el comprobante de la transferencia]", sent)
     buttons = transferencias.team_buttons(order.id)
@@ -782,6 +753,16 @@ async def handle_media(kind: str, media: dict, sender: str, conversation: Conver
     )
 
 
+async def _media_not_supported(kind: str, sender: str, conversation: Conversation) -> str | None:
+    """O2: se recibió y no se puede ver o escuchar; se retoma el paso en curso o se muestra el menú."""
+    step = get_step("O2")
+    tipo, emoji, verbo = step["tipos"].get(kind, step["tipos"]["image"])
+    text = step["texto"].replace("[tipo]", tipo).replace("[emoji]", emoji).replace("[verbo]", verbo)
+    if conversation.flujo_activo and conversation.opciones:
+        return await _resume(sender, conversation, text)
+    return await _show_step(sender, _menu_step(), conversation, body=text)
+
+
 async def resolve_transfer(order: Pedido, accion: str) -> str:
     """Acción del equipo desde el correo. Devuelve el mensaje para la página de confirmación."""
     if order.medio_pago != TRANSFERENCIA:
@@ -793,15 +774,18 @@ async def resolve_transfer(order: Pedido, accion: str) -> str:
     if accion == transferencias.RECHAZAR:
         order.estado = ESPERANDO_COMPROBANTE
         update_order(order)
-        sent = await send_text(order.remitente, _fill(get_step("P11X")["texto"], order))
-        aviso = "Le pedimos al cliente que revise y envíe el comprobante otra vez."
+        # P16: Juanita revisa el pago con el cliente. El bot se silencia; no hace falta otro correo al equipo.
+        conversation = load_conversation(order.remitente)
+        sent = await _handoff(order.remitente, conversation, "pago", notify=False)
+        save_conversation(conversation)
+        aviso = "Especia le avisó al cliente que revisas el pago con él. La conversación queda en tus manos."
         return aviso if sent else (
-            f"{aviso} Pero WhatsApp no dejó enviarle el mensaje (pasaron más de 24 h desde su último mensaje): "
+            "WhatsApp no dejó avisarle al cliente (pasaron más de 24 h desde su último mensaje): "
             "escríbele desde la app de WhatsApp Business.")
     order.estado = PAGADO
     order.pagado_en = time.time()
     update_order(order)
-    sent = await send_text(order.remitente, _fill(get_step("P12")["texto"], order))
+    sent = await _payment_confirmed(order)
     archivo.remember_payment(order.remitente, order.referencia)
     archivo.save_order_chat(order.id, order.referencia, order.remitente, order.nombre, order_ficha(order))
     await notify_team(
@@ -812,6 +796,31 @@ async def resolve_transfer(order: Pedido, accion: str) -> str:
     return f"{aviso} Le avisamos al cliente por WhatsApp." if sent else (
         f"{aviso} WhatsApp no dejó avisarle al cliente (pasaron más de 24 h desde su último mensaje): "
         "escríbele desde la app de WhatsApp Business.")
+
+
+async def _payment_confirmed(order: Pedido) -> bool:
+    """P15: pago confirmado, día de despacho y la pregunta de la postventa."""
+    conversation = load_conversation(order.remitente)
+    paid = datetime.fromtimestamp(order.pagado_en or time.time(), tz=COLOMBIA)
+    body = _fill(get_step("P15")["texto"], order).replace("[día de despacho]", spanish_date(dispatch_day(paid)))
+    sent = await _show_step(order.remitente, "P15", conversation, body=body)
+    if "Pendiente de pago" in conversation.etiquetas:
+        conversation.etiquetas.remove("Pendiente de pago")
+    for etiqueta in ("Producto", "Pagado"):
+        if etiqueta not in conversation.etiquetas:
+            conversation.etiquetas.append(etiqueta)
+    save_conversation(conversation)
+    return bool(sent)
+
+
+async def _after_sale_answer(sender: str, accepted: bool) -> str | None:
+    """Respuesta a P15: se guarda en el último pedido pagado (permiso para el mensaje de postventa)."""
+    order = last_paid(sender)
+    if order:
+        order.postventa = 1 if accepted else 0
+        update_order(order)
+        logger.info("Pedido %s: postventa %s", order.referencia, "aceptada" if accepted else "rechazada")
+    return await _reply_text(sender, get_step("P15S" if accepted else "P15N")["texto"])
 
 
 async def handle_bold_event(event: dict) -> None:
@@ -836,7 +845,7 @@ async def handle_bold_event(event: dict) -> None:
         await _payment_approved(order, data)
     elif kind == "SALE_REJECTED":
         if order.estado == PENDIENTE:
-            await send_text(order.remitente, _fill(get_step("P12R")["texto"], order))
+            await send_text(order.remitente, _fill(get_step("P13R")["texto"], order))
     elif kind == "VOID_APPROVED":
         order.estado = ANULADO
         update_order(order)
@@ -869,7 +878,7 @@ async def _payment_approved(order: Pedido, data: dict) -> None:
     order.estado = PAGADO
     order.pagado_en = time.time()
     update_order(order)
-    await send_text(order.remitente, _fill(get_step("P12")["texto"], order))
+    await _payment_confirmed(order)
     archivo.remember_payment(order.remitente, order.referencia)
     # Chat completo + ficha: se guarda 1 año y se copia a Google Drive para que el equipo lo lea.
     archivo.save_order_chat(order.id, order.referencia, order.remitente, order.nombre, order_ficha(order))
@@ -881,24 +890,36 @@ async def _payment_approved(order: Pedido, data: dict) -> None:
 
 # ── Traspaso a una persona (coexistencia con la app de WhatsApp Business) ────
 
-async def _handoff(sender: str, conversation: Conversation, motivo: str) -> str | None:
+# Mensaje al cliente según el motivo: (dentro de horario, fuera de horario). Los demás usan T1/T2.
+_MENSAJES_DE_TRASPASO = {
+    "pedido": ("P13H", "P13F"),
+    "corporativo": ("R1", "R1F"),
+    "distribuidor": ("D1", "D1F"),
+    "proveedor": ("V1", "V1F"),
+    "pago": ("P16", "P16F"),
+}
+
+
+async def _handoff(sender: str, conversation: Conversation, motivo: str, notify: bool = True) -> str | None:
     """Avisa al cliente, silencia el bot y envía la ficha al equipo."""
-    open_now = is_open(_now())
-    if motivo == "pedido":
-        step = "P11" if open_now else "P11F"
-    elif motivo == "no_entiende":
+    if motivo == "no_entiende":
         step = "G4"
+    elif motivo == "queja_grave":
+        step = "Q2"
     else:
-        step = "T1" if open_now else "T2"
+        inside, outside = _MENSAJES_DE_TRASPASO.get(motivo, ("T1", "T2"))
+        step = inside if is_open(_now()) else outside
     sent = await _show_step(sender, step, conversation)
     if not sent:
         return None
     start_handoff(conversation, motivo)
-    logger.info("Traspaso iniciado (motivo: %s)", motivo)
-    await notify_team(
-        f"[Saboryarte] {MOTIVOS[motivo]} — {conversation.nombre or conversation.remitente}",
-        handoff_ficha(conversation),
-    )
+    logger.info("Traspaso iniciado (motivo: %s, prioridad: %s)", motivo, conversation.traspaso["prioridad"])
+    if notify:
+        urgente = "🚨 URGENTE · " if conversation.traspaso["prioridad"] == "urgente" else ""
+        await notify_team(
+            f"[Saboryarte] {urgente}{MOTIVOS[motivo]} — {conversation.nombre or conversation.remitente}",
+            handoff_ficha(conversation),
+        )
     return sent
 
 

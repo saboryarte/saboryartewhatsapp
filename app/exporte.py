@@ -49,7 +49,8 @@ def _productos(order: Pedido) -> str:
     partes = []
     for item in order.items:
         if "kit" in item:
-            partes.append(f"Kit de {len(item['kit'])} ({', '.join(get_product(m)['nombre'] for m in item['kit'])})")
+            kits = f"{item.get('cantidad', 1)} × Kit" if item.get("cantidad", 1) > 1 else "Kit"
+            partes.append(f"{kits} de {len(item['kit'])} ({', '.join(get_product(m)['nombre'] for m in item['kit'])})")
         else:
             partes.append(f"{item['cantidad']} × {get_product(item['producto'])['nombre']}")
     return "; ".join(partes)
