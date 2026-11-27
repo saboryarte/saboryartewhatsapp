@@ -31,7 +31,7 @@ La idea de la simplificación: **Especia atiende la compra de principio a fin, i
 | Alianzas, prensa, ferias | O3 → T1/T2 | Lo escribe el cliente (`IR:alianza`) | `otras` | Traspaso con el detalle |
 | «Por ahora no» | P10 | Lo escribe el cliente (`IR:no_por_ahora`) | — | Despedida y reinicio |
 | Audio, video, imagen o sticker | O2 | Tipo de mensaje | sin cambio | Retoma el paso o muestra el menú |
-| Postventa | O4–O4C | Plantilla de Meta (**pendiente**) | — | Aún no se envía; P15 ya guarda el permiso |
+| Postventa | O4 → O4B/O4C/O4M/O4S → O4F | Plantilla de Meta «especia_postventa» | — | 3 días después de la entrega estimada, solo a quien aceptó en P15 |
 | Traspaso | T1–T3 | «asesor», «Hablar con alguien», o cualquier disparador del §4 | `en_traspaso` | Bot en silencio hasta el cierre |
 
 ---
@@ -112,7 +112,8 @@ flowchart TD
 - **P7C:** solo si ya compró antes y su dirección guardada es de la misma ciudad. Va en el mismo mensaje que P7B, en lugar de pedirle los datos. Un «sí» escrito también vale.
 - **P8 → P11:** confirmar ya no traspasa: pregunta el medio de pago. Cambiar de medio antes de pagar anula el pedido anterior sin cobrar.
 - **Día de despacho (P15):** el siguiente martes o jueves después del día del pago (`dispatch_day` en `app/handoff.py`).
-- **P15 guarda el permiso** para la postventa en `pedidos.postventa` (1 sí, 0 no). El mensaje O4 todavía no se envía.
+- **P15 guarda el permiso** para la postventa en `pedidos.postventa` (1 sí, 0 no).
+- **Postventa O4** (`app/postventa.py`, cron diario a las 10:00 a. m.): a quien aceptó en P15 le llega la plantilla «especia_postventa» 3 días después de la entrega estimada (día de despacho + 2 días hábiles en Medellín y el área metropolitana, 4 en el resto del país). Se aplaza si Juanita está atendiendo al cliente; no se envía a pedidos de hace más de 7 días de su fecha. «Llegó perfecto» → O4B; «Tuve un problema» → Q1. En O4B: «Me encantaron» → O4C, «Están bien» → O4M (qué mejorar, por correo al equipo), «Tengo una duda» → T1. En O4C: «Sí, claro» guarda `pedidos.testimonio` y pide una frase (O4S, por correo al equipo), «Pedir de nuevo» → P1, «Listo, gracias» → O4F. La plantilla es de la cuenta de WhatsApp: al pasar al número del negocio se crea otra vez con `python -m app.postventa crear-plantilla`.
 
 ### Traspasos directos: regalos, distribuidores y proveedores
 
@@ -247,7 +248,7 @@ Esto va al *system prompt* y es el criterio para evaluar las respuestas de Claud
 
 | Qué | Estado |
 |---|---|
-| Plantilla de postventa O4 (aprobación de Meta y envío 3 días después de la entrega, solo a quien aceptó en P15) | Pendiente. El permiso ya se guarda. |
+| Plantilla de postventa O4 | Construida. Falta que Meta apruebe «especia_postventa» (y crearla de nuevo en la cuenta del número del negocio). |
 | Fotos de producto y presentación para regalos o distribuidores | No hay envío de archivos. |
 | Seguimiento automático del estado del pedido | Sin integración: «¿dónde está mi pedido?» lo responde Claude o pasa a Juanita. |
 

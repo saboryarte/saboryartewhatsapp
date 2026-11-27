@@ -32,6 +32,8 @@ class WhatsAppMessage(BaseModel):
     video: dict[str, Any] | None = None
     document: dict[str, Any] | None = None
     sticker: dict[str, Any] | None = None
+    # Respuesta a un botón de una plantilla (postventa O4): {"payload": id de la opción, "text": título}.
+    button: dict[str, Any] | None = None
     location: dict[str, Any] | None = None
     interactive: dict[str, Any] | None = None
 
@@ -145,7 +147,14 @@ async def download_media(media_id: str) -> tuple[bytes, str] | None:
     return response.content, (data.get("mime_type") or "").split(";")[0].strip()
 
 
-async def _send(to: str, message: dict[str, Any]) -> bool:
+async def send_template(to: str, name: str, language: str, components: list[dict[str, Any]], readable: str) -> bool:
+    """Plantilla aprobada por Meta: la única forma de escribirle a un cliente pasadas 24 h de su último mensaje.
+    «readable» es el texto tal como lo ve el cliente, para el archivo de chats."""
+    return await _send(to, {"type": "template", "template": {
+        "name": name, "language": {"code": language}, "components": components}}, readable=readable)
+
+
+async def _send(to: str, message: dict[str, Any], readable: str | None = None) -> bool:
     """Envía un mensaje por Graph API. Devuelve True si Meta lo aceptó."""
     if not settings.whatsapp_token or not settings.whatsapp_phone_number_id:
         logger.warning("send: WHATSAPP_TOKEN o WHATSAPP_PHONE_NUMBER_ID no configurados")
@@ -164,7 +173,7 @@ async def _send(to: str, message: dict[str, Any]) -> bool:
             response.raise_for_status()
             logger.info("Mensaje enviado (tipo: %s)", message["type"])
             record_whatsapp(to, message["type"])
-            record(to, ESPECIA, outgoing_text(message))
+            record(to, ESPECIA, readable or outgoing_text(message))
             return True
         except HTTPStatusError as e:
             # Meta explica el motivo en error.message (p. ej. token vencido: code 190, subcode 463)

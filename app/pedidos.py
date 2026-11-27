@@ -48,6 +48,10 @@ class Pedido:
     comprobante: str | None = None
     # Respuesta en P15 a «¿te escribimos para saber cómo te fue?»: 1 sí, 0 no, None sin responder.
     postventa: int | None = None
+    # Cuándo se envió la plantilla de postventa O4 (app/postventa.py). None: todavía no.
+    postventa_enviada_en: float | None = None
+    # Respuesta en O4C a «¿nos dejas mostrar tu comentario como testimonio?»: 1 sí, None sin responder.
+    testimonio: int | None = None
 
     @property
     def referencia(self) -> str:
@@ -57,10 +61,11 @@ class Pedido:
 _COLUMNAS = (
     "id", "remitente", "nombre", "items", "envio", "subtotal", "valor_envio", "total", "estado",
     "link_id", "link_url", "payment_id", "creado_en", "vence_en", "pagado_en", "medio_pago", "comprobante",
-    "postventa",
+    "postventa", "postventa_enviada_en", "testimonio",
 )
 # Columnas agregadas después de crear la tabla: se agregan solas a una base existente.
-_COLUMNAS_NUEVAS = {"medio_pago": f"TEXT NOT NULL DEFAULT '{BOLD}'", "comprobante": "TEXT", "postventa": "INTEGER"}
+_COLUMNAS_NUEVAS = {"medio_pago": f"TEXT NOT NULL DEFAULT '{BOLD}'", "comprobante": "TEXT", "postventa": "INTEGER",
+                    "postventa_enviada_en": "REAL", "testimonio": "INTEGER"}
 
 
 def _connect() -> sqlite3.Connection:
@@ -145,9 +150,10 @@ def update_order(order: Pedido) -> None:
     with closing(_connect()) as conn, conn:
         conn.execute(
             "UPDATE pedidos SET estado = ?, link_id = ?, link_url = ?, payment_id = ?, vence_en = ?, pagado_en = ?, "
-            "medio_pago = ?, comprobante = ?, postventa = ? WHERE id = ?",
+            "medio_pago = ?, comprobante = ?, postventa = ?, postventa_enviada_en = ?, testimonio = ? WHERE id = ?",
             (order.estado, order.link_id, order.link_url, order.payment_id, order.vence_en, order.pagado_en,
-             order.medio_pago, order.comprobante, order.postventa, order.id),
+             order.medio_pago, order.comprobante, order.postventa, order.postventa_enviada_en, order.testimonio,
+             order.id),
         )
 
 
@@ -157,6 +163,33 @@ def last_paid(remitente: str) -> Pedido | None:
         row = conn.execute(
             f"SELECT {', '.join(_COLUMNAS)} FROM pedidos WHERE remitente = ? AND estado = ? ORDER BY id DESC LIMIT 1",
             (remitente, PAGADO),
+        ).fetchone()
+    return _from_row(row) if row else None
+
+
+# La postventa se envía días después del pago; más allá de esto el pedido ya es viejo para preguntar.
+_DIAS_PARA_POSTVENTA = 30
+
+
+def follow_ups_pending() -> list[Pedido]:
+    """Pedidos pagados cuyo cliente aceptó la postventa (P15) y que todavía no la han recibido."""
+    since = time.time() - _DIAS_PARA_POSTVENTA * 24 * 3600
+    with closing(_connect()) as conn:
+        rows = conn.execute(
+            f"SELECT {', '.join(_COLUMNAS)} FROM pedidos WHERE estado = ? AND postventa = 1 "
+            "AND postventa_enviada_en IS NULL AND pagado_en >= ? ORDER BY id",
+            (PAGADO, since),
+        ).fetchall()
+    return [_from_row(row) for row in rows]
+
+
+def last_follow_up(remitente: str) -> Pedido | None:
+    """Último pedido del cliente al que se le envió la postventa (para guardar sus respuestas)."""
+    with closing(_connect()) as conn:
+        row = conn.execute(
+            f"SELECT {', '.join(_COLUMNAS)} FROM pedidos WHERE remitente = ? AND postventa_enviada_en IS NOT NULL "
+            "ORDER BY postventa_enviada_en DESC LIMIT 1",
+            (remitente,),
         ).fetchone()
     return _from_row(row) if row else None
 

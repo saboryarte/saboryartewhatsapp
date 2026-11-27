@@ -85,6 +85,8 @@ https_() {
 
 actualizar() {
   codigo
+  # Las tareas programadas viven en el repositorio: se reinstalan por si cambiaron.
+  como_especia crontab "$DIR/deploy/crontab"
   systemctl restart especia
   sleep 2
   systemctl --no-pager --lines=0 status especia | head -3 || true

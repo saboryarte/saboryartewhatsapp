@@ -69,6 +69,7 @@ from .pedidos import (
     find_by_link,
     find_by_reference,
     get_order,
+    last_follow_up,
     last_paid,
     order_ficha,
     pending_links,
@@ -82,7 +83,7 @@ from .whatsapp import download_media, interactive_reply, send_buttons, send_list
 logger = logging.getLogger(__name__)
 
 # Pasos que se muestran tal cual cuando el cliente elige una opción que lleva a ellos.
-_PASOS_SIMPLES = frozenset({"G1", "P1", "P4", "P4B"})
+_PASOS_SIMPLES = frozenset({"G1", "P1", "P4", "P4B", "Q1", "O4B", "O4C", "O4M"})
 # Opciones del menú que pasan directo a Juanita, sin preguntas del bot: destino → motivo del traspaso.
 _DIRECTOS = {"R1": "corporativo", "D1": "distribuidor", "V1": "proveedor"}
 # Pasos de otras rutas que se usan como respuesta dentro de la ruta actual: no cambian el flujo activo.
@@ -178,6 +179,8 @@ async def handle_text(body: str, sender: str, profile_name: str | None, conversa
     elif conversation.paso == "O3":
         conversation.datos["detalle"] = body
         sent = await _handoff(sender, conversation, "alianza")
+    elif conversation.paso in ("O4M", "O4S"):
+        sent = await _take_follow_up_comment(body, sender, conversation)
     elif conversation.flujo_activo is None and not conversation.historial:
         # Primer mensaje de la conversación y no es un saludo: se responde y se ofrece el menú en el mismo mensaje.
         sent = await _answer_with_menu(body, sender, conversation)
@@ -623,10 +626,15 @@ async def handle_choice(interactive: dict | None, sender: str, conversation: Con
         sent = await _confirm_order(sender, conversation)
     elif option_id in ("p15_si", "p15_no"):
         sent = await _after_sale_answer(sender, option_id == "p15_si")
+    elif option_id == "o4c_si":
+        sent = await _testimonial_ok(sender, conversation)
+    elif destination == "O4F":
+        sent = await _show_step(sender, "O4F", conversation)
+        conversation.reset_flow()
     elif destination in _PASOS_SIMPLES:
         sent = await _show_step(sender, destination, conversation)
     else:
-        # Opción de un mensaje que Especia todavía no envía (p. ej. la postventa O4): el menú.
+        # Opción sin acción conocida (p. ej. de un mensaje que ya no existe): el menú.
         logger.warning("Opción sin acción '%s': se muestra el menú", option_id)
         sent = await _show_step(sender, MENU_PRINCIPAL, conversation)
     if sent:
@@ -930,6 +938,31 @@ async def reconcile_pending_links() -> int:
         await _mark_link_paid(current)
         paid += 1
     return paid
+
+
+# ── Postventa (O4 → O4B → O4C / O4M / O4S → O4F); la plantilla O4 la envía app/postventa.py ──
+
+async def _testimonial_ok(sender: str, conversation: Conversation) -> str | None:
+    """«Sí, claro» en O4C: el permiso para mostrar su comentario queda en el pedido y se le pide una frase (O4S)."""
+    order = last_follow_up(sender)
+    if order:
+        order.testimonio = 1
+        update_order(order)
+    return await _show_step(sender, "O4S", conversation)
+
+
+async def _take_follow_up_comment(body: str, sender: str, conversation: Conversation) -> str | None:
+    """Lo que escribe en O4M (qué mejorar) u O4S (testimonio) va por correo al equipo; luego se cierra con O4F."""
+    testimonial = conversation.paso == "O4S"
+    order = last_follow_up(sender)
+    who = (order.nombre if order else None) or conversation.nombre or sender
+    subject = f"[Saboryarte] {'⭐ Testimonio' if testimonial else '💬 Qué mejorar'} — {who}"
+    note = (f"Lo que escribió el cliente: {body}\n\n"
+            + ("Aceptó que lo mostremos como testimonio." if testimonial else "Respondió «Están bien» en la postventa."))
+    await notify_team(subject, order_ficha(order, note) if order else f"WhatsApp {sender}\n\n{note}")
+    sent = await _show_step(sender, "O4F", conversation)
+    conversation.reset_flow()
+    return sent
 
 
 # ── Traspaso a una persona (coexistencia con la app de WhatsApp Business) ────

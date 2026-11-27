@@ -448,7 +448,7 @@
         {
           "id": "O4",
           "tipo": "plantilla",
-          "texto": "¡Hola, [nombre]! 🌿 Soy Especia, de Saboryarte. ¿Cómo te llegó tu pedido?",
+          "texto": "¡Hola, [nombre]! 🌿 Soy Especia, de Saboryarte. Tu pedido [referencia] ya debería estar contigo. ¿Cómo te llegó?",
           "opciones": [
             {
               "id": "o4_bien",
@@ -461,7 +461,7 @@
               "va_a": "Q1"
             }
           ],
-          "notas": "PENDIENTE: aún no se envía. Plantilla que debe aprobar Meta; 3 días después de la entrega, solo a quien aceptó en P15 (pedidos.postventa)."
+          "notas": "Plantilla de Meta «especia_postventa» (categoría utilidad, español), creada con «python -m app.postventa crear-plantilla» a partir de este texto: [nombre] → {{1}}, [referencia] → {{2}}. La envía todos los días a las 10:00 a. m. app/postventa.py, 3 días después de la entrega estimada (día de despacho + 2 días hábiles cerca o 4 en el resto del país), solo a quien aceptó en P15. «Tuve un problema» abre la queja (Q1)."
         },
         {
           "id": "O4B",
@@ -475,7 +475,8 @@
             },
             {
               "id": "o4b_bien",
-              "titulo": "Están bien"
+              "titulo": "Están bien",
+              "va_a": "O4M"
             },
             {
               "id": "o4b_duda",
@@ -483,7 +484,7 @@
               "va_a": "T1"
             }
           ],
-          "notas": "PENDIENTE, con O4. «Están bien» pregunta qué podemos mejorar y se guarda para el equipo."
+          "notas": "«Están bien» pregunta qué podemos mejorar (O4M). «Tengo una duda» pasa a Juanita (T1)."
         },
         {
           "id": "O4C",
@@ -492,7 +493,8 @@
           "opciones": [
             {
               "id": "o4c_si",
-              "titulo": "Sí, claro"
+              "titulo": "Sí, claro",
+              "va_a": "O4S"
             },
             {
               "id": "o4c_pedir",
@@ -501,10 +503,29 @@
             },
             {
               "id": "o4c_listo",
-              "titulo": "Listo, gracias"
+              "titulo": "Listo, gracias",
+              "va_a": "O4F"
             }
           ],
-          "notas": "PENDIENTE, con O4. En el artefacto el botón es «Quiero pedir de nuevo» (21 caracteres; WhatsApp permite 20)."
+          "notas": "«Sí, claro» guarda el permiso en el pedido (testimonio) y pide una frase (O4S). «Listo, gracias» cierra (O4F). En el artefacto el botón es «Quiero pedir de nuevo» (21 caracteres; WhatsApp permite 20)."
+        },
+        {
+          "id": "O4M",
+          "tipo": "libre",
+          "texto": "¡Gracias por contarnos! 💛 ¿Qué podemos mejorar? Tu comentario le llega directo a nuestro equipo.",
+          "notas": "La respuesta del cliente se envía por correo al equipo y se cierra con O4F."
+        },
+        {
+          "id": "O4S",
+          "tipo": "libre",
+          "texto": "¡Mil gracias! 🙌 Cuéntanos en una frase qué es lo que más te gustó y lo compartimos con mucho cariño.",
+          "notas": "El permiso ya quedó en el pedido (testimonio = 1). La frase va por correo al equipo y se cierra con O4F."
+        },
+        {
+          "id": "O4F",
+          "tipo": "texto",
+          "texto": "¡Gracias por ser parte de Saboryarte! 🌿 Cuando quieras más sabor, aquí estoy.",
+          "notas": "Cierre de la postventa."
         }
       ]
     },

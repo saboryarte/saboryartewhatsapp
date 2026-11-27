@@ -171,7 +171,12 @@ async def _process_payload(payload: WhatsAppPayload) -> None:
                 if not mark_processed(message.id):
                     logger.info("Mensaje duplicado ignorado (id: %s)", message.id)
                     continue
-                if message.type not in ("text", "interactive", *_MEDIA_TYPES):
+                if message.type == "button":
+                    # Botón de una plantilla (postventa O4): se trata como un botón de un mensaje interactivo.
+                    button = message.button or {}
+                    message.interactive = {"type": "button_reply", "button_reply": {
+                        "id": button.get("payload"), "title": button.get("text", "")}}
+                if message.type not in ("text", "interactive", "button", *_MEDIA_TYPES):
                     logger.info("Mensaje tipo '%s' ignorado (id: %s)", message.type, message.id)
                     continue
                 sender = _resolve_sender(message, value.contacts)

@@ -194,6 +194,7 @@ whatsapp-claude-agent/
 │   ├── conexion.py      # Conexión del número del negocio en coexistencia (/conectar) y avisos de desconexión
 │   ├── privacidad.py    # Página pública /privacidad.html (contenido/politica_de_privacidad.md)
 │   ├── exporte.py     # Excel diario de pedidos (correo y Drive)
+│   ├── postventa.py   # Plantilla «¿Cómo te llegó tu pedido?» (O4), cron diario
 │   ├── hoja_precios.py # Hoja de precios para la dueña: exportar e importar con validación
 │   ├── orders.py      # Cálculos del pedido: subtotal, tarifa de envío por ciudad y resumen (P8)
 │   ├── handoff.py     # Traspaso: horario, ficha, silencio, reactivación y alertas
