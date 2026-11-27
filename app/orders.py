@@ -10,7 +10,7 @@ from typing import Any
 from .flows import format_price, get_product, kit_price
 from .precios import current_prices
 
-# Las tarifas de envío estándar están en contenido/precios.yaml. Una persona confirma el valor final.
+# Las tarifas de envío están en contenido/precios.yaml y se cobran tal cual, en el mismo pago del pedido.
 _AREA_METROPOLITANA = ("bello", "envigado", "itagui", "sabaneta", "la estrella")
 
 REQUIRED_SHIPPING_FIELDS = ("nombre", "direccion", "ciudad", "telefono")
@@ -78,16 +78,15 @@ def ask_missing_shipping(missing: list[str]) -> str:
     return f"¡Gracias! Para el envío me falta {joined}. ¿Me lo compartes? 😊"
 
 
-def order_summary(items: list[dict[str, Any]], shipping: dict[str, str], aviso_resto: str = "") -> str:
-    """Cuerpo del mensaje P8 con los valores calculados. «aviso_resto» va si el envío es al resto del país."""
+def order_summary(items: list[dict[str, Any]], shipping: dict[str, str]) -> str:
+    """Cuerpo del mensaje P8 con los valores calculados."""
     sub = subtotal(items)
     envio = shipping_cost(shipping["ciudad"])
     lines = "\n".join(describe_item(item) for item in items)
-    aviso = f" _{aviso_resto}_" if aviso_resto and shipping_zone(shipping["ciudad"]) == "resto_del_pais" else ""
     return (
         f"Este es tu pedido:\n{lines}\n\n"
         f"Subtotal: {format_price(sub)}\n"
-        f"Envío: {format_price(envio)} ({shipping['ciudad']}){aviso}\n"
+        f"Envío: {format_price(envio)} ({shipping['ciudad']})\n"
         f"*Total: {format_price(sub + envio)}*\n\n"
         f"Envío a: {shipping['nombre']}, {shipping['direccion']}, {shipping['ciudad']} · Tel. {shipping['telefono']}\n\n"
         "¿Todo bien?"

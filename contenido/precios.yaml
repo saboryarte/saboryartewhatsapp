@@ -27,7 +27,7 @@ kits_armados:
   5_mezclas: 110000
   6_mezclas: 133000
 
-# Tarifa de envío estándar. Una persona del equipo confirma el valor final.
+# Tarifa de envío. Se cobra tal cual, junto con el pedido.
 envios:
   medellin: 9000
   area_metropolitana: 12000   # Bello, Envigado, Itagüí, Sabaneta y La Estrella

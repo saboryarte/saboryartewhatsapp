@@ -101,11 +101,11 @@ class TestCalculos:
         assert "Subtotal: $78.000" in texto and "Envío: $12.000 (Envigado)" in texto and "*Total: $90.000*" in texto
         assert "una persona" not in texto.lower()
 
-    def test_resumen_al_resto_del_pais_avisa_que_el_envio_puede_variar(self):
+    def test_resumen_al_resto_del_pais_no_dice_que_el_envio_puede_variar(self):
         envio_ = {"nombre": "Laura", "direccion": "Cl 100", "ciudad": "Bogotá", "telefono": "300"}
         items = [{"producto": "sal_de_oro", "cantidad": 1}]
-        assert "Envío: $18.000 (Bogotá) _Puede variar._" in order_summary(items, envio_, "Puede variar.")
-        assert "_" not in order_summary(items, {**envio_, "ciudad": "Medellín"}, "Puede variar.")
+        assert "Envío: $18.000 (Bogotá)\n" in order_summary(items, envio_)
+        assert "variar" not in order_summary(items, envio_)
 
     def test_varios_kits_iguales(self):
         item = {"kit": ["sal_de_oro", "sal_de_sol", "sal_chilemon"], "cantidad": 2}
@@ -159,14 +159,14 @@ class TestFlujoDePedido:
         resumen = mocks["buttons"].call_args.args[1]
         assert "Envío: $9.000 (Medellín)" in resumen and "*Total: $35.000*" in resumen
 
-    def test_resto_del_pais_avisa_que_el_envio_puede_variar(self, client, mocks):
+    def test_resto_del_pais_no_dice_que_el_envio_puede_variar(self, client, mocks):
         elegir(client, "p1_pedido", "button_reply")
         mocks["order"].return_value = pedido(("sal_de_oro", 1))
         escribir(client, "una de oro")
         mocks["shipping"].return_value = envio(ciudad="Bogotá")
         escribir(client, "Bogotá")
         texto = ultimo_texto(mocks)
-        assert "$18.000" in texto and "2 a 4 días hábiles" in texto and "El valor puede variar" in texto
+        assert "$18.000" in texto and "2 a 4 días hábiles" in texto and "variar" not in texto
 
     def test_envio_incompleto_pide_lo_que_falta_y_acumula(self, client, mocks):
         elegir(client, "p1_pedido", "button_reply")

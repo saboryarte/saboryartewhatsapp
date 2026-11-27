@@ -108,7 +108,7 @@ flowchart TD
 
 - **P6 y P4K son texto libre.** Claude (Haiku, salida estructurada) solo extrae productos, cantidades y número de kits; el código valida contra el catálogo y hace las cuentas. Si un kit trae menos o más mezclas de las elegidas, se le dice cuántas nombró y se le vuelve a preguntar. Una mezcla repetida en un kit cuenta una vez. El kit de 6 trae todas: solo se pregunta cuántos. En P4K las mezclas se reconocen primero sin Claude, por nombre completo o corto («oro», «luna rosa», «chile limón», «tierra»…, en `app/orders.py`) junto con «2 kits»: si nombró justo las del kit, se arma de una; si no, decide Claude.
 - **P4M:** un número escrito («3», «tres») no usa Claude.
-- **P7 → P7B:** con la ciudad, el código calcula el valor (`precios.yaml`) y el tiempo: 1 a 2 días hábiles en Medellín y el área metropolitana, 2 a 4 en el resto del país, donde además se avisa que el valor puede variar (también en el resumen P8). Si el cliente escribe todos los datos de una vez, va directo a P8.
+- **P7 → P7B:** con la ciudad, el código calcula el valor (`precios.yaml`) y el tiempo: 1 a 2 días hábiles en Medellín y el área metropolitana, 2 a 4 en el resto del país. La tarifa se cobra tal cual: no se avisa que pueda variar. Si el cliente escribe todos los datos de una vez, va directo a P8.
 - **P7C:** solo si ya compró antes y su dirección guardada es de la misma ciudad. Va en el mismo mensaje que P7B, en lugar de pedirle los datos. Un «sí» escrito también vale.
 - **P8 → P11:** confirmar ya no traspasa: pregunta el medio de pago. Cambiar de medio antes de pagar anula el pedido anterior sin cobrar.
 - **Día de despacho (P15):** el siguiente martes o jueves después del día del pago (`dispatch_day` en `app/handoff.py`).
@@ -263,7 +263,7 @@ Esto va al *system prompt* y es el criterio para evaluar las respuestas de Claud
 | VEN-001 | Hacer mi pedido → «2 de oro y una chilemon» → «Envigado» → nombre, dirección y teléfono | P7B con $12.000 y 1 a 2 días; P8 con subtotal $78.000 y total $90.000. |
 | VEN-002 | Kits → Armar mi kit → 3 mezclas → «2 kits de oro, sol y chilemon» | Resumen con «2 × Kit de 3 mezclas». |
 | VEN-003 | A mitad de P6: «en realidad quiero revenderlas en mi tienda» | D1 y traspaso. |
-| VEN-004 | Envío a Bogotá | $18.000, 2 a 4 días hábiles y «el valor puede variar». |
+| VEN-004 | Envío a Bogotá | $18.000 y 2 a 4 días hábiles, sin aviso de que el valor puede variar. |
 | PAG-001 | Confirmar → Transferencia → foto del comprobante → Juanita confirma | P12, P14 y P15 con el día de despacho. |
 | PAG-002 | Juanita toca «No llegó» | P16 al cliente; la conversación queda con Juanita. |
 | PAG-003 | Pago rechazado en Bold | P13R con el mismo link. |

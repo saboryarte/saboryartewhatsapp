@@ -191,12 +191,11 @@
           "tipo": "libre",
           "texto": "El envío a [ciudad] cuesta [valor del envío]. Despachamos los martes y jueves: tu pedido sale el próximo de esos días una vez confirmemos el pago, y llega en [tiempo de entrega].",
           "pide_datos": "Para el envío necesito tu nombre completo, dirección y un teléfono de contacto.",
-          "aviso_resto": "El valor puede variar según el peso y el lugar.",
           "tiempos": {
             "cerca": "1 a 2 días hábiles",
             "resto": "2 a 4 días hábiles"
           },
-          "notas": "Tarifas en contenido/precios.yaml: Medellín; Bello, Envigado, Itagüí, Sabaneta y La Estrella; resto del país (con aviso_resto). Tiempo: «cerca» para Medellín y el área metropolitana, «resto» para el resto del país. Al cliente que ya compró se le omite pide_datos y se le ofrece P7C."
+          "notas": "Tarifas en contenido/precios.yaml: Medellín; Bello, Envigado, Itagüí, Sabaneta y La Estrella; resto del país (sin aviso de que el valor puede variar: se cobra la tarifa tal cual). Tiempo: «cerca» para Medellín y el área metropolitana, «resto» para el resto del país. Al cliente que ya compró se le omite pide_datos y se le ofrece P7C."
         },
         {
           "id": "P7C",

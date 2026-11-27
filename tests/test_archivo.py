@@ -102,7 +102,7 @@ class TestClienteQueVuelve:
         escribir(client, "Cali")
         cuerpo = mocks["text"].call_args.args[1]
         assert cuerpo.startswith("El envío a Cali cuesta") and "2 a 4 días hábiles" in cuerpo
-        assert "puede variar" in cuerpo and "nombre completo" in cuerpo
+        assert "puede variar" not in cuerpo and "nombre completo" in cuerpo
         assert load_conversation(REMITENTE).paso == "P7B"
 
     def test_cliente_nuevo_no_ve_la_pregunta(self, client, mocks, monkeypatch):

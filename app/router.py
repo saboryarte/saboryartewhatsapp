@@ -523,8 +523,6 @@ async def _shipping_info(sender: str, conversation: Conversation) -> str | None:
         step["texto"].replace("[ciudad]", city).replace("[valor del envío]", format_price(shipping_cost(city)))
         .replace("[tiempo de entrega]", step["tiempos"]["resto" if far else "cerca"])
     )
-    if far:
-        info += f" {step['aviso_resto']}"
     missing = missing_shipping_fields(shipping)
     saved = archivo.saved_shipping(sender)
     if (missing == ["nombre", "direccion", "telefono"] and saved and not missing_shipping_fields(saved)
@@ -563,7 +561,7 @@ async def _take_shipping(body: str, sender: str, conversation: Conversation) -> 
 
 
 async def _show_summary(sender: str, conversation: Conversation) -> str | None:
-    summary = order_summary(conversation.datos["pedido"], conversation.datos["envio"], get_step("P7B")["aviso_resto"])
+    summary = order_summary(conversation.datos["pedido"], conversation.datos["envio"])
     return await _show_step(sender, "P8", conversation, body=summary)
 
 

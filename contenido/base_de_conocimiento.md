@@ -48,7 +48,7 @@ Se usan como la sal de siempre, ajustando la cantidad al gusto.
 
 **Tiempo de entrega:** Medellín y área metropolitana, 1 a 2 días hábiles. Resto del país, 2 a 4 días hábiles; puede tardar más en lugares remotos.
 
-La tarifa puede variar por peso y destino. **Una persona confirma el valor final del envío.**
+El valor del envío es el de la tabla, sin cobros adicionales, y se paga junto con el pedido.
 
 ## Pagos
 
