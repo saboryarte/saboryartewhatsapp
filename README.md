@@ -58,6 +58,7 @@ cp .env.example .env
 | `VERIFY_TOKEN` | ✅ | Token aleatorio que usarás al configurar el webhook en Meta |
 | `WHATSAPP_TOKEN` | ✅ | Token de acceso de la Graph API para enviar mensajes |
 | `WHATSAPP_PHONE_NUMBER_ID` | ✅ | ID del número de teléfono en Meta Developers |
+| `WHATSAPP_WABA_ID` | ⬜ | WhatsApp Business Account ID (API Setup), para crear la plantilla de la postventa |
 | `ANTHROPIC_API_KEY` | ✅ | API Key de Anthropic para consultar a Claude |
 | `ANTHROPIC_WORKSPACE_ID` | ⬜ | Solo si la llave no está ligada a un workspace (empieza por `sk-ant-usr`): id `wrkspc_…` |
 | `APP_SECRET` | ✅ en producción | App Secret de Meta: el bot rechaza los avisos de WhatsApp sin su firma (`X-Hub-Signature-256`) |

@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     verify_token: str
     whatsapp_token: str = ""
     whatsapp_phone_number_id: str = ""
+    # Cuenta de WhatsApp Business (WABA) del número del .env, para las plantillas (app/postventa.py). No es secreto.
+    # Con el número del negocio conectado se usa la de data/whatsapp_conexion.json.
+    whatsapp_waba_id: str = ""
     app_secret: str = ""
     anthropic_api_key: str = ""
     # Solo si la llave de Claude no está ligada a un workspace (empieza por «sk-ant-usr»): id del workspace

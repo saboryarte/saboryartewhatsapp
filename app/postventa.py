@@ -17,6 +17,7 @@ otra vez allá con «crear-plantilla».
 """
 import argparse
 import asyncio
+import json
 import logging
 import re
 import sys
@@ -25,7 +26,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 from . import conexion
-from .config import settings
+from .config import conexion_path, settings
 from .flows import button_rows, get_step
 from .handoff import COLOMBIA, dispatch_day
 from .orders import shipping_zone
@@ -129,13 +130,25 @@ def template_definition() -> dict[str, Any]:
     }
 
 
+async def _waba_id() -> str:
+    """Cuenta de WhatsApp a la que pertenece la plantilla: la del número del negocio si ya se conectó, si no
+    WHATSAPP_WABA_ID del .env, y si no la que diga la llave."""
+    try:
+        datos = json.loads(conexion_path().read_text())
+        if datos.get("waba_id"):
+            return datos["waba_id"]
+    except (OSError, ValueError):
+        pass
+    return settings.whatsapp_waba_id or await conexion._waba_from_token(settings.whatsapp_token)
+
+
 async def create_template() -> dict[str, Any]:
-    waba = await conexion._waba_from_token(settings.whatsapp_token)
+    waba = await _waba_id()
     return await conexion._graph("POST", f"{waba}/message_templates", settings.whatsapp_token, json=template_definition())
 
 
 async def template_status() -> list[dict[str, Any]]:
-    waba = await conexion._waba_from_token(settings.whatsapp_token)
+    waba = await _waba_id()
     data = await conexion._graph("GET", f"{waba}/message_templates", settings.whatsapp_token, params={
         "name": PLANTILLA, "fields": "name,language,status,category,rejected_reason"})
     return data.get("data", [])
