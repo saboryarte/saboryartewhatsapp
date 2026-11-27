@@ -61,8 +61,9 @@ async def create_payment_link(total: int, description: str, reference: str) -> d
     return {"id": payload["payment_link"], "url": payload["url"], "vence_en": expires_at}
 
 
-async def link_status(link_id: str) -> str | None:
-    """Estado del link según Bold (ACTIVE, PROCESSING, PAID, REJECTED, CANCELLED, EXPIRED) o None si no respondió."""
+async def link_info(link_id: str) -> dict | None:
+    """Datos del link según Bold: «status» (ACTIVE, PROCESSING, PAID, REJECTED, CANCELLED, EXPIRED), «total»,
+    «transaction_id»… None si Bold no respondió."""
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             response = await client.get(f"{_BOLD_API_URL}/online/link/v1/{link_id}", headers=_headers())
@@ -71,8 +72,13 @@ async def link_status(link_id: str) -> str | None:
     except (HTTPError, ValueError) as e:
         logger.error("Bold: no se pudo consultar el link (%s)", type(e).__name__)
         return None
-    info = data.get("payload") or data
-    return info.get("status")
+    return data.get("payload") or data
+
+
+async def link_status(link_id: str) -> str | None:
+    """Estado del link según Bold o None si no respondió."""
+    info = await link_info(link_id)
+    return info.get("status") if info else None
 
 
 async def confirm_paid(link_id: str, attempts: int = 4, wait_seconds: float = 15) -> str | None:

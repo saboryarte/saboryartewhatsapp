@@ -48,6 +48,8 @@ def mocks(monkeypatch):
     m["estado_link"] = AsyncMock(return_value="PAID")
     monkeypatch.setattr("app.bold.create_payment_link", m["crear_link"])
     monkeypatch.setattr("app.bold.link_status", m["estado_link"])
+    m["info_link"] = AsyncMock(return_value=None)  # consulta de links pendientes (aviso sin pedido)
+    monkeypatch.setattr("app.bold.link_info", m["info_link"])
     return m
 
 
@@ -240,6 +242,44 @@ class TestAvisos:
         assert aviso_bold(client, "SALE_APPROVED", link_id="LNK_DESCONOCIDO").status_code == 200
         mocks["text"].assert_not_called()
         mocks["notify"].assert_not_called()
+
+    # El botón «Probar el webhook» de Bold manda un aviso sin referencia y por $0: se consulta a Bold por los links.
+    def test_aviso_sin_referencia_consulta_los_links_y_confirma_el_pagado(self, client, mocks, pedido_con_link):
+        mocks["info_link"].return_value = {"status": "PAID", "total": 64_000, "transaction_id": "SGDX123"}
+        aviso_bold(client, "SALE_APPROVED", total=0, link_id="")
+        mocks["info_link"].assert_called_once_with(LINK["id"])
+        pedido = get_order(1)
+        assert pedido.estado == PAGADO and pedido.payment_id == "SGDX123"
+        assert mocks["buttons"].call_args.args[1].startswith("¡Pago confirmado!")
+        assert "Pedido pagado SAB-00001" in mocks["notify"].call_args.args[0]
+
+    def test_aviso_sin_referencia_con_el_link_sin_pagar_no_cambia_nada(self, client, mocks, pedido_con_link):
+        mocks["buttons"].reset_mock()
+        mocks["info_link"].return_value = {"status": "ACTIVE", "total": 64_000}
+        aviso_bold(client, "SALE_APPROVED", total=0, link_id="")
+        assert get_order(1).estado == PENDIENTE
+        mocks["buttons"].assert_not_called()
+        mocks["notify"].assert_not_called()
+
+    def test_aviso_sin_referencia_con_otro_monto_queda_por_revisar(self, client, mocks, pedido_con_link):
+        mocks["buttons"].reset_mock()
+        mocks["info_link"].return_value = {"status": "PAID", "total": 1_000}
+        aviso_bold(client, "SALE_APPROVED", total=0, link_id="")
+        assert get_order(1).estado == REVISAR
+        mocks["buttons"].assert_not_called()
+        assert "Revisar pago" in mocks["notify"].call_args.args[0]
+
+    def test_aviso_sin_referencia_no_repite_un_pago_ya_confirmado(self, client, mocks, pedido_con_link):
+        aviso_bold(client, "SALE_APPROVED")
+        mocks["notify"].reset_mock()
+        mocks["info_link"].return_value = {"status": "PAID", "total": 64_000}
+        aviso_bold(client, "SALE_APPROVED", total=0, link_id="")
+        mocks["info_link"].assert_not_called()  # ya no hay links pendientes
+        mocks["notify"].assert_not_called()
+
+    def test_rechazo_sin_referencia_no_consulta_links(self, client, mocks, pedido_con_link):
+        aviso_bold(client, "SALE_REJECTED", total=0, link_id="")
+        mocks["info_link"].assert_not_called()
 
 
 # ── Cliente HTTP de Bold ──────────────────────────────────────────────────────

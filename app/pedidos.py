@@ -124,6 +124,23 @@ def find_by_reference(reference: str) -> Pedido | None:
     return None
 
 
+# Links de pago que se consultan en Bold cuando llega un aviso sin pedido: los de los últimos días bastan
+# (el link vence en 24 h y Bold puede tardar en avisar).
+_DIAS_PARA_CONSULTAR_LINKS = 3
+
+
+def pending_links() -> list[Pedido]:
+    """Pedidos con link de Bold que siguen pendientes de pago, de los últimos días, del más reciente al más viejo."""
+    since = time.time() - _DIAS_PARA_CONSULTAR_LINKS * 24 * 3600
+    with closing(_connect()) as conn:
+        rows = conn.execute(
+            f"SELECT {', '.join(_COLUMNAS)} FROM pedidos WHERE medio_pago = ? AND estado = ? AND link_id IS NOT NULL "
+            "AND creado_en >= ? ORDER BY id DESC LIMIT 20",
+            (BOLD, PENDIENTE, since),
+        ).fetchall()
+    return [_from_row(row) for row in rows]
+
+
 def update_order(order: Pedido) -> None:
     with closing(_connect()) as conn, conn:
         conn.execute(

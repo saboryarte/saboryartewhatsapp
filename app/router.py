@@ -71,6 +71,7 @@ from .pedidos import (
     get_order,
     last_paid,
     order_ficha,
+    pending_links,
     pending_transfer,
     update_order,
 )
@@ -842,6 +843,10 @@ async def handle_bold_event(event: dict) -> None:
     order = (find_by_link(reference) or find_by_reference(reference)) if reference else None
     if order is None:
         logger.warning("Bold: aviso %s sin pedido asociado (referencia %s)", kind, reference or "vacía")
+        if kind == "SALE_APPROVED":
+            # El aviso de prueba de Bold («Probar el webhook») llega sin referencia y por $0, y en producción un aviso
+            # podría llegar incompleto: se le pregunta a Bold por los links pendientes y se confirman los pagados.
+            await reconcile_pending_links()
         return
     # Se marca solo si corresponde a un pedido: un aviso sin pedido puede reintentarse cuando se corrija la causa.
     if not mark_processed(f"bold:{event.get('id')}"):
@@ -882,6 +887,11 @@ async def _payment_approved(order: Pedido, data: dict) -> None:
                                "Revísalo en el panel de Bold antes de despachar."),
         )
         return
+    await _mark_link_paid(order)
+
+
+async def _mark_link_paid(order: Pedido) -> None:
+    """Pago con link confirmado: P15 al cliente, chat del pedido guardado y correo al equipo para despachar."""
     order.estado = PAGADO
     order.pagado_en = time.time()
     update_order(order)
@@ -893,6 +903,35 @@ async def _payment_approved(order: Pedido, data: dict) -> None:
         f"[Saboryarte] 💰 Pedido pagado {order.referencia} — {order.nombre or order.remitente}: despachar",
         order_ficha(order),
     )
+
+
+async def reconcile_pending_links() -> int:
+    """Consulta en Bold los links pendientes y marca pagados los que Bold reporta PAID por el total exacto.
+    La fuente es la API de Bold (con nuestra llave), no el aviso: un aviso falso no puede marcar nada. Devuelve
+    cuántos pedidos quedaron pagados."""
+    paid = 0
+    for order in pending_links():
+        info = await bold.link_info(order.link_id)
+        if not info or info.get("status") != "PAID":
+            continue
+        current = get_order(order.id)
+        if current is None or current.estado != PENDIENTE:
+            continue  # otro aviso ya lo procesó mientras consultábamos
+        if info.get("total") is None or int(info["total"]) != current.total:
+            logger.warning("Bold: el link del pedido %s figura pagado por otro monto", current.referencia)
+            current.estado = REVISAR
+            update_order(current)
+            await notify_team(
+                f"[Saboryarte] ⚠️ Revisar pago — pedido {current.referencia}",
+                order_ficha(current, f"Bold reporta el link pagado por {info.get('total')}, pero el pedido es por "
+                                     f"{current.total}. Revísalo en el panel de Bold antes de despachar."),
+            )
+            continue
+        current.payment_id = info.get("transaction_id")
+        logger.info("Bold: el pedido %s figura pagado al consultar el link", current.referencia)
+        await _mark_link_paid(current)
+        paid += 1
+    return paid
 
 
 # ── Traspaso a una persona (coexistencia con la app de WhatsApp Business) ────
